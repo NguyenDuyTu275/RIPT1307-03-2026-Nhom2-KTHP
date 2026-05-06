@@ -8,6 +8,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "hotels")
+@lombok.Data
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
 public class Hotel {
 
     @Id

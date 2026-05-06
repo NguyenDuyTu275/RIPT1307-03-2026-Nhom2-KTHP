@@ -6,6 +6,9 @@ import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "reviews")
+@lombok.Data
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
 public class Review {
 
     @Id

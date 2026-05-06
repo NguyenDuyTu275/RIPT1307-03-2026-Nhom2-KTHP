@@ -6,6 +6,9 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "room_image")
+@lombok.Data
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
 public class RoomImage {
 
     @Id
