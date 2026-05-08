@@ -12,32 +12,48 @@ public class UserController {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
+    public UserController(
+            UserService userService
+    ) {
         this.userService = userService;
     }
 
-    // GET all
+    // GET ALL
     @GetMapping
     public List<User> getAll() {
+
         return userService.getAll();
     }
 
-    // POST create
+    // CREATE USER
     @PostMapping
-    public User create(@RequestBody User user) {
+    public User create(
+            @RequestBody User user
+    ) {
+
         return userService.create(user);
     }
 
-    // DELETE
+    // DELETE USER
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public String delete(
+            @PathVariable Long id
+    ) {
+
         userService.delete(id);
+
+        return "Deleted success";
     }
+
+    // UPDATE USER
     @PutMapping("/{id}")
-    public User update(@PathVariable Long id, @RequestBody User user) {
+    public User update(
+            @PathVariable Long id,
+            @RequestBody User user
+    ) {
+
         user.setId(id);
+
         return userService.create(user);
     }
-
-
 }
