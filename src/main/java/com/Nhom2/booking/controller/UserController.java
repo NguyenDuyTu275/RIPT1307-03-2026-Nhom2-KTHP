@@ -5,6 +5,7 @@ import com.Nhom2.booking.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -23,6 +24,11 @@ public class UserController {
     public List<User> getAll() {
 
         return userService.getAll();
+    }
+    @GetMapping("/{id}")
+    public Optional<User> getUser(@PathVariable Long id
+    ){
+       return userService.getUser(id);
     }
 
     // CREATE USER

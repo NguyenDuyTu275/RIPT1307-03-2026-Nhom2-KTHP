@@ -9,6 +9,7 @@ import com.Nhom2.booking.security.JwtUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -28,6 +29,10 @@ public class UserService {
     public List<User> getAll() {
 
         return userRepository.findAll();
+    }
+    // GET
+    public Optional<User> getUser(Long id ){
+        return userRepository.findById(id);
     }
 
     // CREATE / UPDATE
