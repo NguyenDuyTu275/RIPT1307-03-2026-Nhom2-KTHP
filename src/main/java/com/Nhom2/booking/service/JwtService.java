@@ -1,5 +1,6 @@
 package com.Nhom2.booking.service;
 
+import com.Nhom2.booking.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Service;
@@ -12,10 +13,10 @@ public class JwtService {
     private final String SECRET_KEY =
             "mysecretkeymysecretkeymysecretkey";
 
-    public String generateToken(String username) {
+    public String generateToken(User username) {
 
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(String.valueOf(username))
                 .setIssuedAt(new Date())
                 .setExpiration(
                         new Date(System.currentTimeMillis() + 86400000)
