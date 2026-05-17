@@ -7,10 +7,10 @@ import com.Nhom2.booking.enums.UserRole;
 import com.Nhom2.booking.repository.UserRepository;
 import com.Nhom2.booking.security.JwtUtil;
 import org.springframework.stereotype.Service;
-//import com.Nhom2.booking.dto.RegisterRequest;
+
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -20,41 +20,21 @@ public class UserService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final MailService mailService;
+    private final OtpService otpService;
 
-//    @Autowired
-//    private OtpService otpService;
-//
-//    @Autowired
-//    private MailService mailService;
 
     public UserService(
             UserRepository userRepository,
             JwtUtil jwtUtil,
-            MailService mailService
+            MailService mailService,
+            OtpService otpService
     ) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.mailService = mailService;
+        this.otpService = otpService;
     }
-    // gửi otp
-//    public String sendOtp(RegisterRequest request) {
-//
-//        if (userRepository.findByusername(request.getUsername()).isPresent()) {
-//            return "Username đã tồn tại";
-//        }
-//
-//        String otp = otpService.generateOtp(request.getEmail());
-//
-//        pendingUsers.put(request.getEmail(), request);
-//
-//        mailService.sendMail(
-//                request.getEmail(),
-//                "Xác nhận đăng ký tài khoản",
-//                "Mã OTP của bạn là: " + otp
-//        );
-//
-//        return "Đã gửi OTP về email";
-//    }
+
     // GET ALL
     public List<User> getAll() {
         return userRepository.findAll();
@@ -74,12 +54,38 @@ public class UserService {
     public void delete(Long id) {
         userRepository.deleteById(id);
     }
+    //sendotp
 
-    // REGISTER
-    public String register(RegisterRequest request) {
+
+    public String sendOtp(RegisterRequest request) {
 
         if (userRepository.findByusername(request.getUsername()).isPresent()) {
             return "Username already exists";
+        }
+
+        String otp = otpService.generateOtp(request.getEmail());
+
+        pendingUsers.put(request.getEmail(), request);
+
+        mailService.sendMail(
+                request.getEmail(),
+                "Xác nhận đăng ký tài khoản",
+                "Mã OTP của bạn là: " + otp
+        );
+
+        return "OTP sent to email";
+    }
+    //verify otp
+    public String verifyOtp(String email, String otp) {
+
+        if (!otpService.verifyOtp(email, otp)) {
+            return "OTP invalid";
+        }
+
+        RegisterRequest request = pendingUsers.get(email);
+
+        if (request == null) {
+            return "No registration request found";
         }
 
         User user = new User();
@@ -90,15 +96,12 @@ public class UserService {
 
         userRepository.save(user);
 
-        // gửi mail đăng ký
-        mailService.sendMail(
-                user.getEmail(),
-                "Đăng ký thành công",
-                "Xin chào " + user.getUsername() + ", bạn đã đăng ký tài khoản thành công."
-        );
+        otpService.removeOtp(email);
+        pendingUsers.remove(email);
 
         return "Register success";
     }
+
 
     // LOGIN
     public String login(LoginRequest request) {
