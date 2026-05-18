@@ -7,6 +7,16 @@ import java.util.List;
 
 import com.Nhom2.booking.enums.*;
 import org.hibernate.annotations.CreationTimestamp;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+
 
 @Entity
 @Table(name = "bookings")
