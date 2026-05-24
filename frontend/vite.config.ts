@@ -13,10 +13,12 @@ export default defineConfig({
       '/hotels': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/hotels/, '/api/hotels')
       },
       '/bookings': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/bookings/, '/api/bookings')
       },
       '/users': {
         target: 'http://localhost:8080',

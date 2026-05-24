@@ -73,7 +73,7 @@ const SearchResults: React.FC = () => {
 
   return (
     <div className="page-wrapper">
-      <Header showSearch />
+      <Header />
 
       {/* Search bar strip */}
       <div style={{ background: '#003b95', padding: '16px 0' }}>
@@ -156,15 +156,17 @@ const SearchResults: React.FC = () => {
                   </div>
                 ))
               ) : filtered.length === 0 ? (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description={
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700 }}>Không tìm thấy kết quả</div>
-                      <div style={{ color: '#929292', marginTop: 4 }}>Thử tìm kiếm với từ khóa khác</div>
-                    </div>
-                  }
-                />
+                <div style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 8, padding: '80px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={
+                      <div>
+                        <div style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>Không tìm thấy chỗ nghỉ nào</div>
+                        <div style={{ color: '#595959', fontSize: 15 }}>Vui lòng thử thay đổi bộ lọc hoặc tìm kiếm với địa điểm khác.</div>
+                      </div>
+                    }
+                  />
+                </div>
               ) : (
                 filtered.map((hotel) => {
                   const price = 500000 + (Number(hotel.id) % 20) * 50000;

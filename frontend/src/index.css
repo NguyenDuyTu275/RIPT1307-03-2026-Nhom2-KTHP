@@ -432,16 +432,17 @@ button { cursor: pointer; font-family: inherit; }
 }
 
 .filter-sidebar {
-  width: 240px;
+  width: 280px;
   flex-shrink: 0;
 }
 
 .filter-card {
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 20px;
+  border-radius: var(--radius-lg);
+  padding: 24px;
   margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
 }
 
 .filter-title {
@@ -474,12 +475,12 @@ button { cursor: pointer; font-family: inherit; }
 .hotel-result-card {
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   display: flex;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   cursor: pointer;
-  transition: box-shadow 0.2s;
+  transition: all 0.2s ease-in-out;
   text-decoration: none;
   color: inherit;
 }
