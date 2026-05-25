@@ -1,11 +1,16 @@
 package com.Nhom2.booking.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "hotels")
 public class Hotel {
@@ -44,5 +49,6 @@ public class Hotel {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "hotel")
+    @JsonIgnoreProperties({"hotel", "bookingRooms"})
     private List<Room> rooms;
 }

@@ -1,7 +1,10 @@
 package com.Nhom2.booking.controller;
 
+import com.Nhom2.booking.dto.BookingRequest;
+import com.Nhom2.booking.dto.CreateBookingRequestDto;
 import com.Nhom2.booking.entity.Booking;
 import com.Nhom2.booking.service.BookingService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,9 +25,15 @@ public class BookingController {
     @PostMapping("/{hotelId}")
     public Booking createBooking(
             @PathVariable Long hotelId,
-            @RequestBody Booking booking
+            @RequestBody BookingRequest request,
+            Authentication authentication
     ) {
-        return bookingService.createBooking(hotelId, booking);
+
+        return bookingService.createBooking(
+                authentication.getName(),
+                hotelId,
+                request
+        );
     }
 
     // xem booking của chính mình
@@ -39,5 +48,29 @@ public class BookingController {
             @PathVariable Long bookingId
     ) {
         return bookingService.cancelBooking(bookingId);
+    }
+
+    @PostMapping("/{bookingId}/requests")
+    public com.Nhom2.booking.entity.BookingRequest createRequest(
+            @PathVariable Long bookingId,
+            @RequestBody CreateBookingRequestDto request,
+            Authentication authentication
+    ) {
+        return bookingService.createBookingRequest(
+                authentication.getName(),
+                bookingId,
+                request
+        );
+    }
+
+    @GetMapping("/{bookingId}/requests")
+    public List<com.Nhom2.booking.entity.BookingRequest> getRequests(
+            @PathVariable Long bookingId,
+            Authentication authentication
+    ) {
+        return bookingService.getMyBookingRequests(
+                authentication.getName(),
+                bookingId
+        );
     }
 }

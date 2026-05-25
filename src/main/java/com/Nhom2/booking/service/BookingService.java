@@ -1,78 +1,527 @@
 package com.Nhom2.booking.service;
 
+import com.Nhom2.booking.dto.BookingRequest;
+import com.Nhom2.booking.dto.BookingRoomRequest;
+import com.Nhom2.booking.dto.CreateBookingRequestDto;
 import com.Nhom2.booking.entity.Booking;
+import com.Nhom2.booking.entity.BookingRoom;
 import com.Nhom2.booking.entity.Hotel;
+import com.Nhom2.booking.entity.Room;
 import com.Nhom2.booking.entity.User;
 import com.Nhom2.booking.enums.BookingStatus;
 import com.Nhom2.booking.enums.PaymentStatus;
+import com.Nhom2.booking.enums.RequestStatus;
+import com.Nhom2.booking.enums.RequestType;
 import com.Nhom2.booking.repository.BookingRepository;
+import com.Nhom2.booking.repository.BookingRequestRepository;
+import com.Nhom2.booking.repository.BookingRoomRepository;
 import com.Nhom2.booking.repository.HotelRepository;
+import com.Nhom2.booking.repository.RoomRepository;
 import com.Nhom2.booking.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class BookingService {
 
+    private static final List<BookingStatus> RESERVED_STATUSES =
+            List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED);
+
+    private final RoomRepository roomRepository;
+    private final BookingRoomRepository bookingRoomRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final HotelRepository hotelRepository;
+    private final BookingRequestRepository bookingRequestRepository;
+    private final NotificationService notificationService;
 
     public BookingService(
             BookingRepository bookingRepository,
             UserRepository userRepository,
-            HotelRepository hotelRepository
+            HotelRepository hotelRepository,
+            RoomRepository roomRepository,
+            BookingRoomRepository bookingRoomRepository,
+            BookingRequestRepository bookingRequestRepository,
+            NotificationService notificationService
     ) {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.hotelRepository = hotelRepository;
+        this.roomRepository = roomRepository;
+        this.bookingRoomRepository = bookingRoomRepository;
+        this.bookingRequestRepository = bookingRequestRepository;
+        this.notificationService = notificationService;
     }
 
-    // đặt phòng
-    public Booking createBooking(Long hotelId, Booking bookingRequest) {
+    @Transactional
+    public Booking createBooking(
+            String username,
+            Long hotelId,
+            BookingRequest request
+    ) {
 
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
+        validateBookingRequest(request);
 
-        User user = userRepository.findByusername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = getUserByUsername(username);
 
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(() -> new RuntimeException("Hotel not found"));
 
-        bookingRequest.setUser(user);
-        bookingRequest.setHotel(hotel);
+        long nights = countNights(request.getCheckInDate(), request.getCheckOutDate());
 
-        bookingRequest.setStatus(BookingStatus.PENDING);
-        bookingRequest.setPaymentStatus(PaymentStatus.UNPAID);
+        Booking booking = new Booking();
+        booking.setUser(user);
+        booking.setHotel(hotel);
+        booking.setCheckInDate(request.getCheckInDate());
+        booking.setCheckOutDate(request.getCheckOutDate());
+        booking.setStatus(BookingStatus.PENDING);
+        booking.setPaymentStatus(PaymentStatus.UNPAID);
 
-        return bookingRepository.save(bookingRequest);
+        Booking savedBooking = bookingRepository.save(booking);
+
+        double totalPrice = 0;
+        List<BookingRoom> details = new ArrayList<>();
+
+        for (BookingRoomRequest roomRequest : request.getRooms()) {
+            validateRoomRequest(roomRequest);
+
+            Room room = roomRepository.findById(roomRequest.getRoomId())
+                    .orElseThrow(() -> new RuntimeException("Room not found"));
+
+            validateRoomBelongsToHotel(room, hotelId);
+            validateRoomAvailable(
+                    room,
+                    roomRequest.getQuantity(),
+                    request.getCheckInDate(),
+                    request.getCheckOutDate(),
+                    null
+            );
+
+            BookingRoom bookingRoom = new BookingRoom();
+            bookingRoom.setBooking(savedBooking);
+            bookingRoom.setRoom(room);
+            bookingRoom.setQuantity(roomRequest.getQuantity());
+            bookingRoom.setPrice(room.getPricePerNight());
+
+            details.add(bookingRoomRepository.save(bookingRoom));
+            totalPrice += room.getPricePerNight() * roomRequest.getQuantity() * nights;
+        }
+
+        savedBooking.setBookingRooms(details);
+        savedBooking.setTotalPrice(totalPrice);
+
+        Booking result = bookingRepository.save(savedBooking);
+        notificationService.notifyAdmins(
+                "New booking",
+                "Booking #" + result.getId() + " is waiting for approval"
+        );
+
+        return result;
     }
 
-    // lịch sử đặt phòng của user
     public List<Booking> getMyBookings() {
 
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
+        User user = getCurrentUser();
 
-        User user = userRepository.findByusername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return bookingRepository.findByUser(user);
+        return bookingRepository.findByUserOrderByCreatedAtDesc(user);
     }
 
-    // huỷ booking
+    @Transactional
     public Booking cancelBooking(Long bookingId) {
 
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        User user = getCurrentUser();
+        Booking booking = getBooking(bookingId);
+        validateBookingOwner(booking, user);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new RuntimeException("Booking already cancelled");
+        }
+        if (booking.getStatus() == BookingStatus.REJECTED) {
+            throw new RuntimeException("Rejected booking cannot be cancelled");
+        }
 
         booking.setStatus(BookingStatus.CANCELLED);
+        Booking result = bookingRepository.save(booking);
 
-        return bookingRepository.save(booking);
+        notificationService.notifyAdmins(
+                "Booking cancelled",
+                "User " + user.getUsername() + " cancelled booking #" + booking.getId()
+        );
+
+        return result;
+    }
+
+    public List<Booking> getBookings(BookingStatus status) {
+        if (status == null) {
+            return bookingRepository.findAllByOrderByCreatedAtDesc();
+        }
+        return bookingRepository.findByStatusOrderByCreatedAtDesc(status);
+    }
+
+    @Transactional
+    public Booking approveBooking(Long bookingId) {
+
+        Booking booking = getBooking(bookingId);
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new RuntimeException("Only pending booking can be approved");
+        }
+
+        validateAvailabilityForExistingBooking(
+                booking,
+                booking.getCheckInDate(),
+                booking.getCheckOutDate()
+        );
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        Booking result = bookingRepository.save(booking);
+
+        notificationService.create(
+                booking.getUser(),
+                "Booking approved",
+                "Your booking #" + booking.getId() + " has been approved"
+        );
+
+        return result;
+    }
+
+    @Transactional
+    public Booking rejectBooking(Long bookingId, String response) {
+
+        Booking booking = getBooking(bookingId);
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new RuntimeException("Only pending booking can be rejected");
+        }
+
+        booking.setStatus(BookingStatus.REJECTED);
+        Booking result = bookingRepository.save(booking);
+
+        notificationService.create(
+                booking.getUser(),
+                "Booking rejected",
+                response == null || response.isBlank()
+                        ? "Your booking #" + booking.getId() + " has been rejected"
+                        : response
+        );
+
+        return result;
+    }
+
+    @Transactional
+    public Booking markBookingPaid(Long bookingId) {
+
+        Booking booking = getBooking(bookingId);
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new RuntimeException("Only confirmed booking can be marked as paid");
+        }
+
+        booking.setPaymentStatus(PaymentStatus.PAID);
+        Booking result = bookingRepository.save(booking);
+
+        notificationService.create(
+                booking.getUser(),
+                "Payment confirmed",
+                "Payment for booking #" + booking.getId() + " has been confirmed"
+        );
+
+        return result;
+    }
+
+    @Transactional
+    public com.Nhom2.booking.entity.BookingRequest createBookingRequest(
+            String username,
+            Long bookingId,
+            CreateBookingRequestDto request
+    ) {
+
+        if (request == null || request.getType() == null) {
+            throw new RuntimeException("Request type is required");
+        }
+
+        User user = getUserByUsername(username);
+        Booking booking = getBooking(bookingId);
+        validateBookingOwner(booking, user);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED
+                || booking.getStatus() == BookingStatus.REJECTED) {
+            throw new RuntimeException("This booking cannot create new request");
+        }
+
+        if (request.getType() == RequestType.CHANGE_DATE) {
+            validateBookingDates(request.getNewCheckIn(), request.getNewCheckOut());
+        }
+
+        com.Nhom2.booking.entity.BookingRequest entity =
+                new com.Nhom2.booking.entity.BookingRequest();
+        entity.setType(request.getType());
+        entity.setNewCheckIn(request.getNewCheckIn());
+        entity.setNewCheckOut(request.getNewCheckOut());
+        entity.setReason(request.getReason());
+        entity.setStatus(RequestStatus.PENDING);
+        entity.setBooking(booking);
+
+        com.Nhom2.booking.entity.BookingRequest result =
+                bookingRequestRepository.save(entity);
+
+        notificationService.notifyAdmins(
+                "New booking request",
+                "User " + user.getUsername() + " sent " + request.getType()
+                        + " request for booking #" + booking.getId()
+        );
+
+        return result;
+    }
+
+    public List<com.Nhom2.booking.entity.BookingRequest> getMyBookingRequests(
+            String username,
+            Long bookingId
+    ) {
+
+        User user = getUserByUsername(username);
+        Booking booking = getBooking(bookingId);
+        validateBookingOwner(booking, user);
+
+        return bookingRequestRepository.findByBookingOrderByCreatedAtDesc(booking);
+    }
+
+    public List<com.Nhom2.booking.entity.BookingRequest> getBookingRequests(
+            RequestStatus status
+    ) {
+        if (status == null) {
+            return bookingRequestRepository.findAllByOrderByCreatedAtDesc();
+        }
+        return bookingRequestRepository.findByStatusOrderByCreatedAtDesc(status);
+    }
+
+    @Transactional
+    public com.Nhom2.booking.entity.BookingRequest approveBookingRequest(
+            Long requestId,
+            String response
+    ) {
+
+        User admin = getCurrentUser();
+        com.Nhom2.booking.entity.BookingRequest request =
+                getBookingRequest(requestId);
+        ensureRequestPending(request);
+
+        Booking booking = request.getBooking();
+
+        if (request.getType() == RequestType.CANCEL) {
+            booking.setStatus(BookingStatus.CANCELLED);
+        } else if (request.getType() == RequestType.CHANGE_DATE) {
+            validateBookingDates(request.getNewCheckIn(), request.getNewCheckOut());
+            validateAvailabilityForExistingBooking(
+                    booking,
+                    request.getNewCheckIn(),
+                    request.getNewCheckOut()
+            );
+            booking.setCheckInDate(request.getNewCheckIn());
+            booking.setCheckOutDate(request.getNewCheckOut());
+            recalculateTotalPrice(booking);
+        }
+
+        bookingRepository.save(booking);
+
+        request.setStatus(RequestStatus.APPROVED);
+        request.setProcessedAt(LocalDateTime.now());
+        request.setProcessedBy(admin);
+        request.setAdminResponse(response);
+
+        com.Nhom2.booking.entity.BookingRequest result =
+                bookingRequestRepository.save(request);
+
+        notificationService.create(
+                booking.getUser(),
+                "Request approved",
+                response == null || response.isBlank()
+                        ? "Your request for booking #" + booking.getId() + " has been approved"
+                        : response
+        );
+
+        return result;
+    }
+
+    @Transactional
+    public com.Nhom2.booking.entity.BookingRequest rejectBookingRequest(
+            Long requestId,
+            String response
+    ) {
+
+        User admin = getCurrentUser();
+        com.Nhom2.booking.entity.BookingRequest request =
+                getBookingRequest(requestId);
+        ensureRequestPending(request);
+
+        request.setStatus(RequestStatus.REJECTED);
+        request.setProcessedAt(LocalDateTime.now());
+        request.setProcessedBy(admin);
+        request.setAdminResponse(response);
+
+        com.Nhom2.booking.entity.BookingRequest result =
+                bookingRequestRepository.save(request);
+
+        notificationService.create(
+                request.getBooking().getUser(),
+                "Request rejected",
+                response == null || response.isBlank()
+                        ? "Your request for booking #" + request.getBooking().getId()
+                        + " has been rejected"
+                        : response
+        );
+
+        return result;
+    }
+
+    private void validateBookingRequest(BookingRequest request) {
+        if (request == null) {
+            throw new RuntimeException("Booking request is required");
+        }
+        validateBookingDates(request.getCheckInDate(), request.getCheckOutDate());
+        if (request.getRooms() == null || request.getRooms().isEmpty()) {
+            throw new RuntimeException("Booking must contain at least one room");
+        }
+    }
+
+    private void validateBookingDates(LocalDate checkIn, LocalDate checkOut) {
+        if (checkIn == null || checkOut == null) {
+            throw new RuntimeException("Check-in and check-out date are required");
+        }
+        if (!checkIn.isBefore(checkOut)) {
+            throw new RuntimeException("Check-in date must be before check-out date");
+        }
+        if (checkIn.isBefore(LocalDate.now())) {
+            throw new RuntimeException("Check-in date must not be in the past");
+        }
+    }
+
+    private long countNights(LocalDate checkIn, LocalDate checkOut) {
+        return ChronoUnit.DAYS.between(checkIn, checkOut);
+    }
+
+    private void validateRoomRequest(BookingRoomRequest roomRequest) {
+        if (roomRequest == null || roomRequest.getRoomId() == null) {
+            throw new RuntimeException("Room id is required");
+        }
+        if (roomRequest.getQuantity() == null || roomRequest.getQuantity() <= 0) {
+            throw new RuntimeException("Room quantity must be greater than 0");
+        }
+    }
+
+    private void validateRoomBelongsToHotel(Room room, Long hotelId) {
+        if (room.getHotel() == null || !room.getHotel().getId().equals(hotelId)) {
+            throw new RuntimeException("Room does not belong to this hotel");
+        }
+        if (room.getPricePerNight() == null || room.getPricePerNight() <= 0) {
+            throw new RuntimeException("Room price is invalid");
+        }
+    }
+
+    private void validateRoomAvailable(
+            Room room,
+            Integer requestedQuantity,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            Long excludedBookingId
+    ) {
+        if (room.getQuantity() == null || room.getQuantity() <= 0) {
+            throw new RuntimeException("Room quantity is invalid");
+        }
+
+        Long reserved = excludedBookingId == null
+                ? bookingRoomRepository.sumReservedQuantityForRoom(
+                room,
+                checkIn,
+                checkOut,
+                RESERVED_STATUSES
+        )
+                : bookingRoomRepository.sumReservedQuantityForRoomExcludingBooking(
+                room,
+                excludedBookingId,
+                checkIn,
+                checkOut,
+                RESERVED_STATUSES
+        );
+
+        int available = room.getQuantity() - reserved.intValue();
+
+        if (requestedQuantity > available) {
+            throw new RuntimeException(
+                    "Room " + room.getName() + " only has " + available + " available"
+            );
+        }
+    }
+
+    private void validateAvailabilityForExistingBooking(
+            Booking booking,
+            LocalDate checkIn,
+            LocalDate checkOut
+    ) {
+        for (BookingRoom bookingRoom : booking.getBookingRooms()) {
+            validateRoomAvailable(
+                    bookingRoom.getRoom(),
+                    bookingRoom.getQuantity(),
+                    checkIn,
+                    checkOut,
+                    booking.getId()
+            );
+        }
+    }
+
+    private void recalculateTotalPrice(Booking booking) {
+        long nights = countNights(booking.getCheckInDate(), booking.getCheckOutDate());
+        double totalPrice = 0;
+
+        for (BookingRoom bookingRoom : booking.getBookingRooms()) {
+            Double price = bookingRoom.getPrice() != null
+                    ? bookingRoom.getPrice()
+                    : bookingRoom.getRoom().getPricePerNight();
+            totalPrice += price * bookingRoom.getQuantity() * nights;
+        }
+
+        booking.setTotalPrice(totalPrice);
+    }
+
+    private Booking getBooking(Long bookingId) {
+        return bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+    }
+
+    private com.Nhom2.booking.entity.BookingRequest getBookingRequest(Long requestId) {
+        return bookingRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Booking request not found"));
+    }
+
+    private void ensureRequestPending(com.Nhom2.booking.entity.BookingRequest request) {
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new RuntimeException("Only pending request can be processed");
+        }
+    }
+
+    private void validateBookingOwner(Booking booking, User user) {
+        if (!booking.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You can only access your own booking");
+        }
+    }
+
+    private User getCurrentUser() {
+        return getUserByUsername(
+                SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getName()
+        );
+    }
+
+    private User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

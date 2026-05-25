@@ -6,6 +6,7 @@ import com.Nhom2.booking.entity.User;
 import com.Nhom2.booking.enums.UserRole;
 import com.Nhom2.booking.repository.UserRepository;
 import com.Nhom2.booking.security.JwtUtil;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -21,18 +22,21 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final MailService mailService;
     private final OtpService otpService;
+    private final PasswordEncoder passwordEncoder;
 
 
     public UserService(
             UserRepository userRepository,
             JwtUtil jwtUtil,
             MailService mailService,
-            OtpService otpService
+            OtpService otpService,
+            PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.mailService = mailService;
         this.otpService = otpService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // GET ALL
@@ -47,6 +51,12 @@ public class UserService {
 
     // CREATE / UPDATE
     public User create(User user) {
+        if (user.getRole() == null) {
+            user.setRole(UserRole.USER);
+        }
+        if (user.getPassword() != null && !isBcrypt(user.getPassword())) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         return userRepository.save(user);
     }
 
@@ -59,8 +69,11 @@ public class UserService {
 
     public String sendOtp(RegisterRequest request) {
 
-        if (userRepository.findByusername(request.getUsername()).isPresent()) {
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             return "Username already exists";
+        }
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            return "Email already exists";
         }
 
         String otp = otpService.generateOtp(request.getEmail());
@@ -90,7 +103,7 @@ public class UserService {
 
         User user = new User();
         user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEmail(request.getEmail());
         user.setRole(UserRole.USER);
 
@@ -106,11 +119,20 @@ public class UserService {
     // LOGIN
     public String login(LoginRequest request) {
 
-        User user = userRepository.findByusername(request.getUsername())
+        User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!user.getPassword().equals(request.getPassword())) {
+        if (user.getRole() == null) {
+            user.setRole(UserRole.USER);
+            userRepository.save(user);
+        }
+
+        if (!passwordMatches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Wrong password");
+        }
+        if (!isBcrypt(user.getPassword())) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            userRepository.save(user);
         }
 
         // gửi mail đăng nhập
@@ -120,6 +142,17 @@ public class UserService {
                 "Xin chào " + user.getUsername() + ", bạn vừa đăng nhập vào hệ thống."
         );
 
-        return jwtUtil.generateToken(user.getUsername());
+        return jwtUtil.generateToken(user.getUsername(), user.getRole());
+    }
+
+    private boolean passwordMatches(String rawPassword, String storedPassword) {
+        if (isBcrypt(storedPassword)) {
+            return passwordEncoder.matches(rawPassword, storedPassword);
+        }
+        return storedPassword != null && storedPassword.equals(rawPassword);
+    }
+
+    private boolean isBcrypt(String password) {
+        return password != null && password.startsWith("$2");
     }
 }
