@@ -2,27 +2,45 @@ package com.Nhom2.booking.controller;
 
 import com.Nhom2.booking.entity.Room;
 import com.Nhom2.booking.service.RoomService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/rooms")
+@RequestMapping("/rooms")
 public class RoomController {
 
-    @Autowired
-    private RoomService service;
+    private final RoomService roomService;
 
-    @GetMapping
-    public List<Room> getAll() {
-        return service.getAll();
+    public RoomController(
+            RoomService roomService
+    ) {
+        this.roomService = roomService;
     }
 
-    @PostMapping
-    public ResponseEntity<Room> create(@RequestBody Room entity) {
-        return ResponseEntity.ok(service.save(entity));
+    // thêm phòng vào khách sạn
+    @PostMapping("/{hotelId}")
+    public Room create(
+            @PathVariable Long hotelId,
+            @RequestBody Room room
+    ) {
+        return roomService.create(hotelId, room);
+    }
+
+    // xem phòng theo khách sạn
+    @GetMapping("/hotel/{hotelId}")
+    public List<Room> getByHotel(
+            @PathVariable Long hotelId
+    ) {
+        return roomService.getByHotel(hotelId);
+    }
+
+    // xoá phòng
+    @DeleteMapping("/{id}")
+    public String delete(
+            @PathVariable Long id
+    ) {
+        roomService.delete(id);
+        return "Deleted success";
     }
 }
-

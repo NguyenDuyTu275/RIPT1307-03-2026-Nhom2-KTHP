@@ -1,6 +1,6 @@
 package com.Nhom2.booking.dto;
 
-public class VerifyOtpRequest {
+public class OtpRequest {
     private String email;
     private String otp;
 

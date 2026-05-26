@@ -1,0 +1,71 @@
+package com.Nhom2.booking.service;
+
+import com.Nhom2.booking.entity.Notification;
+import com.Nhom2.booking.entity.User;
+import com.Nhom2.booking.enums.UserRole;
+import com.Nhom2.booking.repository.NotificationRepository;
+import com.Nhom2.booking.repository.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class NotificationService {
+
+    private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
+
+    public NotificationService(
+            NotificationRepository notificationRepository,
+            UserRepository userRepository
+    ) {
+        this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
+    }
+
+    public Notification create(User user, String title, String message) {
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setRead(false);
+
+        return notificationRepository.save(notification);
+    }
+
+    public void notifyAdmins(String title, String message) {
+        List<User> admins = userRepository.findByRole(UserRole.ADMIN);
+
+        for (User admin : admins) {
+            create(admin, title, message);
+        }
+    }
+
+    public List<Notification> getMyNotifications() {
+        User user = getCurrentUser();
+        return notificationRepository.findByUserOrderByCreatedAtDesc(user);
+    }
+
+    public Notification markAsRead(Long notificationId) {
+        User user = getCurrentUser();
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        if (!notification.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You can only update your own notification");
+        }
+
+        notification.setRead(true);
+        return notificationRepository.save(notification);
+    }
+
+    private User getCurrentUser() {
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+}

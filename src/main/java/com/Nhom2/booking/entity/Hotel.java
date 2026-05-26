@@ -1,11 +1,16 @@
 package com.Nhom2.booking.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.hibernate.annotations.CreationTimestamp;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "hotels")
 @lombok.Data
@@ -20,6 +25,21 @@ public class Hotel {
     private String name;
     private String address;
     private String city;
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -32,5 +52,6 @@ public class Hotel {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "hotel")
+    @JsonIgnoreProperties({"hotel", "bookingRooms"})
     private List<Room> rooms;
 }
