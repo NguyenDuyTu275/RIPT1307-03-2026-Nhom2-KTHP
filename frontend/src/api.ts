@@ -1,68 +1,118 @@
-import { Api, Booking, Hotel, User } from './api-generated';
+import {
+  Api,
+  Booking,
+  BookingRequest,
+  CreateBookingRequestDto,
+  Hotel,
+  ProcessBookingRequestDto,
+  Review,
+  Room,
+  User,
+} from './api-generated';
 
-const BASE_URL = window.location.origin;
-
-// ─── SWAGGER GENERATED CLIENT INTEGRATION ────────────────────
+// ─── Khởi tạo Swagger client ──────────────────────────────────
+// baseUrl = '' để dựa vào Vite proxy (forward tới localhost:8080)
 const swaggerApi = new Api({
-  baseURL: BASE_URL,
+  baseUrl: '',
+  // Tự động gắn JWT token cho mọi request
+  securityWorker: () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      return { headers: { Authorization: `Bearer ${token}` } };
+    }
+    return {};
+  },
 });
 
-// Tự động đính kèm token JWT cho Swagger client
-swaggerApi.instance.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+export default swaggerApi;
 
-// ─── Axios instance (dùng chung) ─────────────────────────────
-const api = swaggerApi.instance;
-export default api;
+// ─── Param mặc định: luôn parse response thành JSON ──────────
+const JSON_FMT = { format: 'json' as const };
 
-// ─── AUTH (Nối qua Swagger) ──────────────────────────────────
+// ─── AUTH ─────────────────────────────────────────────────────
 export const authApi = {
   login: (username: string, password: string) =>
-    swaggerApi.auth.login({ username, password }).then(res => ({
-      ...res,
-      data: res.data
-    })),
+    swaggerApi.auth.login({ username, password }, JSON_FMT),
 
   register: (username: string, password: string, email: string) =>
-    swaggerApi.auth.register({ username, password, email }).then(res => ({
-      ...res,
-      data: res.data
-    })),
+    swaggerApi.auth.register({ username, password, email }, JSON_FMT),
 
   verifyOtp: (email: string, otp: string) =>
-    swaggerApi.auth.verifyOtp({ email, otp }).then(res => ({
-      ...res,
-      data: res.data
-    })),
+    swaggerApi.auth.verifyOtp({ email, otp }, JSON_FMT),
 };
 
-// ─── USERS (Nối qua Swagger) ─────────────────────────────────
+// ─── USERS ────────────────────────────────────────────────────
 export const userApi = {
-  getAll: () => swaggerApi.users.getAll(),
-  getById: (id: number) => swaggerApi.users.getUser(id),
-  create: (data: User) => swaggerApi.users.create(data),
-  update: (id: number, data: User) => swaggerApi.users.update(id, data),
-  delete: (id: number) => swaggerApi.users.delete(id),
+  getAll: () => swaggerApi.users.getAll(JSON_FMT),
+  getById: (id: number) => swaggerApi.users.getUser(id, JSON_FMT),
+  create: (data: User) => swaggerApi.users.create(data, JSON_FMT),
+  update: (id: number, data: User) => swaggerApi.users.update(id, data, JSON_FMT),
+  delete: (id: number) => swaggerApi.users.delete(id, JSON_FMT),
 };
 
-// ─── HOTELS (Nối qua Swagger) ────────────────────────────────
+// ─── HOTELS ───────────────────────────────────────────────────
 export const hotelApi = {
-  getAll: () => swaggerApi.hotels.getAll1(),
-  getById: (id: number) => swaggerApi.hotels.getById(id),
-  create: (data: Hotel) => swaggerApi.hotels.create1(data),
-  update: (id: number, data: Hotel) => swaggerApi.hotels.update1(id, data),
-  delete: (id: number) => swaggerApi.hotels.delete1(id),
+  getAll: () => swaggerApi.hotels.getAll1(JSON_FMT),
+  getById: (id: number) => swaggerApi.hotels.getById(id, JSON_FMT),
+  create: (data: Hotel) => swaggerApi.hotels.create2(data, JSON_FMT),
+  update: (id: number, data: Hotel) => swaggerApi.hotels.update1(id, data, JSON_FMT),
+  delete: (id: number) => swaggerApi.hotels.delete1(id, JSON_FMT),
 };
 
-// ─── BOOKINGS (Nối qua Swagger) ──────────────────────────────
+// ─── ROOMS ────────────────────────────────────────────────────
+export const roomApi = {
+  getByHotel: (hotelId: number) => swaggerApi.rooms.getByHotel(hotelId, JSON_FMT),
+  create: (hotelId: number, data: Room) => swaggerApi.rooms.create1(hotelId, data, JSON_FMT),
+  delete: (id: number) => swaggerApi.rooms.delete2(id, JSON_FMT),
+};
+
+// ─── BOOKINGS ─────────────────────────────────────────────────
 export const bookingApi = {
-  create: (hotelId: number, data: any) => swaggerApi.bookings.createBooking(hotelId, data as Booking),
-  getMy: () => swaggerApi.bookings.myBookings(),
-  getMyBookings: () => swaggerApi.bookings.myBookings(),
-  cancel: (bookingId: number) => swaggerApi.bookings.cancelBooking(bookingId),
+  create: (hotelId: number, data: BookingRequest) =>
+    swaggerApi.bookings.createBooking(hotelId, data, JSON_FMT),
+  getMy: () => swaggerApi.bookings.myBookings(JSON_FMT),
+  getMyBookings: () => swaggerApi.bookings.myBookings(JSON_FMT),
+  cancel: (bookingId: number) => swaggerApi.bookings.cancelBooking(bookingId, JSON_FMT),
+  createRequest: (bookingId: number, data: CreateBookingRequestDto) =>
+    swaggerApi.bookings.createRequest(bookingId, data, JSON_FMT),
+  getRequests: (bookingId: number) =>
+    swaggerApi.bookings.getRequests(bookingId, JSON_FMT),
+};
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────
+export const notificationApi = {
+  getMy: () => swaggerApi.notifications.getMyNotifications(JSON_FMT),
+  markAsRead: (notificationId: number) =>
+    swaggerApi.notifications.markAsRead(notificationId, JSON_FMT),
+};
+
+// ─── ADMIN ────────────────────────────────────────────────────
+export const adminApi = {
+  // Bookings
+  getBookings: (status?: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') =>
+    swaggerApi.admin.getBookings(status ? { status } : {}, JSON_FMT),
+  approveBooking: (bookingId: number) =>
+    swaggerApi.admin.approveBooking(bookingId, JSON_FMT),
+  rejectBooking: (bookingId: number, response?: string) =>
+    swaggerApi.admin.rejectBooking(bookingId, { response } as ProcessBookingRequestDto, JSON_FMT),
+  markBookingPaid: (bookingId: number) =>
+    swaggerApi.admin.markBookingPaid(bookingId, JSON_FMT),
+
+  // Booking Requests
+  getBookingRequests: (status?: 'PENDING' | 'APPROVED' | 'REJECTED') =>
+    swaggerApi.admin.getBookingRequests(status ? { status } : {}, JSON_FMT),
+  approveBookingRequest: (requestId: number, response?: string) =>
+    swaggerApi.admin.approveBookingRequest(requestId, { response } as ProcessBookingRequestDto, JSON_FMT),
+  rejectBookingRequest: (requestId: number, response?: string) =>
+    swaggerApi.admin.rejectBookingRequest(requestId, { response } as ProcessBookingRequestDto, JSON_FMT),
+
+  // Statistics & Reports
+  getOverview: () => swaggerApi.admin.getOverview(JSON_FMT),
+  exportBookingsExcel: () => swaggerApi.admin.exportBookings(JSON_FMT),
+};
+
+// ─── REVIEWS ──────────────────────────────────────────────────
+export const reviewApi = {
+  getAll: () => swaggerApi.api.getAll2(JSON_FMT),
+  create: (data: Review) => swaggerApi.api.create3(data, JSON_FMT),
 };

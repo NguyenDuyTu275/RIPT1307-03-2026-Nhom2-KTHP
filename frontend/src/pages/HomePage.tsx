@@ -1,27 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Skeleton, Tag } from 'antd';
-import { FireOutlined, StarOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { Row, Col, Skeleton } from 'antd';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SearchWidget from '../components/SearchWidget';
 import HotelCard from '../components/HotelCard';
 import { hotelApi } from '../api';
 
-const DESTINATIONS = [
-  { name: 'Hà Nội', img: 'https://images.unsplash.com/photo-1509942774463-acf339cf87d5?w=600&q=80', count: 1240 },
-  { name: 'Hồ Chí Minh', img: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600&q=80', count: 2380 },
-  { name: 'Đà Nẵng', img: 'https://images.unsplash.com/photo-1540308938-c3e3ce1ad6c5?w=600&q=80', count: 870 },
-  { name: 'Hội An', img: 'https://images.unsplash.com/photo-1600459374449-9a14f2aa95b6?w=600&q=80', count: 560 },
-  { name: 'Nha Trang', img: 'https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=600&q=80', count: 730 },
-  { name: 'Phú Quốc', img: 'https://images.unsplash.com/photo-1571983824985-c28c6f1e7b9a?w=600&q=80', count: 410 },
-];
 
-const DEALS = [
-  { title: 'Hè rực rỡ — Giảm đến 30%', desc: 'Đặt sớm, giảm ngay cho chuyến hè', badge: '-30%', color: '#cc0000', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80' },
-  { title: 'Cuối tuần lý tưởng', desc: 'Nghỉ dưỡng 2 ngày cuối tuần giá cực tốt', badge: '-20%', color: '#006ce4', img: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=400&q=80' },
-  { title: 'Đặt sớm tiết kiệm', desc: 'Đặt trước 30 ngày, hưởng giá ưu đãi', badge: 'Đặt sớm', color: '#008234', img: 'https://images.unsplash.com/photo-1561501900-3701fa6a0864?w=400&q=80' },
-];
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -59,34 +45,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── DESTINATIONS ── */}
-      <section className="section" style={{ background: '#f5f5f5' }}>
-        <div className="section-inner">
-          <div className="section-header">
-            <div>
-              <h2 className="section-title">🗺️ Điểm đến phổ biến</h2>
-              <p className="section-subtitle">Những thành phố được du khách yêu thích nhất</p>
-            </div>
-            <a className="section-link" onClick={() => navigate('/destinations')}>Xem tất cả →</a>
-          </div>
-          <Row gutter={[12, 12]}>
-            {DESTINATIONS.map((dest) => (
-              <Col key={dest.name} xs={12} sm={8} md={4}>
-                <div
-                  className="dest-card"
-                  onClick={() => navigate(`/search?city=${encodeURIComponent(dest.name)}`)}
-                >
-                  <img src={dest.img} alt={dest.name} className="dest-card-img" />
-                  <div className="dest-card-overlay">
-                    <div className="dest-card-name">{dest.name}</div>
-                    <div className="dest-card-count">{dest.count.toLocaleString()} chỗ nghỉ</div>
-                  </div>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </div>
-      </section>
+
 
       {/* ── FEATURED HOTELS ── */}
       <section className="section">
@@ -129,32 +88,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── DEALS ── */}
-      <section className="section" style={{ background: '#f5f5f5' }}>
-        <div className="section-inner">
-          <div className="section-header">
-            <div>
-              <h2 className="section-title">🔥 Ưu đãi hôm nay</h2>
-              <p className="section-subtitle">Đừng bỏ lỡ các deal cực hot!</p>
-            </div>
-            <a className="section-link" onClick={() => navigate('/deals')}>Xem tất cả →</a>
-          </div>
-          <Row gutter={[16, 16]}>
-            {DEALS.map((deal) => (
-              <Col key={deal.title} xs={24} sm={8}>
-                <div className="deal-card" onClick={() => navigate('/deals')} style={{ cursor: 'pointer' }}>
-                  <img src={deal.img} alt={deal.title} className="deal-card-img" onError={(e) => ((e.target as any).style.display = 'none')} />
-                  <div className="deal-card-body">
-                    <div className="deal-badge" style={{ background: deal.color }}>{deal.badge}</div>
-                    <div className="deal-card-title">{deal.title}</div>
-                    <div className="deal-card-desc">{deal.desc}</div>
-                  </div>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </div>
-      </section>
+
 
       {/* ── WHY BOOKING ── */}
       <section className="section">

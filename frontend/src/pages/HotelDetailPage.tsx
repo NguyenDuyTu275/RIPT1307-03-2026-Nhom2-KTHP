@@ -11,23 +11,7 @@ import Footer from '../components/Footer';
 import { getHotelImage } from '../components/HotelCard';
 import { hotelApi } from '../api';
 
-// Ảnh gallery dựa trên id hotel (pool)
-const GALLERY_POOLS = [
-  [
-    'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=900&q=80',
-    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=500&q=80',
-    'https://images.unsplash.com/photo-1584622781564-1d987f7333c1?w=500&q=80',
-    'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500&q=80',
-    'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=500&q=80',
-  ],
-  [
-    'https://images.unsplash.com/photo-1551882547-ff40c4a49f7c?w=900&q=80',
-    'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&q=80',
-    'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=500&q=80',
-    'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=500&q=80',
-    'https://images.unsplash.com/photo-1576354302919-96748cb8299e?w=500&q=80',
-  ],
-];
+
 
 const AMENITIES = [
   { icon: <WifiOutlined />, label: 'Wi-Fi miễn phí' },
@@ -90,15 +74,15 @@ const HotelDetailPage: React.FC = () => {
     </div>
   );
 
-  // Backend chỉ trả về id + name; các field khác dùng fallback
+  // Backend trả về đầy đủ hotel + rooms[]
   const hotelName: string = hotel.name || 'Khách sạn';
   const hotelId = Number(id);
-  const gallery = GALLERY_POOLS[hotelId % 2];
-  // Ước tính giá dựa trên id (không có field price trong backend)
-  const basePrice = 500000 + (hotelId % 20) * 50000;
-  // Rating không có getter trong entity → dùng giá trị ước tính
-  const rating = (8.0 + (hotelId % 20) * 0.05).toFixed(1);
-  const ratingLabel = Number(rating) >= 9 ? 'Tuyệt vời' : 'Rất tốt';
+  // Backend không có field images riêng — bỏ gallery
+  const gallery: string[] = [];
+  // Giá lấy từ phòng đầu tiên, rating lấy từ hotel
+  const basePrice: number | null = hotel.rooms?.[0]?.pricePerNight ?? null;
+  const rating = hotel.ratingAvg ? hotel.ratingAvg.toFixed(1) : null;
+  const ratingLabel = hotel.ratingAvg ? (hotel.ratingAvg >= 9 ? 'Tuyệt vời' : hotel.ratingAvg >= 8 ? 'Rất tốt' : 'Tốt') : null;
 
   return (
     <div className="page-wrapper">
@@ -122,7 +106,7 @@ const HotelDetailPage: React.FC = () => {
               <span style={{ fontSize: 13, color: '#595959' }}>
                 <EnvironmentOutlined /> Việt Nam
               </span>
-              <Tag color="blue" style={{ borderRadius: 20 }}>★ {rating}</Tag>
+              <Tag color="blue" style={{ borderRadius: 20 }}>{rating ? `★ ${rating}` : 'Chưa đánh giá'}</Tag>
               <span style={{ fontSize: 13, color: '#008234', fontWeight: 600 }}>✓ Đặt ngay, trả sau</span>
             </div>
           </div>
@@ -142,15 +126,21 @@ const HotelDetailPage: React.FC = () => {
 
       {/* Gallery */}
       <div className="container" style={{ padding: '0 24px 20px' }}>
-        <div className="hotel-gallery">
-          {gallery.map((img, i) => (
-            <div key={i} className={i === 0 ? 'hotel-gallery-main' : ''}>
-              <img src={img} alt={`${hotelName}-${i}`} className="hotel-gallery-img"
-                onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
-              />
-            </div>
-          ))}
-        </div>
+        {gallery.length > 0 ? (
+          <div className="hotel-gallery">
+            {gallery.map((img: string, i: number) => (
+              <div key={i} className={i === 0 ? 'hotel-gallery-main' : ''}>
+                <img src={img} alt={`${hotelName}-${i}`} className="hotel-gallery-img"
+                  onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; }}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ background: '#f5f5f5', borderRadius: 8, height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>
+            🏨
+          </div>
+        )}
       </div>
 
       {/* Main content */}
@@ -207,8 +197,8 @@ const HotelDetailPage: React.FC = () => {
               <h3 style={{ fontWeight: 700, fontSize: 18, marginBottom: 16 }}>⭐ Đánh giá của khách</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
                 <div style={{ textAlign: 'center', background: '#003b95', color: '#fff', borderRadius: 8, padding: '12px 20px' }}>
-                  <div style={{ fontSize: 36, fontWeight: 800 }}>{rating}</div>
-                  <div style={{ fontSize: 14 }}>{ratingLabel}</div>
+                  <div style={{ fontSize: 36, fontWeight: 800 }}>{rating ?? 'N/A'}</div>
+                  <div style={{ fontSize: 14 }}>{ratingLabel ?? 'Chưa đánh giá'}</div>
                 </div>
                 <div style={{ color: '#595959', fontSize: 14 }}>
                   <div style={{ fontWeight: 600, marginBottom: 4 }}>Điểm đánh giá trung bình</div>
@@ -230,11 +220,11 @@ const HotelDetailPage: React.FC = () => {
           <Col xs={24} md={8}>
             <div className="hotel-sticky-cta">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <span className="rating-badge" style={{ fontSize: 15 }}>{rating}</span>
-                <span style={{ fontWeight: 600 }}>{ratingLabel}</span>
+                <span className="rating-badge" style={{ fontSize: 15 }}>{rating ?? 'N/A'}</span>
+                <span style={{ fontWeight: 600 }}>{ratingLabel ?? 'Chưa đánh giá'}</span>
               </div>
 
-              <div className="hotel-cta-price">từ {basePrice.toLocaleString('vi-VN')}₫</div>
+              <div className="hotel-cta-price">{basePrice !== null ? `từ ${basePrice.toLocaleString('vi-VN')}₫` : 'Liên hệ để biết giá'}</div>
               <div className="hotel-cta-label">mỗi đêm · đã bao gồm thuế và phí</div>
 
               <div style={{ background: '#f5f5f5', borderRadius: 6, padding: 12, margin: '14px 0', fontSize: 13 }}>
@@ -265,7 +255,7 @@ const HotelDetailPage: React.FC = () => {
               <div style={{ fontSize: 13, color: '#595959' }}>
                 <div style={{ marginBottom: 6 }}>🏨 {hotelName}</div>
                 <div style={{ marginBottom: 6 }}>📍 Việt Nam</div>
-                <div>⭐ Điểm đánh giá: {rating}/10</div>
+                <div>⭐ Điểm đánh giá: {rating ? `${rating}/10` : 'Chưa đánh giá'}</div>
               </div>
             </div>
           </Col>

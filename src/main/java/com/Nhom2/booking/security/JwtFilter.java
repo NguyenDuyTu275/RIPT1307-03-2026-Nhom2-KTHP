@@ -56,8 +56,8 @@ public class JwtFilter extends OncePerRequestFilter {
                         .getContext()
                         .setAuthentication(authentication);
             } catch (JwtException | IllegalArgumentException ex) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
+                // Token không hợp lệ → bỏ qua, để Spring Security quyết định
+                // (không chặn request vì có thể là public endpoint)
             }
         }
 

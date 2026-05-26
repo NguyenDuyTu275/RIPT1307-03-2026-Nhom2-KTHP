@@ -20,7 +20,7 @@ const GuestInfoPage: React.FC = () => {
 
   const token = localStorage.getItem('token');
   const nights = checkIn && checkOut ? checkOut.diff(checkIn, 'day') : 2;
-  const pricePerNight = 500000 + (Number(hotelId) % 20) * 50000;
+  const pricePerNight = hotel?.rooms?.[0]?.pricePerNight ?? 0;
   const totalPrice = pricePerNight * Math.max(1, nights);
 
   useEffect(() => {
@@ -164,11 +164,9 @@ const GuestInfoPage: React.FC = () => {
             <div className="booking-summary-hotel">
               <div className="booking-summary-hotel-img">
                 {hotel ? (
-                  <img
-                    src={getHotelImage(Number(hotelId))}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
-                    alt=""
-                  />
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)', borderRadius: 4 }}>
+                    🏨
+                  </div>
                 ) : '🏨'}
               </div>
               <div>

@@ -13,9 +13,6 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "rooms")
-@lombok.Data
-@lombok.NoArgsConstructor
-@lombok.AllArgsConstructor
 public class Room {
 
     @Id
@@ -42,4 +39,8 @@ public class Room {
     @OneToMany(mappedBy = "room")
     @JsonIgnore
     private List<BookingRoom> bookingRooms;
+
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("room")
+    private List<RoomImage> images;
 }

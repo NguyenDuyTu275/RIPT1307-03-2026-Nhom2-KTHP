@@ -67,12 +67,11 @@ const MyBookingsPage: React.FC = () => {
     return (
       <div className="booking-card">
         <div className="booking-card-img">
-          <img
-            src={getHotelImage(hotelId)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            alt=""
-            onError={(e) => ((e.target as any).style.display = 'none')}
-          />
+          <div
+            style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)' }}
+          >
+            🏨
+          </div>
         </div>
 
         <div className="booking-card-body">

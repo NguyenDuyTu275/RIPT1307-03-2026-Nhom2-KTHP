@@ -169,9 +169,9 @@ const SearchResults: React.FC = () => {
                 </div>
               ) : (
                 filtered.map((hotel) => {
-                  const price = 500000 + (Number(hotel.id) % 20) * 50000;
-                  const rating = hotel.ratingAvg ?? 8.0 + (Number(hotel.id) % 20) / 10;
-                  const ratingLabel = rating >= 9 ? 'Tuyệt vời' : rating >= 8 ? 'Rất tốt' : 'Tốt';
+                  const price = hotel.rooms?.[0]?.pricePerNight ?? null;
+                  const rating = hotel.ratingAvg ?? null;
+                  const ratingLabel = rating === null ? '' : rating >= 9 ? 'Tuyệt vời' : rating >= 8 ? 'Rất tốt' : 'Tốt';
 
                   return (
                     <div
@@ -179,14 +179,23 @@ const SearchResults: React.FC = () => {
                       className="hotel-result-card"
                       onClick={() => navigate(`/hotels/${hotel.id}`)}
                     >
-                      <img
-                        src={getHotelImage(hotel.id)}
-                        alt={hotel.name}
-                        className="hotel-result-img"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
+                      {hotel.imageUrl ? (
+                        <img
+                          className="hotel-result-img"
+                          src={hotel.imageUrl}
+                          alt={hotel.name}
+                          loading="lazy"
+                          style={{ objectFit: 'cover' }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div
+                          className="hotel-result-img"
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)' }}
+                        >
+                          🏨
+                        </div>
+                      )}
                       <div className="hotel-result-body">
                         <div className="hotel-result-info">
                           <div className="hotel-result-name">{hotel.name}</div>
@@ -201,11 +210,11 @@ const SearchResults: React.FC = () => {
 
                         <div className="hotel-result-pricing">
                           <div>
-                            <span className="rating-badge" style={{ fontSize: 14 }}>{rating.toFixed(1)}</span>
-                            <div style={{ fontSize: 12, color: '#595959', marginTop: 4 }}>{ratingLabel}</div>
+                             <span className="rating-badge" style={{ fontSize: 14 }}>{rating !== null ? rating.toFixed(1) : 'N/A'}</span>
+                             <div style={{ fontSize: 12, color: '#595959', marginTop: 4 }}>{ratingLabel || 'Chưa đánh giá'}</div>
                           </div>
                           <div>
-                            <div className="hotel-result-price">{price.toLocaleString('vi-VN')}₫</div>
+                           <div className="hotel-result-price">{price !== null ? price.toLocaleString('vi-VN') + '₫' : 'Liên hệ để biết giá'}</div>
                             <div className="hotel-result-price-label">mỗi đêm, đã bao gồm thuế</div>
                             <button
                               className="hotel-result-cta"

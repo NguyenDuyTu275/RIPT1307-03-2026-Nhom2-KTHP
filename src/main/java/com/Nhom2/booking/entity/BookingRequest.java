@@ -18,9 +18,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @Entity
 @Table(name = "booking_request")
-@lombok.Data
-@lombok.NoArgsConstructor
-@lombok.AllArgsConstructor
 public class BookingRequest {
 
     @Id

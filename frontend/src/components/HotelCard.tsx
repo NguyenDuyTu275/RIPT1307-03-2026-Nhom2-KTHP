@@ -1,22 +1,5 @@
 import React from 'react';
 
-// Pool of high-quality Unsplash hotel images (free to use)
-const HOTEL_IMAGES = [
-  'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
-  'https://images.unsplash.com/photo-1551882547-ff40c4a49f7c?w=600&q=80',
-  'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80',
-  'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&q=80',
-  'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&q=80',
-  'https://images.unsplash.com/photo-1576354302919-96748cb8299e?w=600&q=80',
-  'https://images.unsplash.com/photo-1455587734955-081b22074882?w=600&q=80',
-  'https://images.unsplash.com/photo-1444201983204-c43cbd584d93?w=600&q=80',
-];
-
-export const getHotelImage = (id: number | string): string => {
-  const numId = typeof id === 'string' ? parseInt(id, 10) || 0 : id;
-  return HOTEL_IMAGES[numId % HOTEL_IMAGES.length];
-};
-
 interface HotelCardProps {
   hotel: {
     id: number | string;
@@ -26,6 +9,8 @@ interface HotelCardProps {
     ratingAvg?: number;
     description?: string;
     status?: string;
+    imageUrl?: string;
+    rooms?: { pricePerNight?: number }[];
   };
   onClick?: () => void;
   wished?: boolean;
@@ -42,11 +27,11 @@ const HotelCard: React.FC<HotelCardProps> = ({
   showPrice = true,
   estimatedPrice,
 }) => {
-  const imgUrl = getHotelImage(hotel.id);
-  const rating = hotel.ratingAvg ?? 8.0 + (Number(hotel.id) % 20) / 10;
-  const price = estimatedPrice ?? 500000 + (Number(hotel.id) % 20) * 50000;
+  const rating = hotel.ratingAvg ?? null;
+  // Lấy giá từ phòng đầu tiên (backend trả rooms[] kèm theo hotel)
+  const price = estimatedPrice ?? hotel.rooms?.[0]?.pricePerNight ?? null;
 
-  const ratingLabel = rating >= 9 ? 'Tuyệt vời' : rating >= 8 ? 'Rất tốt' : rating >= 7 ? 'Tốt' : 'Ổn';
+  const ratingLabel = rating === null ? 'Chưa đánh giá' : rating >= 9 ? 'Tuyệt vời' : rating >= 8 ? 'Rất tốt' : rating >= 7 ? 'Tốt' : 'Ổn';
 
   return (
     <div className="hotel-card" onClick={onClick} style={{ position: 'relative' }}>
@@ -60,15 +45,30 @@ const HotelCard: React.FC<HotelCardProps> = ({
         </button>
       )}
 
-      {/* Image */}
-      <img
-        src={imgUrl}
-        alt={hotel.name}
-        className="hotel-card-img"
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.display = 'none';
+      {/* Image — hiển thị ảnh thật nếu có, fallback gradient */}
+      {hotel.imageUrl ? (
+        <img
+          className="hotel-card-img"
+          src={hotel.imageUrl}
+          alt={hotel.name}
+          loading="lazy"
+          onError={(e) => {
+            // Fallback khi ảnh lỗi
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            target.parentElement?.querySelector('.hotel-card-img-fallback')?.removeAttribute('style');
+          }}
+        />
+      ) : null}
+      <div
+        className="hotel-card-img hotel-card-img-fallback"
+        style={hotel.imageUrl ? { display: 'none' } : {
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 48, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)'
         }}
-      />
+      >
+        🏨
+      </div>
 
       {/* Body */}
       <div className="hotel-card-body">
@@ -80,14 +80,14 @@ const HotelCard: React.FC<HotelCardProps> = ({
         <div className="hotel-card-footer">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span className="rating-badge">{rating.toFixed(1)}</span>
+              <span className="rating-badge">{rating !== null ? rating.toFixed(1) : 'N/A'}</span>
               <span className="rating-text">{ratingLabel}</span>
             </div>
           </div>
           {showPrice && (
             <div className="hotel-card-price">
               <div className="hotel-card-price-amount">
-                {price.toLocaleString('vi-VN')}₫
+                {price !== null ? price.toLocaleString('vi-VN') + '₫' : 'Liên hệ'}
               </div>
               <div className="hotel-card-price-label">mỗi đêm</div>
             </div>

@@ -38,9 +38,11 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/**",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/uploads/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/hotels/**", "/rooms/**").permitAll()
+                        .requestMatchers("/api/images/**").authenticated()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/bookings/**").authenticated()

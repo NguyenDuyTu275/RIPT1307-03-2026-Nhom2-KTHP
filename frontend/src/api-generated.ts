@@ -9,6 +9,57 @@
  * ---------------------------------------------------------------
  */
 
+export interface User {
+  /** @format int64 */
+  id?: number;
+  username?: string;
+  password?: string;
+  email?: string;
+  role?: "USER" | "ADMIN";
+}
+
+export interface Notification {
+  /** @format int64 */
+  id?: number;
+  title?: string;
+  message?: string;
+  read?: boolean;
+  /** @format date-time */
+  createdAt?: string;
+  user?: User;
+}
+
+export interface Hotel {
+  /** @format int64 */
+  id?: number;
+  name?: string;
+  address?: string;
+  city?: string;
+  description?: string;
+  /** @format double */
+  ratingAvg?: number;
+  status?: string;
+  /** @format date-time */
+  createdAt?: string;
+  rooms?: Room[];
+}
+
+export interface Room {
+  /** @format int64 */
+  id?: number;
+  name?: string;
+  type?: string;
+  /** @format double */
+  pricePerNight?: number;
+  /** @format int32 */
+  capacity?: number;
+  /** @format int32 */
+  quantity?: number;
+  description?: string;
+  /** @format date-time */
+  createdAt?: string;
+}
+
 export interface Booking {
   /** @format int64 */
   id?: number;
@@ -27,22 +78,46 @@ export interface Booking {
   bookingRooms?: BookingRoom[];
 }
 
-export type BookingRoom = any;
-
-export interface Hotel {
+export interface BookingRoom {
   /** @format int64 */
   id?: number;
-  name?: string;
+  /** @format int32 */
+  quantity?: number;
+  /** @format double */
+  price?: number;
+  room?: Room;
 }
 
-export interface User {
+export interface ProcessBookingRequestDto {
+  response?: string;
+}
+
+export interface BookingRequest {
   /** @format int64 */
   id?: number;
-  username?: string;
-  password?: string;
-  email?: string;
-  role?: "USER" | "ADMIN";
-  bookings?: Booking[];
+  type?: "CANCEL" | "CHANGE_DATE";
+  /** @format date */
+  newCheckIn?: string;
+  /** @format date */
+  newCheckOut?: string;
+  reason?: string;
+  status?: "PENDING" | "APPROVED" | "REJECTED";
+  /** @format date-time */
+  createdAt?: string;
+  /** @format date-time */
+  processedAt?: string;
+  adminResponse?: string;
+  booking?: Booking;
+  processedBy?: User;
+}
+
+export interface CreateBookingRequestDto {
+  type?: "CANCEL" | "CHANGE_DATE";
+  /** @format date */
+  newCheckIn?: string;
+  /** @format date */
+  newCheckOut?: string;
+  reason?: string;
 }
 
 export interface VerifyOtpRequest {
@@ -61,11 +136,22 @@ export interface LoginRequest {
   password?: string;
 }
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, HeadersDefaults, ResponseType } from "axios";
+export interface Review {
+  /** @format int64 */
+  id?: number;
+  /** @format int32 */
+  rating?: number;
+  comment?: string;
+  /** @format date-time */
+  createdAt?: string;
+  user?: User;
+  hotel?: Hotel;
+}
 
 export type QueryParamsType = Record<string | number, any>;
+export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
 
-export interface FullRequestParams extends Omit<AxiosRequestConfig, "data" | "params" | "url" | "responseType"> {
+export interface FullRequestParams extends Omit<RequestInit, "body"> {
   /** set parameter to `true` for call `securityWorker` for this request */
   secure?: boolean;
   /** request path */
@@ -75,20 +161,30 @@ export interface FullRequestParams extends Omit<AxiosRequestConfig, "data" | "pa
   /** query params */
   query?: QueryParamsType;
   /** format of response (i.e. response.json() -> format: "json") */
-  format?: ResponseType;
+  format?: ResponseFormat;
   /** request body */
   body?: unknown;
+  /** base url */
+  baseUrl?: string;
+  /** request cancellation token */
+  cancelToken?: CancelToken;
 }
 
 export type RequestParams = Omit<FullRequestParams, "body" | "method" | "query" | "path">;
 
-export interface ApiConfig<SecurityDataType = unknown> extends Omit<AxiosRequestConfig, "data" | "cancelToken"> {
-  securityWorker?: (
-    securityData: SecurityDataType | null,
-  ) => Promise<AxiosRequestConfig | void> | AxiosRequestConfig | void;
-  secure?: boolean;
-  format?: ResponseType;
+export interface ApiConfig<SecurityDataType = unknown> {
+  baseUrl?: string;
+  baseApiParams?: Omit<RequestParams, "baseUrl" | "cancelToken" | "signal">;
+  securityWorker?: (securityData: SecurityDataType | null) => Promise<RequestParams | void> | RequestParams | void;
+  customFetch?: typeof fetch;
 }
+
+export interface HttpResponse<D extends unknown, E extends unknown = unknown> extends Response {
+  data: D;
+  error: E;
+}
+
+type CancelToken = Symbol | string | number;
 
 export enum ContentType {
   Json = "application/json",
@@ -98,95 +194,166 @@ export enum ContentType {
 }
 
 export class HttpClient<SecurityDataType = unknown> {
-  public instance: AxiosInstance;
+  public baseUrl: string = "http://localhost:8080";
   private securityData: SecurityDataType | null = null;
   private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"];
-  private secure?: boolean;
-  private format?: ResponseType;
+  private abortControllers = new Map<CancelToken, AbortController>();
+  private customFetch = (...fetchParams: Parameters<typeof fetch>) => fetch(...fetchParams);
 
-  constructor({ securityWorker, secure, format, ...axiosConfig }: ApiConfig<SecurityDataType> = {}) {
-    this.instance = axios.create({ ...axiosConfig, baseURL: axiosConfig.baseURL || "http://localhost:8080" });
-    this.secure = secure;
-    this.format = format;
-    this.securityWorker = securityWorker;
+  private baseApiParams: RequestParams = {
+    credentials: "same-origin",
+    headers: {},
+    redirect: "follow",
+    referrerPolicy: "no-referrer",
+  };
+
+  constructor(apiConfig: ApiConfig<SecurityDataType> = {}) {
+    Object.assign(this, apiConfig);
   }
 
   public setSecurityData = (data: SecurityDataType | null) => {
     this.securityData = data;
   };
 
-  protected mergeRequestParams(params1: AxiosRequestConfig, params2?: AxiosRequestConfig): AxiosRequestConfig {
-    const method = params1.method || (params2 && params2.method);
+  protected encodeQueryParam(key: string, value: any) {
+    const encodedKey = encodeURIComponent(key);
+    return `${encodedKey}=${encodeURIComponent(typeof value === "number" ? value : `${value}`)}`;
+  }
 
+  protected addQueryParam(query: QueryParamsType, key: string) {
+    return this.encodeQueryParam(key, query[key]);
+  }
+
+  protected addArrayQueryParam(query: QueryParamsType, key: string) {
+    const value = query[key];
+    return value.map((v: any) => this.encodeQueryParam(key, v)).join("&");
+  }
+
+  protected toQueryString(rawQuery?: QueryParamsType): string {
+    const query = rawQuery || {};
+    const keys = Object.keys(query).filter((key) => "undefined" !== typeof query[key]);
+    return keys
+      .map((key) => (Array.isArray(query[key]) ? this.addArrayQueryParam(query, key) : this.addQueryParam(query, key)))
+      .join("&");
+  }
+
+  protected addQueryParams(rawQuery?: QueryParamsType): string {
+    const queryString = this.toQueryString(rawQuery);
+    return queryString ? `?${queryString}` : "";
+  }
+
+  private contentFormatters: Record<ContentType, (input: any) => any> = {
+    [ContentType.Json]: (input: any) =>
+      input !== null && (typeof input === "object" || typeof input === "string") ? JSON.stringify(input) : input,
+    [ContentType.Text]: (input: any) => (input !== null && typeof input !== "string" ? JSON.stringify(input) : input),
+    [ContentType.FormData]: (input: any) =>
+      Object.keys(input || {}).reduce((formData, key) => {
+        const property = input[key];
+        formData.append(
+          key,
+          property instanceof Blob
+            ? property
+            : typeof property === "object" && property !== null
+            ? JSON.stringify(property)
+            : `${property}`,
+        );
+        return formData;
+      }, new FormData()),
+    [ContentType.UrlEncoded]: (input: any) => this.toQueryString(input),
+  };
+
+  protected mergeRequestParams(params1: RequestParams, params2?: RequestParams): RequestParams {
     return {
-      ...this.instance.defaults,
+      ...this.baseApiParams,
       ...params1,
       ...(params2 || {}),
       headers: {
-        ...((method && this.instance.defaults.headers[method.toLowerCase() as keyof HeadersDefaults]) || {}),
+        ...(this.baseApiParams.headers || {}),
         ...(params1.headers || {}),
         ...((params2 && params2.headers) || {}),
       },
     };
   }
 
-  protected stringifyFormItem(formItem: unknown) {
-    if (typeof formItem === "object" && formItem !== null) {
-      return JSON.stringify(formItem);
-    } else {
-      return `${formItem}`;
-    }
-  }
-
-  protected createFormData(input: Record<string, unknown>): FormData {
-    return Object.keys(input || {}).reduce((formData, key) => {
-      const property = input[key];
-      const propertyContent: any[] = property instanceof Array ? property : [property];
-
-      for (const formItem of propertyContent) {
-        const isFileType = formItem instanceof Blob || formItem instanceof File;
-        formData.append(key, isFileType ? formItem : this.stringifyFormItem(formItem));
+  protected createAbortSignal = (cancelToken: CancelToken): AbortSignal | undefined => {
+    if (this.abortControllers.has(cancelToken)) {
+      const abortController = this.abortControllers.get(cancelToken);
+      if (abortController) {
+        return abortController.signal;
       }
+      return void 0;
+    }
 
-      return formData;
-    }, new FormData());
-  }
+    const abortController = new AbortController();
+    this.abortControllers.set(cancelToken, abortController);
+    return abortController.signal;
+  };
 
-  public request = async <T = any, _E = any>({
+  public abortRequest = (cancelToken: CancelToken) => {
+    const abortController = this.abortControllers.get(cancelToken);
+
+    if (abortController) {
+      abortController.abort();
+      this.abortControllers.delete(cancelToken);
+    }
+  };
+
+  public request = async <T = any, E = any>({
+    body,
     secure,
     path,
     type,
     query,
     format,
-    body,
+    baseUrl,
+    cancelToken,
     ...params
-  }: FullRequestParams): Promise<AxiosResponse<T>> => {
+  }: FullRequestParams): Promise<HttpResponse<T, E>> => {
     const secureParams =
-      ((typeof secure === "boolean" ? secure : this.secure) &&
+      ((typeof secure === "boolean" ? secure : this.baseApiParams.secure) &&
         this.securityWorker &&
         (await this.securityWorker(this.securityData))) ||
       {};
     const requestParams = this.mergeRequestParams(params, secureParams);
-    const responseFormat = format || this.format || undefined;
+    const queryString = query && this.toQueryString(query);
+    const payloadFormatter = this.contentFormatters[type || ContentType.Json];
+    const responseFormat = format || requestParams.format;
 
-    if (type === ContentType.FormData && body && body !== null && typeof body === "object") {
-      body = this.createFormData(body as Record<string, unknown>);
-    }
-
-    if (type === ContentType.Text && body && body !== null && typeof body !== "string") {
-      body = JSON.stringify(body);
-    }
-
-    return this.instance.request({
+    return this.customFetch(`${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`, {
       ...requestParams,
       headers: {
         ...(requestParams.headers || {}),
         ...(type && type !== ContentType.FormData ? { "Content-Type": type } : {}),
       },
-      params: query,
-      responseType: responseFormat,
-      data: body,
-      url: path,
+      signal: cancelToken ? this.createAbortSignal(cancelToken) : requestParams.signal,
+      body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
+    }).then(async (response) => {
+      const r = response as HttpResponse<T, E>;
+      r.data = null as unknown as T;
+      r.error = null as unknown as E;
+
+      const data = !responseFormat
+        ? r
+        : await response[responseFormat]()
+            .then((data) => {
+              if (r.ok) {
+                r.data = data;
+              } else {
+                r.error = data;
+              }
+              return r;
+            })
+            .catch((e) => {
+              r.error = e;
+              return r;
+            });
+
+      if (cancelToken) {
+        this.abortControllers.delete(cancelToken);
+      }
+
+      if (!response.ok) throw data;
+      return data;
     });
   };
 }
@@ -282,6 +449,39 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
+  notifications = {
+    /**
+     * No description
+     *
+     * @tags notification-controller
+     * @name MarkAsRead
+     * @request PUT:/notifications/{notificationId}/read
+     * @secure
+     */
+    markAsRead: (notificationId: number, params: RequestParams = {}) =>
+      this.request<Notification, any>({
+        path: `/notifications/${notificationId}/read`,
+        method: "PUT",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags notification-controller
+     * @name GetMyNotifications
+     * @request GET:/notifications/my
+     * @secure
+     */
+    getMyNotifications: (params: RequestParams = {}) =>
+      this.request<Notification[], any>({
+        path: `/notifications/my`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+  };
   hotels = {
     /**
      * No description
@@ -353,11 +553,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags hotel-controller
-     * @name Create1
+     * @name Create2
      * @request POST:/hotels
      * @secure
      */
-    create1: (data: Hotel, params: RequestParams = {}) =>
+    create2: (data: Hotel, params: RequestParams = {}) =>
       this.request<Hotel, any>({
         path: `/hotels`,
         method: "POST",
@@ -392,9 +592,43 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/bookings/{hotelId}
      * @secure
      */
-    createBooking: (hotelId: number, data: Booking, params: RequestParams = {}) =>
+    createBooking: (hotelId: number, data: BookingRequest, params: RequestParams = {}) =>
       this.request<Booking, any>({
         path: `/bookings/${hotelId}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags booking-controller
+     * @name GetRequests
+     * @request GET:/bookings/{bookingId}/requests
+     * @secure
+     */
+    getRequests: (bookingId: number, params: RequestParams = {}) =>
+      this.request<BookingRequest[], any>({
+        path: `/bookings/${bookingId}/requests`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags booking-controller
+     * @name CreateRequest
+     * @request POST:/bookings/{bookingId}/requests
+     * @secure
+     */
+    createRequest: (bookingId: number, data: CreateBookingRequestDto, params: RequestParams = {}) =>
+      this.request<BookingRequest, any>({
+        path: `/bookings/${bookingId}/requests`,
         method: "POST",
         body: data,
         secure: true,
@@ -414,6 +648,220 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<Booking[], any>({
         path: `/bookings/my`,
         method: "GET",
+        secure: true,
+        ...params,
+      }),
+  };
+  admin = {
+    /**
+     * No description
+     *
+     * @tags admin-controller
+     * @name RejectBooking
+     * @request PUT:/admin/bookings/{bookingId}/reject
+     * @secure
+     */
+    rejectBooking: (bookingId: number, data: ProcessBookingRequestDto, params: RequestParams = {}) =>
+      this.request<Booking, any>({
+        path: `/admin/bookings/${bookingId}/reject`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags admin-controller
+     * @name MarkBookingPaid
+     * @request PUT:/admin/bookings/{bookingId}/paid
+     * @secure
+     */
+    markBookingPaid: (bookingId: number, params: RequestParams = {}) =>
+      this.request<Booking, any>({
+        path: `/admin/bookings/${bookingId}/paid`,
+        method: "PUT",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags admin-controller
+     * @name ApproveBooking
+     * @request PUT:/admin/bookings/{bookingId}/approve
+     * @secure
+     */
+    approveBooking: (bookingId: number, params: RequestParams = {}) =>
+      this.request<Booking, any>({
+        path: `/admin/bookings/${bookingId}/approve`,
+        method: "PUT",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags admin-controller
+     * @name RejectBookingRequest
+     * @request PUT:/admin/booking-requests/{requestId}/reject
+     * @secure
+     */
+    rejectBookingRequest: (requestId: number, data: ProcessBookingRequestDto, params: RequestParams = {}) =>
+      this.request<BookingRequest, any>({
+        path: `/admin/booking-requests/${requestId}/reject`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags admin-controller
+     * @name ApproveBookingRequest
+     * @request PUT:/admin/booking-requests/{requestId}/approve
+     * @secure
+     */
+    approveBookingRequest: (requestId: number, data: ProcessBookingRequestDto, params: RequestParams = {}) =>
+      this.request<BookingRequest, any>({
+        path: `/admin/booking-requests/${requestId}/approve`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags admin-controller
+     * @name GetOverview
+     * @request GET:/admin/statistics/overview
+     * @secure
+     */
+    getOverview: (params: RequestParams = {}) =>
+      this.request<Record<string, any>, any>({
+        path: `/admin/statistics/overview`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags admin-controller
+     * @name ExportBookings
+     * @request GET:/admin/reports/bookings.xlsx
+     * @secure
+     */
+    exportBookings: (params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/admin/reports/bookings.xlsx`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags admin-controller
+     * @name GetBookings
+     * @request GET:/admin/bookings
+     * @secure
+     */
+    getBookings: (
+      query?: {
+        status?: "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<Booking[], any>({
+        path: `/admin/bookings`,
+        method: "GET",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags admin-controller
+     * @name GetBookingRequests
+     * @request GET:/admin/booking-requests
+     * @secure
+     */
+    getBookingRequests: (
+      query?: {
+        status?: "PENDING" | "APPROVED" | "REJECTED";
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<BookingRequest[], any>({
+        path: `/admin/booking-requests`,
+        method: "GET",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+  };
+  rooms = {
+    /**
+     * No description
+     *
+     * @tags room-controller
+     * @name Create1
+     * @request POST:/rooms/{hotelId}
+     * @secure
+     */
+    create1: (hotelId: number, data: Room, params: RequestParams = {}) =>
+      this.request<Room, any>({
+        path: `/rooms/${hotelId}`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags room-controller
+     * @name GetByHotel
+     * @request GET:/rooms/hotel/{hotelId}
+     * @secure
+     */
+    getByHotel: (hotelId: number, params: RequestParams = {}) =>
+      this.request<Room[], any>({
+        path: `/rooms/hotel/${hotelId}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags room-controller
+     * @name Delete2
+     * @request DELETE:/rooms/{id}
+     * @secure
+     */
+    delete2: (id: number, params: RequestParams = {}) =>
+      this.request<string, any>({
+        path: `/rooms/${id}`,
+        method: "DELETE",
         secure: true,
         ...params,
       }),
@@ -466,6 +914,41 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     login: (data: LoginRequest, params: RequestParams = {}) =>
       this.request<string, any>({
         path: `/auth/login`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  api = {
+    /**
+     * No description
+     *
+     * @tags review-controller
+     * @name GetAll2
+     * @request GET:/api/reviews
+     * @secure
+     */
+    getAll2: (params: RequestParams = {}) =>
+      this.request<Review[], any>({
+        path: `/api/reviews`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags review-controller
+     * @name Create3
+     * @request POST:/api/reviews
+     * @secure
+     */
+    create3: (data: Review, params: RequestParams = {}) =>
+      this.request<Review, any>({
+        path: `/api/reviews`,
         method: "POST",
         body: data,
         secure: true,

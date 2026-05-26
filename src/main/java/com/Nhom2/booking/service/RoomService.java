@@ -40,4 +40,12 @@ public class RoomService {
     public void delete(Long id) {
         roomRepository.deleteById(id);
     }
+
+    public List<Room> getAll() {
+        return roomRepository.findAll();
+    }
+
+    public Room save(Room room) {
+        return roomRepository.save(room);
+    }
 }
