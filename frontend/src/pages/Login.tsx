@@ -27,13 +27,14 @@ const Login: React.FC = () => {
       message.success('Đăng nhập thành công!');
       navigate('/welcome');
     } catch (error: any) {
-      const status = error?.response?.status;
-      if (status === 500 || status === 401) {
-        message.error('Sai tên đăng nhập hoặc mật khẩu!');
-      } else if (status === 0 || !error?.response) {
+      const status = error?.status;
+      
+      if (status === 401 || status === 400) {
+        message.error('Tên đăng nhập hoặc mật khẩu không đúng!');
+      } else if (!status) {
         message.error('Không thể kết nối server. Hãy kiểm tra backend đang chạy!');
       } else {
-        message.error(error?.response?.data || 'Đăng nhập thất bại!');
+        message.error(error?.error || 'Đăng nhập thất bại!');
       }
     } finally {
       setLoading(false);

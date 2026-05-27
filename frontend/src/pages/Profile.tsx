@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Form, Input, Button, message, Avatar, Divider, Tag } from 'antd';
+import { Form, Input, Button, message, Divider, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftOutlined, UserOutlined, SaveOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
+import { UserOutlined, SaveOutlined, MailOutlined, LockOutlined, HeartOutlined, CalendarOutlined } from '@ant-design/icons';
 import { userApi } from '../api';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -18,7 +20,6 @@ const Profile: React.FC = () => {
       return;
     }
 
-    // Lấy thông tin thật từ Backend Database
     userApi.getAll()
       .then(res => {
         const users = res.data || [];
@@ -30,12 +31,11 @@ const Profile: React.FC = () => {
             email: found.email,
           });
         } else {
-          // Fallback
           form.setFieldsValue({ username: localUsername });
         }
       })
       .catch(() => {
-        message.warning('Không thể kết nối đến Backend để lấy thông tin chi tiết. Đang hiển thị offline.');
+        message.warning('Đang hiển thị offline.');
         form.setFieldsValue({ username: localUsername });
       });
   }, [navigate, form, localUsername]);
@@ -44,7 +44,6 @@ const Profile: React.FC = () => {
     setLoading(true);
     try {
       if (currentUser && currentUser.id) {
-        // Cập nhật lên Backend Database thật
         const updatedData = {
           ...currentUser,
           username: values.username,
@@ -55,84 +54,101 @@ const Profile: React.FC = () => {
         }
         await userApi.update(currentUser.id, updatedData);
         localStorage.setItem('username', values.username);
-        message.success('Cập nhật thông tin lên Database thành công! 🎉');
+        message.success('Cập nhật thông tin thành công! 🎉');
       } else {
         localStorage.setItem('username', values.username);
         message.success('Cập nhật thành công (Offline)!');
       }
     } catch (err: any) {
-      message.error(err?.response?.data || 'Cập nhật thất bại. Vui lòng thử lại.');
+      message.error(err?.response?.data || 'Cập nhật thất bại.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
+    localStorage.clear();
     message.success('Đã đăng xuất!');
     navigate('/login');
   };
 
   return (
-    <div className="dashboard">
-      <nav className="navbar">
-        <div className="navbar-brand" onClick={() => navigate('/dashboard')}>
-          <span className="navbar-title">Booking.com</span>
+    <div className="page-wrapper" style={{ background: '#f5f5f5' }}>
+      <Header />
+
+      <div className="container">
+        <div className="profile-layout">
+          {/* Sidebar */}
+          <aside className="profile-sidebar">
+            <div className="profile-avatar">
+              {localUsername.charAt(0).toUpperCase()}
+            </div>
+            <div className="profile-username">{localUsername}</div>
+            <div className="profile-email">{currentUser?.email || 'Chưa cập nhật email'}</div>
+
+            {currentUser?.role === 'ADMIN' && (
+              <div style={{ textAlign: 'center', marginBottom: 12 }}>
+                <Tag color="red">Quản trị viên</Tag>
+              </div>
+            )}
+
+            <div className="profile-menu">
+              <div className="profile-menu-item active">
+                <UserOutlined /> Thông tin cá nhân
+              </div>
+              <div className="profile-menu-item" onClick={() => navigate('/my-bookings')}>
+                <CalendarOutlined /> Lịch sử đặt phòng
+              </div>
+              <div className="profile-menu-item" onClick={() => navigate('/wishlist')}>
+                <HeartOutlined /> Khách sạn đã lưu
+              </div>
+            </div>
+          </aside>
+
+          {/* Content */}
+          <main className="profile-content">
+            <div className="profile-content-card">
+              <div className="profile-content-title">Quản lý tài khoản</div>
+              
+              <Form form={form} layout="vertical" onFinish={onFinish} size="large" style={{ maxWidth: 500 }}>
+                <Form.Item
+                  name="username"
+                  label="Tên đăng nhập"
+                  rules={[{ required: true, message: 'Tên đăng nhập không được trống!' }]}
+                >
+                  <Input prefix={<UserOutlined style={{ color: '#888' }} />} />
+                </Form.Item>
+
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[
+                    { required: true, message: 'Email không được trống!' },
+                    { type: 'email', message: 'Email không đúng định dạng!' }
+                  ]}
+                >
+                  <Input prefix={<MailOutlined style={{ color: '#888' }} />} />
+                </Form.Item>
+
+                <Form.Item name="newPassword" label="Mật khẩu mới">
+                  <Input.Password prefix={<LockOutlined style={{ color: '#888' }} />} placeholder="Để trống nếu không đổi mật khẩu" />
+                </Form.Item>
+
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />}>
+                    Lưu thay đổi
+                  </Button>
+                </Form.Item>
+              </Form>
+
+              <Divider />
+              <Button danger onClick={handleLogout}>Đăng xuất</Button>
+            </div>
+          </main>
         </div>
-        <Button icon={<ArrowLeftOutlined />} type="text" className="nav-btn"
-          onClick={() => navigate('/dashboard')}>Quay lại</Button>
-      </nav>
-
-      <div className="section" style={{ maxWidth: 500, margin: '0 auto' }}>
-        {/* AVATAR CARD */}
-        <Card className="detail-card" style={{ textAlign: 'center', marginBottom: 24, background: '#fff', border: '1px solid #e7e7e7' }}>
-          <Avatar size={80} icon={<UserOutlined />}
-            style={{ background: '#003b95', fontSize: 36 }} />
-          <h2 style={{ color: '#1a1a1a', marginTop: 16, marginBottom: 4 }}>{localUsername}</h2>
-          <Tag color={currentUser?.role === 'ADMIN' ? 'red' : 'blue'}>
-            {currentUser?.role || 'USER'}
-          </Tag>
-        </Card>
-
-        {/* EDIT FORM */}
-        <Card className="detail-card" style={{ background: '#fff', border: '1px solid #e7e7e7' }}>
-          <h3 style={{ color: '#1a1a1a', marginBottom: 20 }}>Thông tin cá nhân</h3>
-          <Form form={form} layout="vertical" onFinish={onFinish} size="large">
-            <Form.Item
-              name="username"
-              label="Tên đăng nhập"
-              rules={[{ required: true, message: 'Tên đăng nhập không được trống!' }]}
-            >
-              <Input prefix={<UserOutlined style={{ color: '#888' }} />} />
-            </Form.Item>
-
-            <Form.Item
-              name="email"
-              label="Email"
-              rules={[
-                { required: true, message: 'Email không được trống!' },
-                { type: 'email', message: 'Email không đúng định dạng!' }
-              ]}
-            >
-              <Input prefix={<MailOutlined style={{ color: '#888' }} />} />
-            </Form.Item>
-
-            <Form.Item name="newPassword" label="Mật khẩu mới (Nếu cần đổi)">
-              <Input.Password prefix={<LockOutlined style={{ color: '#888' }} />} placeholder="Để trống nếu giữ nguyên" />
-            </Form.Item>
-
-            <Form.Item>
-              <Button type="primary" htmlType="submit" block loading={loading} icon={<SaveOutlined />}>
-                Lưu thay đổi
-              </Button>
-            </Form.Item>
-          </Form>
-
-          <Divider style={{ borderColor: '#e7e7e7' }} />
-          <Button danger block size="large" onClick={handleLogout}>Đăng xuất</Button>
-        </Card>
       </div>
+
+      <Footer />
     </div>
   );
 };

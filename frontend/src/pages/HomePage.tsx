@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import SearchWidget from '../components/SearchWidget';
 import HotelCard from '../components/HotelCard';
 import { hotelApi } from '../api';
+import { TrophyTwoTone, SafetyCertificateTwoTone, CustomerServiceTwoTone, StarTwoTone } from '@ant-design/icons';
 
 
 
@@ -52,7 +53,7 @@ const HomePage: React.FC = () => {
         <div className="section-inner">
           <div className="section-header">
             <div>
-              <h2 className="section-title">🏨 Khách sạn nổi bật</h2>
+              <h2 className="section-title">Khách sạn nổi bật</h2>
               <p className="section-subtitle">Được đánh giá cao và đặt nhiều nhất tuần này</p>
             </div>
             <a className="section-link" onClick={() => navigate('/search')}>Xem tất cả →</a>
@@ -91,23 +92,36 @@ const HomePage: React.FC = () => {
 
 
       {/* ── WHY BOOKING ── */}
-      <section className="section">
+      <section className="section" style={{ background: '#f5f5f5', padding: '60px 0' }}>
         <div className="section-inner">
-          <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 32 }}>
+          <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 40, fontSize: 24 }}>
             Tại sao chọn Booking.com?
           </h2>
-          <Row gutter={[32, 32]}>
+          <Row gutter={[24, 24]}>
             {[
-              { icon: '🏆', title: 'Giá tốt nhất đảm bảo', desc: 'Chúng tôi cam kết bạn sẽ nhận được giá tốt nhất hoặc hoàn lại tiền' },
-              { icon: '🔒', title: 'Thanh toán an toàn', desc: 'Dữ liệu của bạn được mã hóa và bảo vệ bởi hệ thống bảo mật cao cấp' },
-              { icon: '📞', title: 'Hỗ trợ 24/7', desc: 'Đội ngũ hỗ trợ khách hàng luôn sẵn sàng giải đáp mọi thắc mắc của bạn' },
-              { icon: '⭐', title: 'Triệu đánh giá thực', desc: 'Tất cả đánh giá đều đến từ khách đã lưu trú thực sự' },
+              { icon: <TrophyTwoTone twoToneColor="#006ce4" style={{ fontSize: 36 }} />, title: 'Giá tốt nhất đảm bảo', desc: 'Chúng tôi cam kết bạn sẽ nhận được giá tốt nhất hoặc hoàn lại tiền' },
+              { icon: <SafetyCertificateTwoTone twoToneColor="#006ce4" style={{ fontSize: 36 }} />, title: 'Thanh toán an toàn', desc: 'Dữ liệu của bạn được mã hóa và bảo vệ bởi hệ thống bảo mật cao cấp' },
+              { icon: <CustomerServiceTwoTone twoToneColor="#006ce4" style={{ fontSize: 36 }} />, title: 'Hỗ trợ 24/7', desc: 'Đội ngũ hỗ trợ khách hàng luôn sẵn sàng giải đáp mọi thắc mắc của bạn' },
+              { icon: <StarTwoTone twoToneColor="#febb02" style={{ fontSize: 36 }} />, title: 'Triệu đánh giá thực', desc: 'Tất cả đánh giá đều đến từ khách đã lưu trú thực sự' },
             ].map((item) => (
               <Col key={item.title} xs={24} sm={12} md={6}>
-                <div style={{ textAlign: 'center', padding: '0 16px' }}>
-                  <div style={{ fontSize: 40, marginBottom: 12 }}>{item.icon}</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{item.title}</div>
-                  <div style={{ fontSize: 14, color: '#595959', lineHeight: 1.6 }}>{item.desc}</div>
+                <div style={{
+                  background: '#fff',
+                  border: '1px solid #e7e7e7',
+                  borderRadius: 8,
+                  padding: 24,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  transition: 'box-shadow 0.2s'
+                }} className="hover-shadow">
+                  <div style={{ marginBottom: 16, height: 40, display: 'flex', alignItems: 'center' }}>
+                    {item.icon}
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: '#1a1a1a' }}>{item.title}</div>
+                  <div style={{ fontSize: 13, color: '#595959', lineHeight: 1.6 }}>{item.desc}</div>
                 </div>
               </Col>
             ))}

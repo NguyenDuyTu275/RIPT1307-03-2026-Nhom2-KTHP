@@ -41,6 +41,17 @@ const Wishlist: React.FC = () => {
 
       <div style={{ background: '#003b95', padding: '24px 0' }}>
         <div className="container">
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 600,
+              padding: '0 0 12px',
+            }}
+          >
+            ← Quay lại trang chủ
+          </button>
           <h1 style={{ color: '#fff', fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
             <HeartFilled style={{ color: '#ff4d4f', marginRight: 10 }} />
             Danh sách yêu thích

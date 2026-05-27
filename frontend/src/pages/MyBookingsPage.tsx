@@ -67,8 +67,26 @@ const MyBookingsPage: React.FC = () => {
     return (
       <div className="booking-card">
         <div className="booking-card-img">
+          {(() => {
+            const imgUrl = getHotelImage(booking.hotel);
+            return imgUrl ? (
+              <img
+                src={imgUrl}
+                alt={booking.hotel?.name || 'Hotel'}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  if (target.nextElementSibling) {
+                    (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                  }
+                }}
+              />
+            ) : null;
+          })()}
           <div
-            style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)' }}
+            style={{ display: getHotelImage(booking.hotel) ? 'none' : 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', fontSize: 40, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)' }}
           >
             🏨
           </div>
@@ -133,6 +151,17 @@ const MyBookingsPage: React.FC = () => {
 
         <div style={{ background: '#003b95', padding: '24px 0' }}>
           <div className="container">
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 600,
+                padding: '0 0 12px',
+              }}
+            >
+              ← Quay lại trang chủ
+            </button>
             <h1 style={{ color: '#fff', fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
               Đặt chỗ của tôi
             </h1>
@@ -144,17 +173,12 @@ const MyBookingsPage: React.FC = () => {
 
         <div style={{ background: '#f5f5f5', flex: 1 }}>
           <div className="container" style={{ padding: '24px 24px 48px' }}>
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              items={[
-                { key: 'all', label: `Tất cả (${bookings.length})` },
-                { key: 'PENDING', label: `Chờ xác nhận (${bookings.filter(b => b.status === 'PENDING').length})` },
-                { key: 'CONFIRMED', label: `Đã xác nhận (${bookings.filter(b => b.status === 'CONFIRMED').length})` },
-                { key: 'CANCELLED', label: `Đã hủy (${bookings.filter(b => b.status === 'CANCELLED').length})` },
-              ]}
-              style={{ marginBottom: 20 }}
-            />
+            <Tabs activeKey={activeTab} onChange={setActiveTab} style={{ marginBottom: 20 }}>
+              <Tabs.TabPane tab={`Tất cả (${bookings.length})`} key="all" />
+              <Tabs.TabPane tab={`Chờ xác nhận (${bookings.filter(b => b.status === 'PENDING').length})`} key="PENDING" />
+              <Tabs.TabPane tab={`Đã xác nhận (${bookings.filter(b => b.status === 'CONFIRMED').length})`} key="CONFIRMED" />
+              <Tabs.TabPane tab={`Đã hủy (${bookings.filter(b => b.status === 'CANCELLED').length})`} key="CANCELLED" />
+            </Tabs>
 
             {loading ? (
               [...Array(3)].map((_, i) => (

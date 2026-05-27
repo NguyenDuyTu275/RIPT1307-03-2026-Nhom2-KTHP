@@ -7,6 +7,7 @@ import {
   CarFilled
 } from '@ant-design/icons';
 import { hotelApi } from '../api';
+import { transformImageUrl } from '../utils/imageUtils';
 
 const Dashboard: React.FC = () => {
   const [hotels, setHotels] = useState<any[]>([]);
@@ -125,7 +126,20 @@ const Dashboard: React.FC = () => {
                   hoverable
                   cover={
                     <div className="hotel-card-cover">
-                      <div className="hotel-card-emoji">🏨</div>
+                      {hotel.imageUrl ? (
+                        <img 
+                          src={transformImageUrl(hotel.imageUrl)} 
+                          alt={hotel.name} 
+                          referrerPolicy="no-referrer"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px 12px 0 0' }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement!.innerHTML = '<div class="hotel-card-emoji" style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 48px; background: linear-gradient(135deg, #e8f0fe, #f0f0f0);">🏨</div>';
+                          }}
+                        />
+                      ) : (
+                        <div className="hotel-card-emoji" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: 48, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)' }}>🏨</div>
+                      )}
                     </div>
                   }
                   onClick={() => navigate(`/hotels/${hotel.id}`)}

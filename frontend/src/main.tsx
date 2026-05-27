@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App.tsx';
+import 'antd/dist/antd.css';
 import './index.css';
 
 // Thay YOUR_GOOGLE_CLIENT_ID bằng Client ID thật từ Google Cloud Console

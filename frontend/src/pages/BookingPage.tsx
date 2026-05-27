@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, DatePicker, Button, Card, message, Divider } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeftOutlined, CalendarOutlined, DollarOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import moment from 'moment';
 import { bookingApi } from '../api';
 
 const { RangePicker } = DatePicker;
@@ -25,11 +25,12 @@ const BookingPage: React.FC = () => {
     setLoading(true);
     try {
       const [checkIn, checkOut] = values.dates;
-      await bookingApi.create(hotel?.id, {
+      const bookingData = {
         checkInDate: checkIn.format('YYYY-MM-DD'),
         checkOutDate: checkOut.format('YYYY-MM-DD'),
         totalPrice,
-      });
+      } as any;
+      await bookingApi.create(hotel?.id, bookingData);
       message.success('Đặt phòng thành công! 🎉');
       navigate('/my-bookings');
     } catch (error: any) {
@@ -82,7 +83,7 @@ const BookingPage: React.FC = () => {
             >
               <RangePicker
                 style={{ width: '100%', background: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)' }}
-                disabledDate={(d) => d && d < dayjs().startOf('day')}
+                disabledDate={(d) => d && d < moment().startOf('day')}
                 onChange={onDateChange}
                 format="DD/MM/YYYY"
               />

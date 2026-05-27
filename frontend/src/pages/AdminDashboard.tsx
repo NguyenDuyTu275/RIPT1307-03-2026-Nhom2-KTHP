@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Spin, Empty, message, Modal, Form, Input, Select } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftOutlined, UserOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined, UserOutlined, DeleteOutlined, EditOutlined,
+  PlusOutlined, DashboardOutlined, SettingOutlined, LogoutOutlined
+} from '@ant-design/icons';
 import { userApi } from '../api';
+import Header from '../components/Header';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -12,7 +16,6 @@ const AdminDashboard: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
-  // Load all users from backend
   const loadUsers = () => {
     setLoading(true);
     userApi.getAll()
@@ -28,16 +31,15 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const username = localStorage.getItem('username');
-    if (!token || username !== 'admin') {
+    const role = localStorage.getItem('role');
+    if (!token || role !== 'ADMIN') {
       message.error('Bạn không có quyền truy cập trang quản trị!');
-      navigate('/dashboard');
+      navigate('/');
       return;
     }
     loadUsers();
   }, [navigate]);
 
-  // Handle delete user
   const handleDelete = async (id: number) => {
     Modal.confirm({
       title: 'Xác nhận xóa',
@@ -57,30 +59,25 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  // Open edit modal
   const openEditModal = (user: any) => {
     setEditingUser(user);
     form.setFieldsValue(user);
     setIsModalOpen(true);
   };
 
-  // Open create modal
   const openCreateModal = () => {
     setEditingUser(null);
     form.resetFields();
     setIsModalOpen(true);
   };
 
-  // Handle submit modal (create/update)
   const handleModalSubmit = async (values: any) => {
     try {
       if (editingUser) {
-        // Update user
         const updated = { ...editingUser, ...values };
         await userApi.update(editingUser.id, updated);
         message.success('Cập nhật người dùng thành công!');
       } else {
-        // Create user
         await userApi.create(values);
         message.success('Thêm người dùng mới thành công!');
       }
@@ -121,48 +118,62 @@ const AdminDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="dashboard">
-      <nav className="navbar">
-        <div className="navbar-brand" onClick={() => navigate('/dashboard')}>
-          <span className="navbar-title">Admin Console</span>
-        </div>
-        <Button icon={<ArrowLeftOutlined />} type="text" className="nav-btn"
-          onClick={() => navigate('/dashboard')}>Về Dashboard</Button>
-      </nav>
+    <div className="page-wrapper" style={{ background: '#f5f5f5' }}>
+      <Header />
 
-      <div className="section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div>
-            <h2 className="section-title">
-              <UserOutlined style={{ marginRight: 8 }} />Quản lý người dùng
-            </h2>
-            <p className="section-subtitle" style={{ margin: 0 }}>Xem, thêm, sửa và xóa các tài khoản trong Database</p>
+      <div className="admin-layout">
+        {/* Sidebar */}
+        <aside className="admin-sidebar">
+          <div className="admin-sidebar-logo">Admin Console</div>
+          <div className="admin-menu-item active">
+            <UserOutlined /> Quản lý người dùng
           </div>
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal} style={{ height: 40 }}>
-            Thêm tài khoản mới
-          </Button>
-        </div>
+          <div className="admin-menu-item" onClick={() => navigate('/')}>
+            <ArrowLeftOutlined /> Về trang chủ
+          </div>
+        </aside>
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div>
-        ) : users.length === 0 ? (
-          <Empty description="Không có tài khoản nào" />
-        ) : (
-          <Card className="detail-card" style={{ overflowX: 'auto', background: '#fff', border: '1px solid #e7e7e7' }}>
-            <Table
-              dataSource={users}
-              columns={columns}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
-            />
-          </Card>
-        )}
+        {/* Content */}
+        <main className="admin-content">
+          <div className="admin-stat-grid">
+            <div className="admin-stat-card">
+              <div className="admin-stat-label">Tổng người dùng</div>
+              <div className="admin-stat-value">{users.length}</div>
+            </div>
+            <div className="admin-stat-card">
+              <div className="admin-stat-label">Quản trị viên</div>
+              <div className="admin-stat-value">{users.filter(u => u.role === 'ADMIN').length}</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: '#1a1a1a' }}>Danh sách người dùng</h2>
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+              Thêm tài khoản
+            </Button>
+          </div>
+
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div>
+          ) : users.length === 0 ? (
+            <Empty description="Không có tài khoản nào" />
+          ) : (
+            <Card style={{ padding: 0 }} bodyStyle={{ padding: 0 }}>
+              <Table
+                dataSource={users}
+                columns={columns}
+                rowKey="id"
+                pagination={{ pageSize: 10 }}
+                scroll={{ x: 800 }}
+              />
+            </Card>
+          )}
+        </main>
       </div>
 
-      {/* CREATE / EDIT MODAL */}
       <Modal
         title={editingUser ? 'Chỉnh sửa tài khoản' : 'Thêm tài khoản mới'}
-        open={isModalOpen}
+        visible={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         footer={null}
       >

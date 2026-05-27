@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Form, Input, DatePicker, Button, Divider, message, Row, Col } from 'antd';
 import { UserOutlined, MailOutlined, PhoneOutlined, CalendarOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import moment, { Moment } from 'moment';
 import Header from '../components/Header';
 import { getHotelImage } from '../components/HotelCard';
 import { hotelApi, bookingApi } from '../api';
@@ -15,8 +15,8 @@ const GuestInfoPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [checkIn, setCheckIn] = useState<dayjs.Dayjs | null>(dayjs().add(1, 'day'));
-  const [checkOut, setCheckOut] = useState<dayjs.Dayjs | null>(dayjs().add(3, 'day'));
+  const [checkIn, setCheckIn] = useState<Moment | null>(moment().add(1, 'day'));
+  const [checkOut, setCheckOut] = useState<Moment | null>(moment().add(3, 'day'));
 
   const token = localStorage.getItem('token');
   const nights = checkIn && checkOut ? checkOut.diff(checkIn, 'day') : 2;
@@ -39,11 +39,13 @@ const GuestInfoPage: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      const booking = await bookingApi.create(Number(hotelId), {
-        checkInDate: checkIn.format('YYYY-MM-DD'),
-        checkOutDate: checkOut.format('YYYY-MM-DD'),
+      const bookingData = {
+        checkInDate: checkIn?.format('YYYY-MM-DD'),
+        checkOutDate: checkOut?.format('YYYY-MM-DD'),
         totalPrice: totalPrice,
-      });
+        rooms: [] // Simplified for now, should include actual rooms
+      } as any;
+      const booking = await bookingApi.create(Number(hotelId), bookingData);
       navigate('/booking/confirmation', {
         state: {
           booking: booking.data,
@@ -67,6 +69,19 @@ const GuestInfoPage: React.FC = () => {
       <Header showSearch />
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 48px' }}>
+        {/* Back button */}
+        <button
+          onClick={() => navigate(`/hotels/${hotelId}`)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: '#006ce4', fontSize: 14, fontWeight: 600,
+            padding: '4px 0', marginBottom: 16,
+          }}
+        >
+          ← Quay lại trang khách sạn
+        </button>
+
         {/* Steps indicator */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
           {['1. Thông tin khách', '2. Thanh toán', '3. Xác nhận'].map((step, i) => (
@@ -124,9 +139,14 @@ const GuestInfoPage: React.FC = () => {
                   <Form.Item label="Ngày nhận phòng">
                     <DatePicker
                       value={checkIn}
-                      onChange={setCheckIn}
+                      onChange={(val) => {
+                        setCheckIn(val);
+                        if (val && checkOut && val.isSameOrAfter(checkOut)) {
+                          setCheckOut(val.clone().add(1, 'day'));
+                        }
+                      }}
                       format="DD/MM/YYYY"
-                      disabledDate={(d) => d.isBefore(dayjs(), 'day')}
+                      disabledDate={(d) => d.isBefore(moment(), 'day')}
                       style={{ width: '100%' }}
                     />
                   </Form.Item>
@@ -137,7 +157,7 @@ const GuestInfoPage: React.FC = () => {
                       value={checkOut}
                       onChange={setCheckOut}
                       format="DD/MM/YYYY"
-                      disabledDate={(d) => d.isBefore(checkIn || dayjs(), 'day')}
+                      disabledDate={(d) => d.isBefore(checkIn || moment(), 'day')}
                       style={{ width: '100%' }}
                     />
                   </Form.Item>
@@ -163,11 +183,27 @@ const GuestInfoPage: React.FC = () => {
 
             <div className="booking-summary-hotel">
               <div className="booking-summary-hotel-img">
-                {hotel ? (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)', borderRadius: 4 }}>
-                    🏨
-                  </div>
-                ) : '🏨'}
+                {(() => {
+                  const imgUrl = getHotelImage(hotel);
+                  return imgUrl ? (
+                    <img
+                      src={imgUrl}
+                      alt={hotel?.name}
+                      referrerPolicy="no-referrer"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        if (target.nextElementSibling) {
+                          (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                        }
+                      }}
+                    />
+                  ) : null;
+                })()}
+                <div style={{ display: getHotelImage(hotel) ? 'none' : 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', fontSize: 32, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)', borderRadius: 4 }}>
+                  🏨
+                </div>
               </div>
               <div>
                 <div className="booking-summary-hotel-name">{hotel?.name || 'Đang tải...'}</div>

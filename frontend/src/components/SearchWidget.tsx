@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, DatePicker, InputNumber, Popover, Input } from 'antd';
+import { Button, DatePicker, Popover, Input } from 'antd';
 import { EnvironmentOutlined, CalendarOutlined, TeamOutlined, SearchOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import moment, { Moment } from 'moment';
 
 const { RangePicker } = DatePicker;
 
@@ -23,17 +23,14 @@ const SearchWidget: React.FC<SearchWidgetProps> = ({
 }) => {
   const navigate = useNavigate();
   const [city, setCity] = useState(initialCity);
-  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null]>([
-    initialCheckIn ? dayjs(initialCheckIn) : null,
-    initialCheckOut ? dayjs(initialCheckOut) : null,
-  ]);
+  const [dateRange, setDateRange] = useState<[Moment | null, Moment | null]>(() => {
+    return initialCheckIn && initialCheckOut 
+      ? [moment(initialCheckIn), moment(initialCheckOut)] 
+      : [null, null];
+  });
   const [guests, setGuests] = useState(initialGuests);
   const [rooms, setRooms] = useState(1);
   const [guestOpen, setGuestOpen] = useState(false);
-
-  const dateLabel = dateRange[0] && dateRange[1]
-    ? `${dateRange[0].format('DD/MM')} – ${dateRange[1].format('DD/MM/YYYY')}`
-    : 'Nhận phòng – Trả phòng';
 
   const guestLabel = `${guests} người lớn · ${rooms} phòng`;
 
@@ -49,17 +46,17 @@ const SearchWidget: React.FC<SearchWidgetProps> = ({
   };
 
   const guestContent = (
-    <div style={{ width: 280, padding: '4px 0' }}>
+    <div style={{ width: 260, padding: '4px 0' }}>
       {[
         { label: 'Người lớn', sub: '18 tuổi trở lên', val: guests, set: setGuests, min: 1, max: 30 },
         { label: 'Số phòng', sub: '', val: rooms, set: setRooms, min: 1, max: 30 },
       ].map(({ label, sub, val, set, min, max }) => (
-        <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
+        <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
           <div>
             <div style={{ fontWeight: 600, fontSize: 14 }}>{label}</div>
-            {sub && <div style={{ fontSize: 12, color: '#929292' }}>{sub}</div>}
+            {sub && <div style={{ fontSize: 12, color: '#8c8c8c' }}>{sub}</div>}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Button
               size="small"
               icon={<MinusOutlined />}
@@ -78,7 +75,7 @@ const SearchWidget: React.FC<SearchWidgetProps> = ({
           </div>
         </div>
       ))}
-      <Button type="primary" block style={{ marginTop: 12 }} onClick={() => setGuestOpen(false)}>
+      <Button type="primary" block style={{ marginTop: 10 }} onClick={() => setGuestOpen(false)}>
         Xong
       </Button>
     </div>
@@ -108,9 +105,9 @@ const SearchWidget: React.FC<SearchWidgetProps> = ({
           <div className="search-field-label">Ngày nhận – trả phòng</div>
           <RangePicker
             value={dateRange}
-            onChange={(vals) => setDateRange(vals as any)}
-            format="DD/MM/YYYY"
-            disabledDate={(d) => d.isBefore(dayjs(), 'day')}
+            onChange={(val) => setDateRange(val as [Moment | null, Moment | null])}
+            format="YYYY-MM-DD"
+            disabledDate={(current) => current && current < moment().startOf('day')}
             placeholder={['Nhận phòng', 'Trả phòng']}
             style={{ border: 'none', boxShadow: 'none', padding: 0, background: 'transparent', width: '100%' }}
             popupStyle={{ zIndex: 1100 }}
@@ -122,8 +119,8 @@ const SearchWidget: React.FC<SearchWidgetProps> = ({
       <Popover
         content={guestContent}
         trigger="click"
-        open={guestOpen}
-        onOpenChange={setGuestOpen}
+        visible={guestOpen}
+        onVisibleChange={setGuestOpen}
         placement="bottomLeft"
       >
         <div className="search-field" style={{ flex: 1.5, cursor: 'pointer' }}>
@@ -141,7 +138,7 @@ const SearchWidget: React.FC<SearchWidgetProps> = ({
         icon={<SearchOutlined />}
         onClick={handleSearch}
       >
-        Tìm kiếm
+        Tìm
       </Button>
     </div>
   );

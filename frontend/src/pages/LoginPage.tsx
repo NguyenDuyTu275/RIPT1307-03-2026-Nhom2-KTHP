@@ -13,15 +13,28 @@ const LoginPage: React.FC = () => {
     try {
       const res = await authApi.login(values.username, values.password);
       const token: string = res.data as unknown as string;
+      
+      // Parse role from JWT token
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      const payload = JSON.parse(jsonPayload);
+
       localStorage.setItem('token', token);
       localStorage.setItem('username', values.username);
+      localStorage.setItem('role', payload.role || 'USER');
+      
       message.success('Đăng nhập thành công! 👋');
       navigate('/');
     } catch (error: any) {
-      if (!error?.response) {
+      if (error?.status === 401 || error?.status === 400) {
+        message.error('Tên đăng nhập hoặc mật khẩu không đúng!');
+      } else if (!error?.status) {
         message.error('Không thể kết nối server. Kiểm tra backend đang chạy!');
       } else {
-        message.error('Tên đăng nhập hoặc mật khẩu không đúng!');
+        message.error('Có lỗi xảy ra: ' + (error?.error || error?.statusText || ''));
       }
     } finally {
       setLoading(false);

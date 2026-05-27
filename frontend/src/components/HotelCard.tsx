@@ -10,13 +10,44 @@ interface HotelCardProps {
     description?: string;
     status?: string;
     imageUrl?: string;
-    rooms?: { pricePerNight?: number }[];
+    rooms?: { pricePerNight?: number; images?: { imageUrl?: string }[] }[];
   };
   onClick?: () => void;
   wished?: boolean;
   onWishToggle?: () => void;
   showPrice?: boolean;
   estimatedPrice?: number;
+}
+
+/**
+ * Lấy URL ảnh đại diện cho hotel.
+ * Ưu tiên: hotel.imageUrl → rooms[0].images[0].imageUrl → null
+ */
+export function getHotelImage(hotel: any): string | null {
+  let url = null;
+  if (hotel?.imageUrl) {
+    url = hotel.imageUrl;
+  } else {
+    // Fallback: lấy ảnh từ phòng đầu tiên
+    const rooms = hotel?.rooms;
+    if (rooms && rooms.length > 0) {
+      for (const room of rooms) {
+        if (room.images && room.images.length > 0 && room.images[0].imageUrl) {
+          url = room.images[0].imageUrl;
+          break;
+        }
+      }
+    }
+  }
+
+  // Chuyển đổi link Google Drive nếu có để tránh lỗi 403 / bị chặn
+  if (url && url.includes('drive.google.com')) {
+    const match = url.match(/id=([^&]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+    }
+  }
+  return url;
 }
 
 const HotelCard: React.FC<HotelCardProps> = ({
@@ -30,8 +61,11 @@ const HotelCard: React.FC<HotelCardProps> = ({
   const rating = hotel.ratingAvg ?? null;
   // Lấy giá từ phòng đầu tiên (backend trả rooms[] kèm theo hotel)
   const price = estimatedPrice ?? hotel.rooms?.[0]?.pricePerNight ?? null;
+  const imgUrl = getHotelImage(hotel);
 
   const ratingLabel = rating === null ? 'Chưa đánh giá' : rating >= 9 ? 'Tuyệt vời' : rating >= 8 ? 'Rất tốt' : rating >= 7 ? 'Tốt' : 'Ổn';
+
+  const [imageError, setImageError] = React.useState(false);
 
   return (
     <div className="hotel-card" onClick={onClick} style={{ position: 'relative' }}>
@@ -46,29 +80,26 @@ const HotelCard: React.FC<HotelCardProps> = ({
       )}
 
       {/* Image — hiển thị ảnh thật nếu có, fallback gradient */}
-      {hotel.imageUrl ? (
+      {imgUrl && !imageError ? (
         <img
           className="hotel-card-img"
-          src={hotel.imageUrl}
+          src={imgUrl}
           alt={hotel.name}
           loading="lazy"
-          onError={(e) => {
-            // Fallback khi ảnh lỗi
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            target.parentElement?.querySelector('.hotel-card-img-fallback')?.removeAttribute('style');
-          }}
+          referrerPolicy="no-referrer"
+          onError={() => setImageError(true)}
         />
-      ) : null}
-      <div
-        className="hotel-card-img hotel-card-img-fallback"
-        style={hotel.imageUrl ? { display: 'none' } : {
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 48, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)'
-        }}
-      >
-        🏨
-      </div>
+      ) : (
+        <div
+          className="hotel-card-img hotel-card-img-fallback"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 48, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)'
+          }}
+        >
+          🏨
+        </div>
+      )}
 
       {/* Body */}
       <div className="hotel-card-body">

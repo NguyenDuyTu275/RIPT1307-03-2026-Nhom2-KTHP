@@ -28,17 +28,18 @@ export default swaggerApi;
 
 // ─── Param mặc định: luôn parse response thành JSON ──────────
 const JSON_FMT = { format: 'json' as const };
+const TEXT_FMT = { format: 'text' as const };
 
 // ─── AUTH ─────────────────────────────────────────────────────
 export const authApi = {
   login: (username: string, password: string) =>
-    swaggerApi.auth.login({ username, password }, JSON_FMT),
+    swaggerApi.auth.login({ username, password }, TEXT_FMT),
 
   register: (username: string, password: string, email: string) =>
-    swaggerApi.auth.register({ username, password, email }, JSON_FMT),
+    swaggerApi.auth.register({ username, password, email }, TEXT_FMT),
 
   verifyOtp: (email: string, otp: string) =>
-    swaggerApi.auth.verifyOtp({ email, otp }, JSON_FMT),
+    swaggerApi.auth.verifyOtp({ email, otp }, TEXT_FMT),
 };
 
 // ─── USERS ────────────────────────────────────────────────────

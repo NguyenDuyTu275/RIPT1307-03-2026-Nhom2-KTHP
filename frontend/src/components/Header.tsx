@@ -5,7 +5,6 @@ import {
   SearchOutlined, UserOutlined, HeartOutlined,
   GlobalOutlined, EnvironmentOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
 
 interface HeaderProps {
   showSearch?: boolean;
@@ -18,7 +17,6 @@ const Header: React.FC<HeaderProps> = ({ showSearch = false }) => {
 
   const isAdmin = localStorage.getItem('role') === 'ADMIN';
   const [searchCity, setSearchCity] = useState('');
-  const [guests, setGuests] = useState(2);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -28,11 +26,9 @@ const Header: React.FC<HeaderProps> = ({ showSearch = false }) => {
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (searchCity) params.set('city', searchCity);
-    params.set('guests', String(guests));
+    params.set('guests', '2');
     navigate(`/search?${params.toString()}`);
   };
-
-
 
   return (
     <header className="header">
@@ -42,11 +38,11 @@ const Header: React.FC<HeaderProps> = ({ showSearch = false }) => {
           Booking<span>.com</span>
         </div>
 
-        {/* Mini search bar (only when showSearch=true) */}
+        {/* Mini search bar */}
         {showSearch && (
           <div className="header-search-mini" style={{ display: 'flex', gap: 4 }}>
             <Input
-              prefix={<EnvironmentOutlined style={{ color: '#929292' }} />}
+              prefix={<EnvironmentOutlined style={{ color: '#8c8c8c' }} />}
               placeholder="Bạn muốn đến đâu?"
               value={searchCity}
               onChange={(e) => setSearchCity(e.target.value)}
@@ -64,49 +60,50 @@ const Header: React.FC<HeaderProps> = ({ showSearch = false }) => {
         )}
 
         {/* Nav buttons */}
-        <nav className="header-nav">
+        <nav className="header-nav" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Language */}
-          <Button className="header-btn" icon={<GlobalOutlined />} type="text" style={{ color: '#fff', border: 'none' }} />
+          <Button className="header-btn" type="text" style={{ color: '#fff', padding: '0 12px', height: 40, border: 'none' }}>
+            <GlobalOutlined style={{ fontSize: 20 }} />
+          </Button>
 
           {token ? (
             <>
               <Button
                 className="header-btn"
-                icon={<HeartOutlined />}
-                onClick={() => navigate('/wishlist')}
                 type="text"
-                style={{ color: '#fff', border: 'none' }}
-              />
-              <Badge dot={false}>
-                <Button
-                  className="header-btn"
-                  onClick={() => navigate('/my-bookings')}
-                  type="text"
-                  style={{ color: '#fff', border: 'none' }}
-                >
-                  Đặt chỗ của tôi
-                </Button>
-              </Badge>
+                onClick={() => navigate('/wishlist')}
+                style={{ color: '#fff', padding: '0 12px', height: 40, border: 'none' }}
+              >
+                <HeartOutlined style={{ fontSize: 20 }} />
+              </Button>
+              <Button
+                className="header-btn"
+                onClick={() => navigate('/my-bookings')}
+                type="text"
+                style={{ color: '#fff', padding: '0 16px', height: 40, border: 'none', fontWeight: 600 }}
+              >
+                Đặt chỗ của tôi
+              </Button>
               <Popover
                 content={
-                  <div style={{ minWidth: 160 }}>
-                    <div style={{ padding: '8px 12px', fontWeight: 700, fontSize: 14 }}>{username}</div>
+                  <div style={{ minWidth: 150 }}>
+                    <div style={{ padding: '6px 12px', fontWeight: 700, fontSize: 14 }}>{username}</div>
                     <div style={{ borderTop: '1px solid #eee' }} />
                     <div
-                      style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 14 }}
+                      style={{ padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}
                       onClick={() => navigate('/profile')}
                     >
                       Hồ sơ của tôi
                     </div>
                     <div
-                      style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 14 }}
+                      style={{ padding: '6px 12px', cursor: 'pointer', fontSize: 13 }}
                       onClick={() => navigate('/my-bookings')}
                     >
                       Lịch sử đặt phòng
                     </div>
                     {isAdmin && (
                       <div
-                        style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 14, color: '#006ce4' }}
+                        style={{ padding: '6px 12px', cursor: 'pointer', fontSize: 13, color: '#006ce4' }}
                         onClick={() => navigate('/admin')}
                       >
                         Quản lý Admin
@@ -114,7 +111,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch = false }) => {
                     )}
                     <div style={{ borderTop: '1px solid #eee' }} />
                     <div
-                      style={{ padding: '8px 12px', cursor: 'pointer', fontSize: 14, color: '#cc0000' }}
+                      style={{ padding: '6px 12px', cursor: 'pointer', fontSize: 13, color: '#d4111e' }}
                       onClick={handleLogout}
                     >
                       Đăng xuất
@@ -126,8 +123,9 @@ const Header: React.FC<HeaderProps> = ({ showSearch = false }) => {
               >
                 <Button
                   className="header-btn-primary header-btn"
-                  icon={<UserOutlined />}
+                  style={{ height: 40, padding: '0 16px', border: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}
                 >
+                  <UserOutlined style={{ fontSize: 18 }} />
                   {username || 'Tài khoản'}
                 </Button>
               </Popover>
@@ -137,12 +135,15 @@ const Header: React.FC<HeaderProps> = ({ showSearch = false }) => {
               <Button
                 className="header-btn"
                 onClick={() => navigate('/register')}
+                type="text"
+                style={{ color: '#fff', padding: '0 16px', height: 40, border: 'none', fontWeight: 600 }}
               >
                 Đăng ký
               </Button>
               <Button
                 className="header-btn-primary header-btn"
                 onClick={() => navigate('/login')}
+                style={{ height: 40, padding: '0 16px', border: 'none', fontWeight: 600 }}
               >
                 Đăng nhập
               </Button>

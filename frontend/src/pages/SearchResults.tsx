@@ -5,7 +5,7 @@ import { FilterOutlined, SortAscendingOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SearchWidget from '../components/SearchWidget';
-import { getHotelImage } from '../components/HotelCard';
+import HotelCard, { getHotelImage } from '../components/HotelCard';
 import { hotelApi } from '../api';
 
 const { Option } = Select;
@@ -89,6 +89,18 @@ const SearchResults: React.FC = () => {
 
       <div style={{ background: '#f5f5f5', flex: 1 }}>
         <div className="container">
+          {/* Back button */}
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#006ce4', fontSize: 14, fontWeight: 600,
+              padding: '12px 0 0',
+            }}
+          >
+            ← Quay lại trang chủ
+          </button>
           <div className="search-results">
             {/* ── FILTER SIDEBAR ── */}
             <aside className="filter-sidebar">
@@ -142,7 +154,6 @@ const SearchResults: React.FC = () => {
                   value={sortBy}
                   onChange={setSortBy}
                   style={{ width: 180 }}
-                  prefix={<SortAscendingOutlined />}
                 >
                   <Option value="rating">Đánh giá cao nhất</Option>
                   <Option value="name">Tên A → Z</Option>
@@ -179,12 +190,15 @@ const SearchResults: React.FC = () => {
                       className="hotel-result-card"
                       onClick={() => navigate(`/hotels/${hotel.id}`)}
                     >
-                      {hotel.imageUrl ? (
+                    {(() => {
+                      const imgUrl = getHotelImage(hotel);
+                      return imgUrl ? (
                         <img
                           className="hotel-result-img"
-                          src={hotel.imageUrl}
+                          src={imgUrl}
                           alt={hotel.name}
                           loading="lazy"
+                          referrerPolicy="no-referrer"
                           style={{ objectFit: 'cover' }}
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
@@ -195,7 +209,8 @@ const SearchResults: React.FC = () => {
                         >
                           🏨
                         </div>
-                      )}
+                      );
+                    })()}
                       <div className="hotel-result-body">
                         <div className="hotel-result-info">
                           <div className="hotel-result-name">{hotel.name}</div>
