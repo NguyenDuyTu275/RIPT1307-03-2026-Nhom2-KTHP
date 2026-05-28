@@ -25,4 +25,3 @@ public class ReviewController {
         return ResponseEntity.ok(service.save(entity));
     }
 }
-
