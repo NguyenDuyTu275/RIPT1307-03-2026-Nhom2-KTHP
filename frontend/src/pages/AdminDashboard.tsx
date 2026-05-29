@@ -1,33 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tag, Button, Spin, Empty, message, Modal, Form, Input, Select } from 'antd';
+import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeftOutlined, UserOutlined, DeleteOutlined, EditOutlined,
-  PlusOutlined, DashboardOutlined, SettingOutlined, LogoutOutlined
+  ArrowLeftOutlined, 
+  UserOutlined, 
+  DashboardOutlined, 
+  BookOutlined,
+  ReconciliationOutlined
 } from '@ant-design/icons';
-import { userApi } from '../api';
 import Header from '../components/Header';
+
+// Nhập các component con
+import AdminOverview from '../components/admin/AdminOverview';
+import AdminUsers from '../components/admin/AdminUsers';
+import AdminBookings from '../components/admin/AdminBookings';
+import AdminBookingRequests from '../components/admin/AdminBookingRequests';
+
+type TabKey = 'overview' | 'users' | 'bookings' | 'requests';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingUser, setEditingUser] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form] = Form.useForm();
-
-  const loadUsers = () => {
-    setLoading(true);
-    userApi.getAll()
-      .then(res => {
-        setUsers(res.data || []);
-      })
-      .catch((err) => {
-        message.error('Không thể lấy danh sách người dùng từ Server!');
-        console.error(err);
-      })
-      .finally(() => setLoading(false));
-  };
+  const [activeTab, setActiveTab] = useState<TabKey>('overview');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -37,198 +30,82 @@ const AdminDashboard: React.FC = () => {
       navigate('/');
       return;
     }
-    loadUsers();
   }, [navigate]);
 
-  const handleDelete = async (id: number) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa người dùng này khỏi hệ thống không?',
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: async () => {
-        try {
-          await userApi.delete(id);
-          message.success('Đã xóa người dùng thành công!');
-          loadUsers();
-        } catch (error) {
-          message.error('Không thể xóa người dùng.');
-        }
-      }
-    });
-  };
-
-  const openEditModal = (user: any) => {
-    setEditingUser(user);
-    form.setFieldsValue(user);
-    setIsModalOpen(true);
-  };
-
-  const openCreateModal = () => {
-    setEditingUser(null);
-    form.resetFields();
-    setIsModalOpen(true);
-  };
-
-  const handleModalSubmit = async (values: any) => {
-    try {
-      if (editingUser) {
-        const updated = { ...editingUser, ...values };
-        await userApi.update(editingUser.id, updated);
-        message.success('Cập nhật người dùng thành công!');
-      } else {
-        await userApi.create(values);
-        message.success('Thêm người dùng mới thành công!');
-      }
-      setIsModalOpen(false);
-      loadUsers();
-    } catch (error) {
-      message.error('Thao tác thất bại. Vui lòng thử lại.');
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return <AdminOverview />;
+      case 'users':
+        return <AdminUsers />;
+      case 'bookings':
+        return <AdminBookings />;
+      case 'requests':
+        return <AdminBookingRequests />;
+      default:
+        return <AdminOverview />;
     }
   };
 
-  const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 80 },
-    { title: 'Tên đăng nhập', dataIndex: 'username', key: 'username', render: (v: string) => <b style={{ color: '#1a1a1a' }}>{v}</b> },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    {
-      title: 'Vai trò',
-      dataIndex: 'role',
-      key: 'role',
-      render: (v: string) => (
-        <Tag color={v === 'ADMIN' ? 'red' : 'blue'}>
-          {v || 'USER'}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Hành động',
-      key: 'action',
-      width: 180,
-      render: (_: any, record: any) => (
-        record.username === 'admin' ? null : (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button size="small" icon={<EditOutlined />} onClick={() => openEditModal(record)}>Sửa</Button>
-            <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>Xóa</Button>
-          </div>
-        )
-      )
-    },
-  ];
-
   return (
-    <div className="page-wrapper" style={{ background: '#f5f5f5' }}>
+    <div className="page-wrapper" style={{ background: '#f5f5f5', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
 
-      <div className="admin-layout">
+      <div className="admin-layout" style={{ flex: 1, display: 'flex' }}>
         {/* Sidebar */}
-        <aside className="admin-sidebar">
-          <div className="admin-sidebar-logo">Admin Console</div>
-          <div className="admin-menu-item active">
-            <UserOutlined /> Quản lý người dùng
+        <aside className="admin-sidebar" style={{ width: 250, background: '#fff', borderRight: '1px solid #e8e8e8', padding: '20px 0' }}>
+          <div className="admin-sidebar-logo" style={{ padding: '0 20px', fontSize: 18, fontWeight: 700, color: '#1a1a1a', marginBottom: 20 }}>
+            Admin Console
           </div>
-          <div className="admin-menu-item" onClick={() => navigate('/')}>
-            <ArrowLeftOutlined /> Về trang chủ
+          
+          <div 
+            className={`admin-menu-item ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+            style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, background: activeTab === 'overview' ? '#e6f7ff' : 'transparent', color: activeTab === 'overview' ? '#1890ff' : '#333', borderRight: activeTab === 'overview' ? '3px solid #1890ff' : 'none' }}
+          >
+            <DashboardOutlined /> Tổng quan
+          </div>
+
+          <div 
+            className={`admin-menu-item ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+            style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, background: activeTab === 'users' ? '#e6f7ff' : 'transparent', color: activeTab === 'users' ? '#1890ff' : '#333', borderRight: activeTab === 'users' ? '3px solid #1890ff' : 'none' }}
+          >
+            <UserOutlined /> Quản lý Người dùng
+          </div>
+
+          <div 
+            className={`admin-menu-item ${activeTab === 'bookings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('bookings')}
+            style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, background: activeTab === 'bookings' ? '#e6f7ff' : 'transparent', color: activeTab === 'bookings' ? '#1890ff' : '#333', borderRight: activeTab === 'bookings' ? '3px solid #1890ff' : 'none' }}
+          >
+            <BookOutlined /> Quản lý Đặt phòng
+          </div>
+
+          <div 
+            className={`admin-menu-item ${activeTab === 'requests' ? 'active' : ''}`}
+            onClick={() => setActiveTab('requests')}
+            style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, background: activeTab === 'requests' ? '#e6f7ff' : 'transparent', color: activeTab === 'requests' ? '#1890ff' : '#333', borderRight: activeTab === 'requests' ? '3px solid #1890ff' : 'none' }}
+          >
+            <ReconciliationOutlined /> Yêu cầu Đặt phòng
+          </div>
+
+          <div style={{ marginTop: 40, borderTop: '1px solid #e8e8e8', paddingTop: 20 }}>
+            <div 
+              className="admin-menu-item" 
+              onClick={() => navigate('/')}
+              style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, color: '#595959' }}
+            >
+              <ArrowLeftOutlined /> Về trang chủ
+            </div>
           </div>
         </aside>
 
         {/* Content */}
-        <main className="admin-content">
-          <div className="admin-stat-grid">
-            <div className="admin-stat-card">
-              <div className="admin-stat-label">Tổng người dùng</div>
-              <div className="admin-stat-value">{users.length}</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="admin-stat-label">Quản trị viên</div>
-              <div className="admin-stat-value">{users.filter(u => u.role === 'ADMIN').length}</div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, color: '#1a1a1a' }}>Danh sách người dùng</h2>
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
-              Thêm tài khoản
-            </Button>
-          </div>
-
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div>
-          ) : users.length === 0 ? (
-            <Empty description="Không có tài khoản nào" />
-          ) : (
-            <Card style={{ padding: 0 }} bodyStyle={{ padding: 0 }}>
-              <Table
-                dataSource={users}
-                columns={columns}
-                rowKey="id"
-                pagination={{ pageSize: 10 }}
-                scroll={{ x: 800 }}
-              />
-            </Card>
-          )}
+        <main className="admin-content" style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+          {renderContent()}
         </main>
       </div>
-
-      <Modal
-        title={editingUser ? 'Chỉnh sửa tài khoản' : 'Thêm tài khoản mới'}
-        visible={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}
-      >
-        <Form form={form} layout="vertical" onFinish={handleModalSubmit} size="large" style={{ marginTop: 16 }}>
-          <Form.Item
-            name="username"
-            label="Tên đăng nhập"
-            rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
-          >
-            <Input disabled={!!editingUser} />
-          </Form.Item>
-
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: 'Vui lòng nhập email!' },
-              { type: 'email', message: 'Email không đúng định dạng!' }
-            ]}
-          >
-            <Input />
-          </Form.Item>
-
-          {!editingUser && (
-            <Form.Item
-              name="password"
-              label="Mật khẩu"
-              rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
-            >
-              <Input.Password />
-            </Form.Item>
-          )}
-
-          <Form.Item
-            name="role"
-            label="Vai trò (Role)"
-            rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
-            initialValue="USER"
-          >
-            <Select>
-              <Select.Option value="USER">USER</Select.Option>
-              <Select.Option value="ADMIN">ADMIN</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 0, textAlign: 'right', marginTop: 24 }}>
-            <Button onClick={() => setIsModalOpen(false)} style={{ marginRight: 8 }}>
-              Hủy
-            </Button>
-            <Button type="primary" htmlType="submit">
-              Xác nhận
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 };

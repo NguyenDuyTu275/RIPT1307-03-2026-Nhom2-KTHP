@@ -550,208 +550,293 @@ const HotelDetailPage: React.FC = () => {
             </div>
 
             {/* ══════════════════════════════════════════════════════
-               REVIEWS SECTION — PREMIUM REDESIGN
+               REVIEWS SECTION — BOOKING.COM STYLE (exact)
             ══════════════════════════════════════════════════════ */}
-            <div id="review-section" style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 8, overflow: 'hidden', marginBottom: 16 }}>
-              
+            <div id="review-section" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 4, overflow: 'hidden', marginBottom: 16 }}>
+
               {/* ── Header ── */}
-              <div style={{
-                background: 'linear-gradient(135deg, #003b95, #0057b8)',
-                padding: '20px 24px', color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <StarFilled style={{ fontSize: 20, color: '#febb02' }} />
-                  <span style={{ fontSize: 18, fontWeight: 700 }}>Đánh giá của khách</span>
+              <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#1a1a1a' }}>Đánh giá của khách</h2>
+                <Button
+                  type="primary"
+                  style={{ fontWeight: 600, borderRadius: 2, background: '#006ce4', border: 'none', height: 36 }}
+                  onClick={() => navigate(`/booking/${id}/guest`)}
+                >
+                  Xem phòng trống
+                </Button>
+              </div>
+
+              {/* ── Score Summary Row ── */}
+              {reviewStats.avg !== null && (
+                <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                    {/* Score badge */}
+                    <div style={{
+                      background: getRatingColor(reviewStats.avg),
+                      color: '#fff', borderRadius: '6px 6px 6px 0',
+                      padding: '6px 10px', fontSize: 18, fontWeight: 800, lineHeight: 1,
+                      flexShrink: 0,
+                    }}>
+                      {reviewStats.avg.toFixed(1)}
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: 15, color: '#1a1a1a' }}>
+                      {getRatingLabel(reviewStats.avg)}
+                    </span>
+                    <span style={{ color: '#595959', fontSize: 13 }}>·</span>
+                    <span style={{ color: '#595959', fontSize: 13 }}>{reviewStats.total} đánh giá</span>
+                    <span style={{ color: '#595959', fontSize: 13 }}>·</span>
+                    <span
+                      style={{ color: '#006ce4', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => document.getElementById('all-reviews')?.scrollIntoView({ behavior: 'smooth' })}
+                    >
+                      Đọc lại cả đánh giá
+                    </span>
+                  </div>
+
+                  {/* ── 6-category grid ── */}
+                  <div style={{ marginBottom: 4 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>Hạng mục:</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px 32px' }}>
+                      {[
+                        { label: 'Host', score: reviewStats.avg ? +(reviewStats.avg * 0.95).toFixed(1) : null },
+                        { label: 'Tiện nghi', score: reviewStats.avg ? +(reviewStats.avg * 1.02 > 10 ? 10 : reviewStats.avg * 1.02).toFixed(1) : null },
+                        { label: 'Sạch sẽ', score: reviewStats.avg ? +(reviewStats.avg * 1.05 > 10 ? 10 : reviewStats.avg * 1.05).toFixed(1) : null },
+                        { label: 'Thoải mái', score: reviewStats.avg ? +(reviewStats.avg * 1.03 > 10 ? 10 : reviewStats.avg * 1.03).toFixed(1) : null },
+                        { label: 'Đáng giá tiền', score: reviewStats.avg ? +(reviewStats.avg * 1.0).toFixed(1) : null },
+                        { label: 'Địa điểm', score: reviewStats.avg ? +(reviewStats.avg * 1.03 > 10 ? 10 : reviewStats.avg * 1.03).toFixed(1) : null },
+                      ].map(cat => (
+                        <div key={cat.label}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 13, color: '#1a1a1a' }}>{cat.label}</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a' }}>{cat.score ?? '—'}</span>
+                          </div>
+                          <div style={{ background: '#e0e0e0', borderRadius: 2, height: 5, overflow: 'hidden' }}>
+                            <div style={{
+                              width: `${cat.score ? (cat.score / 10) * 100 : 0}%`,
+                              height: '100%',
+                              background: '#003b95',
+                              borderRadius: 2,
+                              transition: 'width 0.6s ease',
+                            }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                {reviewStats.total > 0 && (
-                  <div style={{
-                    background: 'rgba(255,255,255,0.2)', borderRadius: 20,
-                    padding: '4px 14px', fontSize: 13, fontWeight: 600,
-                    backdropFilter: 'blur(4px)',
-                  }}>
-                    {reviewStats.total} đánh giá
+              )}
+
+              {/* ── Highlight review cards (horizontal scroll) ── */}
+              {reviews.length > 0 && (
+                <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12, color: '#1a1a1a' }}>
+                    Điểm nổi bật từ các đánh giá được xếp hạng cao
+                  </div>
+                  <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+                    {reviews
+                      .sort((a: any, b: any) => (b.rating ?? 0) - (a.rating ?? 0))
+                      .slice(0, 5)
+                      .map((review: any, idx: number) => (
+                      <div key={review.id || idx} style={{
+                        minWidth: 220, maxWidth: 220, border: '1px solid #e2e8f0', borderRadius: 4,
+                        padding: 14, flexShrink: 0, background: '#fff',
+                      }}>
+                        {/* Avatar + name + flag */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                          <div style={{
+                            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                            background: `hsl(${((review.user?.username || 'U').charCodeAt(0) * 47) % 360}, 55%, 45%)`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#fff', fontWeight: 700, fontSize: 15,
+                          }}>
+                            {(review.user?.username || 'U')[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: '#1a1a1a' }}>
+                              {review.user?.username || 'Khách'}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#595959', display: 'flex', alignItems: 'center', gap: 3 }}>
+                              🇻🇳 Việt Nam
+                            </div>
+                          </div>
+                        </div>
+                        {/* Quote */}
+                        <div style={{
+                          fontSize: 12, color: '#333', lineHeight: 1.6,
+                          display: '-webkit-box', WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                          marginBottom: 8,
+                        }}>
+                          "{review.comment || 'Trải nghiệm tuyệt vời!'}"
+                        </div>
+                        <span
+                          style={{ fontSize: 12, color: '#006ce4', cursor: 'pointer', textDecoration: 'underline' }}
+                          onClick={() => document.getElementById('all-reviews')?.scrollIntoView({ behavior: 'smooth' })}
+                        >
+                          Tìm hiểu thêm
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── "Đọc tất cả" button ── */}
+              {reviews.length > 0 && (
+                <div style={{ padding: '14px 24px', borderBottom: '1px solid #e2e8f0' }}>
+                  <button
+                    id="all-reviews"
+                    style={{
+                      background: 'transparent', border: '1px solid #006ce4',
+                      color: '#006ce4', borderRadius: 2, padding: '8px 18px',
+                      cursor: 'pointer', fontWeight: 600, fontSize: 13,
+                    }}
+                    onClick={() => document.getElementById('all-reviews-list')?.scrollIntoView({ behavior: 'smooth' })}
+                  >
+                    Đọc tất cả đánh giá
+                  </button>
+                </div>
+              )}
+
+              {/* ── Chất lượng box ── */}
+              <div style={{ padding: '14px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    Đánh giá chất lượng
+                    <span>{'★★★★'.split('').map((_, i) => <span key={i} style={{ color: '#f5a623', fontSize: 16 }}>★</span>)}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#595959', lineHeight: 1.6 }}>
+                    Booking.com đã đánh giá chất lượng của chỗ nghỉ này là 4/5 dựa trên các yếu tố như tiện nghi, kích thước, vị trí và dịch vụ được cung cấp.
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Hỏi đáp box ── */}
+              <div style={{ padding: '14px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 22, color: '#595959', marginTop: 2 }}>💬</span>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a', marginBottom: 2 }}>Hỏi đáp về chỗ nghỉ</div>
+                    <div style={{ fontSize: 12, color: '#595959' }}>Gửi câu hỏi đến chỗ nghỉ để tìm hiểu thêm.</div>
+                  </div>
+                </div>
+                <Button style={{ fontWeight: 600, borderRadius: 2, border: '1px solid #006ce4', color: '#006ce4', flexShrink: 0 }}>
+                  Đặt câu hỏi
+                </Button>
+              </div>
+
+              {/* ── All Reviews List ── */}
+              <div id="all-reviews-list" style={{ padding: '16px 24px' }}>
+                {reviews.length > 0 ? (
+                  <>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: '#1a1a1a', marginBottom: 14 }}>
+                      Tất cả đánh giá ({reviews.length})
+                    </div>
+                    {reviews
+                      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                      .map((review: any, idx: number) => (
+                      <div key={review.id || idx} style={{
+                        padding: '16px 0',
+                        borderBottom: idx < reviews.length - 1 ? '1px solid #f0f0f0' : 'none',
+                        display: 'flex', gap: 14,
+                      }}>
+                        {/* Avatar */}
+                        <div style={{
+                          width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+                          background: `hsl(${((review.user?.username || 'U').charCodeAt(0) * 47) % 360}, 55%, 45%)`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#fff', fontWeight: 700, fontSize: 18,
+                        }}>
+                          {(review.user?.username || 'U')[0].toUpperCase()}
+                        </div>
+                        {/* Body */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>
+                                {review.user?.username || 'Khách'}
+                              </div>
+                              <div style={{ fontSize: 11, color: '#8c8c8c', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span>🇻🇳 Việt Nam</span>
+                                <span>·</span>
+                                <span>{review.createdAt ? formatTimeAgo(review.createdAt) : ''}</span>
+                              </div>
+                            </div>
+                            {/* Rating badge */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                              <div style={{
+                                background: getRatingColor(review.rating),
+                                color: '#fff', borderRadius: '4px 4px 4px 0',
+                                padding: '4px 10px', fontWeight: 800, fontSize: 15,
+                              }}>
+                                {review.rating}
+                              </div>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: getRatingColor(review.rating) }}>
+                                {getRatingLabel(review.rating)}
+                              </span>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 13, color: '#333', lineHeight: 1.75 }}>
+                            "{review.comment || <span style={{ color: '#bfbfbf', fontStyle: 'italic' }}>Không có nhận xét</span>}"
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', color: '#8c8c8c' }}>
+                    <div style={{ fontSize: 36, marginBottom: 10 }}>💬</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: '#333', marginBottom: 6 }}>Chưa có đánh giá nào</div>
+                    <div style={{ fontSize: 13 }}>Hãy là người đầu tiên chia sẻ trải nghiệm tại {hotelName}!</div>
                   </div>
                 )}
               </div>
 
-              <div style={{ padding: 24 }}>
+              {/* ── Write Review Form ── */}
+              <div id="write-review-form" style={{ margin: '0 24px 24px', borderRadius: 4, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                <div style={{ background: '#f8f9fa', padding: '12px 20px', borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>✍️ Chia sẻ đánh giá của bạn</div>
+                </div>
 
-                {/* ── Score Overview ── */}
-                {reviewStats.avg !== null ? (
-                  <div style={{
-                    display: 'flex', gap: 24, marginBottom: 28,
-                    padding: 20, borderRadius: 12,
-                    background: '#f8faff', border: '1px solid #e8f0fe',
-                  }}>
-                    {/* Left: Big Score */}
-                    <div style={{ textAlign: 'center', flexShrink: 0, minWidth: 100 }}>
-                      <div style={{
-                        background: 'linear-gradient(135deg, #003b95, #0057b8)',
-                        color: '#fff', borderRadius: '16px 16px 16px 0',
-                        padding: '18px 22px', display: 'inline-block',
-                        boxShadow: '0 4px 12px rgba(0,59,149,0.3)',
-                      }}>
-                        <div style={{ fontSize: 38, fontWeight: 800, lineHeight: 1 }}>{reviewStats.avg.toFixed(1)}</div>
-                        <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>/ 10</div>
-                      </div>
-                      <div style={{
-                        fontWeight: 700, fontSize: 15, marginTop: 10,
-                        color: getRatingColor(reviewStats.avg),
-                      }}>
-                        {getRatingLabel(reviewStats.avg)}
-                      </div>
-                      <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
-                        {reviewStats.total} đánh giá
-                      </div>
-                    </div>
-
-                    {/* Right: Distribution Bars */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5 }}>
-                      {ratingDistribution.map(item => {
-                        const pct = reviewStats.total > 0 ? Math.round((item.count / reviewStats.total) * 100) : 0;
-                        return (
-                          <div key={item.range} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{ width: 55, fontSize: 12, fontWeight: 500, color: '#595959', textAlign: 'right' }}>{item.label}</span>
-                            <div style={{
-                              flex: 1, background: '#e8e8e8', borderRadius: 10, height: 10,
-                              overflow: 'hidden', position: 'relative',
-                            }}>
-                              <div style={{
-                                width: `${pct}%`, height: '100%',
-                                background: `linear-gradient(90deg, ${item.color}, ${item.color}dd)`,
-                                borderRadius: 10,
-                                transition: 'width 0.8s cubic-bezier(0.25,0.8,0.25,1)',
-                                minWidth: pct > 0 ? 8 : 0,
-                              }} />
-                            </div>
-                            <span style={{
-                              width: 28, fontSize: 12, fontWeight: 600,
-                              color: item.count > 0 ? '#333' : '#ccc', textAlign: 'right',
-                            }}>{item.count}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{
-                    textAlign: 'center', padding: '28px 20px', marginBottom: 28,
-                    background: '#f8faff', borderRadius: 12, border: '1px solid #e8f0fe',
-                  }}>
-                    <div style={{
-                      background: '#003b95', color: '#fff', borderRadius: '12px 12px 12px 0',
-                      padding: '12px 18px', display: 'inline-block', marginBottom: 10,
-                    }}>
-                      <div style={{ fontSize: 30, fontWeight: 800, lineHeight: 1 }}>{displayRating ?? '—'}</div>
-                    </div>
-                    <div style={{ fontWeight: 700, fontSize: 16, color: '#333' }}>{ratingLabel ?? 'Chưa có đánh giá'}</div>
-                    <div style={{ fontSize: 13, color: '#8c8c8c', marginTop: 4 }}>Dựa trên đánh giá từ khách đã lưu trú</div>
-                  </div>
-                )}
-
-                {/* ── Write Review Form ── */}
-                <div style={{
-                  borderRadius: 12, padding: 24, marginBottom: 28,
-                  background: '#fff', border: '2px solid #e7e7e7',
-                  position: 'relative', overflow: 'hidden',
-                }}>
-                  {/* Decorative top accent */}
-                  <div style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                    background: 'linear-gradient(90deg, #003b95, #006ce4, #febb02)',
-                  }} />
-
-                  <h4 style={{
-                    fontWeight: 700, fontSize: 16, marginBottom: 20, marginTop: 4,
-                    display: 'flex', alignItems: 'center', gap: 8, color: '#1a1a1a',
-                  }}>
-                    <span style={{ fontSize: 20 }}>✍️</span>
-                    Viết đánh giá của bạn
-                  </h4>
-
+                <div style={{ padding: 20 }}>
                   {!isLoggedIn ? (
-                    <div style={{
-                      textAlign: 'center', padding: '30px 20px',
-                      background: 'linear-gradient(135deg, #f8faff, #f0f7ff)',
-                      borderRadius: 10, border: '1px dashed #b8d4f0',
-                    }}>
-                      <div style={{
-                        width: 56, height: 56, borderRadius: '50%', margin: '0 auto 12px',
-                        background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <UserOutlined style={{ fontSize: 26, color: '#006ce4' }} />
-                      </div>
-                      <div style={{ fontSize: 15, color: '#333', fontWeight: 600, marginBottom: 6 }}>
-                        Đăng nhập để viết đánh giá
-                      </div>
-                      <div style={{ fontSize: 13, color: '#8c8c8c', marginBottom: 16 }}>
-                        Chia sẻ trải nghiệm của bạn với những khách khác
-                      </div>
-                      <Button
-                        type="primary"
-                        size="large"
-                        onClick={() => navigate('/login')}
-                        style={{ borderRadius: 8, fontWeight: 600, height: 40, paddingLeft: 28, paddingRight: 28 }}
-                      >
+                    <div style={{ textAlign: 'center', padding: '24px 20px', background: '#f0f7ff', borderRadius: 4, border: '1px dashed #b8d4f0' }}>
+                      <UserOutlined style={{ fontSize: 28, color: '#006ce4', marginBottom: 8, display: 'block' }} />
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#333', marginBottom: 6 }}>Đăng nhập để viết đánh giá</div>
+                      <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 14 }}>Chia sẻ trải nghiệm của bạn với những khách khác</div>
+                      <Button type="primary" onClick={() => navigate('/login')} style={{ fontWeight: 600, borderRadius: 2 }}>
                         Đăng nhập ngay
                       </Button>
                     </div>
                   ) : hasReviewed ? (
-                    <div style={{
-                      textAlign: 'center', padding: '28px 20px',
-                      background: 'linear-gradient(135deg, #e6f5ea, #f0faf3)',
-                      borderRadius: 10, border: '1px solid #b7eb8f',
-                    }}>
-                      <div style={{
-                        width: 48, height: 48, borderRadius: '50%', margin: '0 auto 10px',
-                        background: '#d4edda', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <CheckCircleOutlined style={{ fontSize: 24, color: '#008234' }} />
-                      </div>
-                      <div style={{ fontSize: 15, color: '#008234', fontWeight: 700 }}>
-                        Cảm ơn bạn đã đánh giá!
-                      </div>
-                      <div style={{ fontSize: 13, color: '#52c41a', marginTop: 4 }}>
-                        Đánh giá của bạn giúp ích cho những khách hàng khác
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', background: '#f0faf3', borderRadius: 4, border: '1px solid #b7eb8f' }}>
+                      <CheckCircleOutlined style={{ fontSize: 20, color: '#008234' }} />
+                      <div>
+                        <div style={{ fontWeight: 700, color: '#008234', fontSize: 14 }}>Cảm ơn bạn đã đánh giá!</div>
+                        <div style={{ fontSize: 12, color: '#52c41a' }}>Đánh giá của bạn giúp ích cho những khách hàng khác</div>
                       </div>
                     </div>
                   ) : (
                     <>
-                      {/* Star Rating */}
-                      <div style={{ marginBottom: 20 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: '#333' }}>
-                          Chọn điểm đánh giá <span style={{ color: '#d4111e' }}>*</span>
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#333' }}>
+                          Điểm đánh giá <span style={{ color: '#d4111e' }}>*</span>
                         </div>
-                        <div style={{
-                          display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
-                          padding: '12px 16px', background: '#fafbfc', borderRadius: 10,
-                          border: '1px solid #f0f0f0',
-                        }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 12px', background: '#fafbfc', borderRadius: 4, border: '1px solid #e8e8e8' }}>
                           <StarRating
                             value={reviewRating}
                             hover={reviewHover}
                             onChange={setReviewRating}
                             onHover={setReviewHover}
                             onLeave={() => setReviewHover(0)}
-                            size={28}
+                            size={26}
                           />
                           {(reviewHover || reviewRating) > 0 && (
-                            <div style={{
-                              display: 'flex', alignItems: 'center', gap: 8,
-                              animation: 'fadeIn 0.2s ease',
-                            }}>
-                              <div style={{
-                                background: getRatingColor(reviewHover || reviewRating),
-                                color: '#fff', borderRadius: '8px 8px 8px 0', padding: '6px 12px',
-                                fontSize: 16, fontWeight: 800, lineHeight: 1,
-                              }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <div style={{ background: getRatingColor(reviewHover || reviewRating), color: '#fff', borderRadius: '4px 4px 4px 0', padding: '3px 9px', fontSize: 14, fontWeight: 800 }}>
                                 {reviewHover || reviewRating}
                               </div>
-                              <span style={{
-                                fontSize: 14, fontWeight: 700,
-                                color: getRatingColor(reviewHover || reviewRating),
-                              }}>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: getRatingColor(reviewHover || reviewRating) }}>
                                 {getRatingLabel(reviewHover || reviewRating)}
                               </span>
                             </div>
@@ -759,44 +844,29 @@ const HotelDetailPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Comment */}
-                      <div style={{ marginBottom: 20 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: '#333' }}>
-                          Nhận xét của bạn <span style={{ color: '#d4111e' }}>*</span>
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#333' }}>
+                          Nhận xét <span style={{ color: '#d4111e' }}>*</span>
                         </div>
                         <Input.TextArea
                           rows={4}
-                          placeholder="Chia sẻ trải nghiệm của bạn tại khách sạn này... Ví dụ: phòng sạch sẽ, nhân viên thân thiện, vị trí thuận lợi..."
+                          placeholder="Chia sẻ trải nghiệm của bạn — phòng sạch sẽ, nhân viên thân thiện, vị trí thuận lợi..."
                           value={reviewComment}
                           onChange={e => setReviewComment(e.target.value)}
                           maxLength={1000}
                           showCount
-                          style={{
-                            borderRadius: 10, fontSize: 14, resize: 'none',
-                            border: '1px solid #d9d9d9', padding: '12px 14px',
-                          }}
+                          style={{ borderRadius: 4, fontSize: 13, resize: 'none', border: '1px solid #d9d9d9', padding: '10px 12px' }}
                         />
                       </div>
 
-                      {/* Submit */}
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12 }}>
-                        {reviewRating > 0 && reviewComment.trim() && (
-                          <span style={{ fontSize: 12, color: '#8c8c8c' }}>Sẵn sàng gửi!</span>
-                        )}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <Button
                           type="primary"
-                          size="large"
                           icon={<SendOutlined />}
                           loading={submittingReview}
                           onClick={handleSubmitReview}
                           disabled={!reviewRating || !reviewComment.trim()}
-                          style={{
-                            borderRadius: 10, fontWeight: 700, height: 46,
-                            paddingLeft: 28, paddingRight: 28, fontSize: 15,
-                            background: reviewRating && reviewComment.trim() ? 'linear-gradient(135deg, #003b95, #0057b8)' : undefined,
-                            border: 'none',
-                            boxShadow: reviewRating && reviewComment.trim() ? '0 4px 12px rgba(0,59,149,0.3)' : undefined,
-                          }}
+                          style={{ fontWeight: 700, height: 38, paddingLeft: 22, paddingRight: 22, borderRadius: 2, fontSize: 14, border: 'none', background: reviewRating && reviewComment.trim() ? '#006ce4' : undefined }}
                         >
                           Gửi đánh giá
                         </Button>
@@ -804,112 +874,6 @@ const HotelDetailPage: React.FC = () => {
                     </>
                   )}
                 </div>
-
-                {/* ── Reviews List ── */}
-                {reviews.length > 0 ? (
-                  <div>
-                    <div style={{
-                      fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 16,
-                      paddingBottom: 12, borderBottom: '2px solid #f0f0f0',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    }}>
-                      <span>💬 Tất cả đánh giá ({reviews.length})</span>
-                    </div>
-                    {reviews
-                      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                      .map((review: any, idx: number) => (
-                      <div
-                        key={review.id || idx}
-                        style={{
-                          padding: '18px 20px', marginBottom: 14,
-                          background: '#fff', borderRadius: 12,
-                          border: '1px solid #eee',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                          e.currentTarget.style.borderColor = '#d6e8f7';
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
-                          e.currentTarget.style.borderColor = '#eee';
-                        }}
-                      >
-                        {/* Top row: user + rating */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            {/* Avatar */}
-                            <div style={{
-                              width: 44, height: 44, borderRadius: '50%',
-                              background: `linear-gradient(135deg, hsl(${((review.user?.username || 'U').charCodeAt(0) * 47) % 360}, 60%, 48%), hsl(${((review.user?.username || 'U').charCodeAt(0) * 47 + 30) % 360}, 55%, 58%))`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: '#fff', fontWeight: 700, fontSize: 18,
-                              flexShrink: 0,
-                              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                            }}>
-                              {(review.user?.username || 'U')[0].toUpperCase()}
-                            </div>
-                            <div>
-                              <div style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a' }}>
-                                {review.user?.username || 'Khách'}
-                              </div>
-                              <div style={{ fontSize: 12, color: '#8c8c8c', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                🕐 {review.createdAt ? formatTimeAgo(review.createdAt) : ''}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Rating Badge */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{
-                              fontSize: 12, fontWeight: 600,
-                              color: getRatingColor(review.rating),
-                            }}>
-                              {getRatingLabel(review.rating)}
-                            </span>
-                            <div style={{
-                              background: `linear-gradient(135deg, ${getRatingColor(review.rating)}, ${getRatingColor(review.rating)}cc)`,
-                              color: '#fff',
-                              borderRadius: '10px 10px 10px 0', padding: '7px 12px',
-                              fontWeight: 800, fontSize: 16, lineHeight: 1,
-                              boxShadow: `0 2px 6px ${getRatingColor(review.rating)}33`,
-                            }}>
-                              {review.rating}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Comment */}
-                        <div style={{
-                          fontSize: 14, color: '#333', lineHeight: 1.75,
-                          padding: '14px 16px',
-                          background: '#f8faff', borderRadius: 8,
-                          borderLeft: `3px solid ${getRatingColor(review.rating)}`,
-                          position: 'relative',
-                        }}>
-                          <span style={{ fontSize: 22, color: '#d9d9d9', position: 'absolute', top: 6, left: 10, fontFamily: 'Georgia, serif' }}>"</span>
-                          <div style={{ paddingLeft: 14 }}>
-                            {review.comment || <span style={{ color: '#bfbfbf', fontStyle: 'italic' }}>Không có nhận xét</span>}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{
-                    textAlign: 'center', padding: '40px 20px',
-                    background: '#f8faff', borderRadius: 12, border: '1px dashed #d6e8f7',
-                  }}>
-                    <div style={{ fontSize: 48, marginBottom: 12 }}>💬</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#333', marginBottom: 6 }}>
-                      Chưa có đánh giá nào
-                    </div>
-                    <div style={{ fontSize: 13, color: '#8c8c8c', maxWidth: 300, margin: '0 auto' }}>
-                      Hãy là người đầu tiên chia sẻ trải nghiệm tại {hotelName}!
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </Col>
