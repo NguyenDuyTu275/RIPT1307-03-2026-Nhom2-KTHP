@@ -36,7 +36,7 @@ public class ImageController {
      * Upload ảnh đại diện cho hotel
      * POST /api/images/hotel/{hotelId}
      */
-    @PostMapping("/hotel/{hotelId}")
+    @PostMapping(value = "/hotel/{hotelId}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadHotelImage(
             @PathVariable Long hotelId,
             @RequestParam("file") MultipartFile file

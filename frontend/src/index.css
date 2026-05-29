@@ -1,4 +1,4 @@
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════
    RESET & BASE
@@ -6,49 +6,49 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.55;
 
-  /* ── Booking.com Brand Colors ── */
-  --blue-deep: #003580;
+  /* ── Booking.com chính xác ── */
+  --blue-deep:    #003580;
   --blue-primary: #003b95;
-  --blue-accent: #006ce4;
-  --blue-hover: #0057b8;
-  --blue-light: #ebf3ff;
-  --yellow-cta: #febb02;
-  --yellow-hover: #f5ad00;
-  --green: #008234;
-  --green-light: #e6f5ea;
-  --red: #d4111e;
-  --red-light: #fde8e8;
-  --orange: #f56600;
+  --blue-accent:  #006ce4;
+  --blue-hover:   #0052b3;
+  --blue-light:   #ebf3ff;
+  --yellow-cta:   #febb02;
+  --yellow-hover: #f5a623;
+  --green:        #008234;
+  --green-light:  #ebf7ee;
+  --red:          #cc0000;
+  --red-light:    #fef0f0;
+  --orange:       #f56600;
 
   /* ── Neutrals ── */
-  --white: #ffffff;
-  --bg: #f5f5f5;
-  --bg-card: #ffffff;
-  --border: #e7e7e7;
-  --border-dark: #bdbdbd;
-  --text-primary: #1a1a1a;
-  --text-secondary: #595959;
-  --text-muted: #8c8c8c;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.10);
-  --shadow-lg: 0 4px 16px rgba(0,0,0,0.14);
+  --white:          #ffffff;
+  --bg:             #f2f2f2;
+  --bg-card:        #ffffff;
+  --border:         #e7e7e7;
+  --border-dark:    #bdbdbd;
+  --text-primary:   #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-muted:     #999999;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 2px 10px rgba(0,0,0,0.12);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.16);
 
   /* ── Layout ── */
-  --container: 1100px;
+  --container:     1200px;
   --container-pad: 24px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
 }
 
 html { scroll-behavior: smooth; }
 
 body {
   min-height: 100vh;
-  background: var(--white);
+  background: var(--bg);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -89,77 +89,239 @@ button { cursor: pointer; font-family: inherit; }
 .back-btn:hover { color: var(--blue-hover); text-decoration: underline; }
 
 /* ═══════════════════════════════════════════════════════════════
-   HEADER / NAVBAR
+   HEADER — Booking.com 2-row style
 ═══════════════════════════════════════════════════════════════ */
-.header {
+.bk-header {
   background: var(--blue-primary);
   position: sticky;
   top: 0;
   z-index: 1000;
 }
 
-.header-inner {
+/* ─ Top row ─ */
+.bk-header-top {
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+.bk-header-top-inner {
   max-width: var(--container);
   margin: 0 auto;
   padding: 0 var(--container-pad);
-  height: 56px;
+  height: 52px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-.header-logo {
-  font-size: 22px;
+.bk-logo {
+  font-size: 23px;
   font-weight: 800;
   color: var(--white);
-  flex-shrink: 0;
   cursor: pointer;
   letter-spacing: -0.5px;
+  flex-shrink: 0;
+  font-style: italic;
 }
+.bk-logo span { color: var(--yellow-cta); }
 
-.header-logo span { color: var(--yellow-cta); }
-
-.header-nav {
+.bk-header-actions {
   display: flex;
   align-items: center;
   gap: 4px;
   margin-left: auto;
 }
 
-.header-btn {
-  color: var(--white) !important;
-  background: transparent !important;
-  border: 1px solid rgba(255,255,255,0.4) !important;
-  border-radius: var(--radius-sm) !important;
-  padding: 4px 12px !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  height: 34px !important;
-  transition: all 0.2s !important;
-  box-shadow: none !important;
+.bk-header-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.bk-header-action-btn:hover {
+  background: rgba(255,255,255,0.15);
 }
 
-.header-btn:hover {
-  background: rgba(255,255,255,0.12) !important;
-  border-color: var(--white) !important;
+.bk-header-signin-btn {
+  background: var(--white);
+  color: var(--blue-primary);
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-left: 4px;
+}
+.bk-header-signin-btn:hover {
+  background: #e8f0fe;
 }
 
-.header-btn-primary {
-  background: var(--white) !important;
-  color: var(--blue-primary) !important;
-  border-color: var(--white) !important;
-  font-weight: 600 !important;
+.bk-header-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+.bk-header-user-btn:hover { background: rgba(255,255,255,0.15); }
+
+.bk-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #febb02, #f5a623);
+  color: #003b95;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
-.header-btn-primary:hover {
-  background: var(--bg) !important;
+.bk-avatar-name { font-size: 13px; font-weight: 700; color: var(--white); line-height: 1.2; }
+
+/* Popover avatar section */
+.bk-popover-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 14px;
+  gap: 8px;
+  background: linear-gradient(135deg, #003b95 0%, #005cc5 100%);
 }
 
-.header-search-mini {
-  flex: 1;
-  max-width: 380px;
-  margin: 0 12px;
+.bk-popover-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #febb02, #f5a623);
+  color: #003b95;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.4);
+  transition: border-color 0.2s;
 }
+.bk-popover-avatar:hover { border-color: var(--white); }
+.bk-popover-avatar:hover .bk-popover-avatar-overlay { opacity: 1; }
+
+.bk-popover-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.bk-popover-avatar-initial {
+  font-size: 22px;
+  font-weight: 800;
+  color: #003b95;
+}
+
+.bk-popover-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: 50%;
+}
+
+.bk-popover-username {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+}
+
+/* Popover items */
+.bk-popover-item {
+  padding: 9px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  color: var(--text-primary);
+}
+.bk-popover-item:hover { background: #f5f5f5; }
+.bk-popover-item-admin { color: var(--blue-accent) !important; font-weight: 600; }
+.bk-popover-item-danger { color: var(--red) !important; }
+
+/* ─ Nav tabs row ─ */
+.bk-header-tabs {
+  background: var(--blue-primary);
+}
+
+.bk-header-tabs-inner {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--container-pad);
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.bk-nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 14px;
+  border-radius: 30px 30px 0 0;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  margin-bottom: -1px;
+}
+.bk-nav-tab:hover {
+  background: rgba(255,255,255,0.12);
+  color: var(--white);
+}
+.bk-nav-tab.active {
+  background: var(--white);
+  color: var(--blue-primary);
+  font-weight: 700;
+  border-color: var(--white);
+}
+
+/* Keep old .header for compatibility */
+.header { background: var(--blue-primary); position: sticky; top: 0; z-index: 1000; }
+.header-inner { max-width: var(--container); margin: 0 auto; padding: 0 var(--container-pad); height: 56px; display: flex; align-items: center; gap: 16px; }
+.header-logo { font-size: 22px; font-weight: 800; color: var(--white); flex-shrink: 0; cursor: pointer; letter-spacing: -0.5px; }
+.header-logo span { color: var(--yellow-cta); }
+.header-nav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.header-btn { color: var(--white) !important; background: transparent !important; border: 1px solid rgba(255,255,255,0.4) !important; border-radius: var(--radius-sm) !important; padding: 4px 12px !important; font-size: 13px !important; font-weight: 500 !important; height: 34px !important; transition: all 0.2s !important; box-shadow: none !important; }
+.header-btn:hover { background: rgba(255,255,255,0.12) !important; border-color: var(--white) !important; }
+.header-btn-primary { background: var(--white) !important; color: var(--blue-primary) !important; border-color: var(--white) !important; font-weight: 600 !important; }
+.header-btn-primary:hover { background: var(--bg) !important; }
+.header-search-mini { flex: 1; max-width: 380px; margin: 0 12px; }
 
 /* ═══════════════════════════════════════════════════════════════
    FOOTER
@@ -341,6 +503,113 @@ button { cursor: pointer; font-family: inherit; }
 .hero-search {
   max-width: 860px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   BK HERO — Booking.com exact style
+═══════════════════════════════════════════════════════════════ */
+.bk-hero {
+  background: var(--blue-primary);
+  padding: 40px 0 64px;
+}
+
+.bk-hero-inner {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--container-pad);
+}
+
+.bk-hero-title {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.bk-hero-subtitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 20px;
+}
+
+.bk-hero-search {
+  max-width: 900px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BK SECTIONS
+═══════════════════════════════════════════════════════════════ */
+.bk-section {
+  padding: 40px 0;
+  background: var(--white);
+}
+
+.bk-why-section {
+  padding: 40px 0;
+  background: var(--bg);
+}
+
+.bk-section-inner {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--container-pad);
+}
+
+.bk-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.bk-section-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.bk-section-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.bk-section-link {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue-accent);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bk-section-link:hover { text-decoration: underline; }
+
+.bk-empty-state {
+  text-align: center;
+  padding: 64px 0;
+  color: var(--text-muted);
+}
+.bk-empty-state p { margin-top: 12px; font-size: 15px; }
+
+/* Why cards */
+.bk-why-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: box-shadow 0.2s;
+}
+.bk-why-card:hover { box-shadow: var(--shadow-md); }
+.bk-why-icon { margin-bottom: 14px; height: 40px; display: flex; align-items: center; }
+.bk-why-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); }
+.bk-why-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
 
 /* ═══════════════════════════════════════════════════════════════
    HOTEL CARD (Vertical)

@@ -9,6 +9,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import HomePage from './pages/HomePage';
 import SearchResults from './pages/SearchResults';
 import HotelDetailPage from './pages/HotelDetailPage';
+import HotelReviewAndChatPage from './pages/HotelReviewAndChatPage';
 import GuestInfoPage from './pages/GuestInfoPage';
 import BookingConfirmation from './pages/BookingConfirmation';
 
@@ -40,6 +41,7 @@ function App() {
         {/* ── Core Search & Hotel Flow */}
         <Route path="/search" element={<SearchResults />} />
         <Route path="/hotels/:id" element={<HotelDetailPage />} />
+        <Route path="/hotels/:id/reviews" element={<HotelReviewAndChatPage />} />
         <Route path="/booking/:hotelId/guest" element={<GuestInfoPage />} />
         <Route path="/booking/confirmation" element={<BookingConfirmation />} />
 
