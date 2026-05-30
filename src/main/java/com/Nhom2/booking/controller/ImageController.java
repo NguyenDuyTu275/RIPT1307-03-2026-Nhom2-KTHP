@@ -73,7 +73,7 @@ public class ImageController {
         roomImage.setRoom(room);
 
         if (room.getImages() == null) {
-            room.setImages(new java.util.ArrayList<>());
+            room.setImages(new java.util.HashSet<>());
         }
         room.getImages().add(roomImage);
         roomRepository.save(room);

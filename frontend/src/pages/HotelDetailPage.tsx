@@ -423,28 +423,37 @@ const HotelDetailPage: React.FC = () => {
             {/* Map Box */}
             <div 
               style={{
+                position: 'relative',
                 borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0',
                 height: 150, marginBottom: 16,
-                backgroundImage: 'url(https://cf.bstatic.com/static/img/map/map-entry-point/462d770529d1ffb8580556f8f110c735dbe199e7.png)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
               }}
               onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotelName} ${hotel.address || ''} ${hotel.city || ''}`)}`, '_blank')}
             >
-              <Button 
-                type="primary" 
-                icon={<EnvironmentOutlined />}
-                style={{ 
-                  fontSize: 14, fontWeight: 700, borderRadius: 4, 
-                  padding: '0 16px', height: 36, background: '#006ce4',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}
-              >
-                Xem trên bản đồ
-              </Button>
+              <iframe 
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(`${hotelName} ${hotel.address || ''} ${hotel.city || ''}`)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                style={{ position: 'absolute', top: -50, left: 0, width: '100%', height: 250, border: 0, pointerEvents: 'none' }}
+                aria-hidden="true"
+                title="map"
+              />
+              <div style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(255,255,255,0.15)'
+              }}>
+                <Button 
+                  type="primary" 
+                  icon={<EnvironmentOutlined />}
+                  style={{ 
+                    fontSize: 14, fontWeight: 700, borderRadius: 4, 
+                    padding: '0 16px', height: 36, background: '#006ce4',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  Xem trên bản đồ
+                </Button>
+              </div>
             </div>
 
             {/* Rating Box */}

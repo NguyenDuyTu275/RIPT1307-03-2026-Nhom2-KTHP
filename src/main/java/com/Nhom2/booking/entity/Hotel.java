@@ -3,7 +3,8 @@ package com.Nhom2.booking.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import org.hibernate.annotations.CreationTimestamp;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,6 +39,6 @@ public class Hotel {
 
     @OneToMany(mappedBy = "hotel")
     @JsonIgnoreProperties({"hotel", "bookingRooms"})
-    private List<Room> rooms;
+    private Set<Room> rooms = new HashSet<>();
 }
 
