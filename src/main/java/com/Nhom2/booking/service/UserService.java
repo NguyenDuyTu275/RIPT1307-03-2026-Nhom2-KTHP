@@ -74,10 +74,7 @@ public class UserService {
     //sendotp
     public String sendOtp(RegisterRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return "Username already exists";
-        }
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return "Email already exists";
+            throw new RuntimeException("Username already exists");
         }
         String otp = otpService.generateOtp(request.getEmail());
         pendingUsers.put(request.getEmail(), request);
@@ -91,11 +88,11 @@ public class UserService {
     //verify otp
     public String verifyOtp(String email, String otp) {
         if (!otpService.verifyOtp(email, otp)) {
-            return "OTP invalid";
+            throw new RuntimeException("OTP invalid");
         }
         RegisterRequest request = pendingUsers.get(email);
         if (request == null) {
-            return "No registration request found";
+            throw new RuntimeException("No registration request found");
         }
         User user = new User();
         user.setUsername(request.getUsername());
