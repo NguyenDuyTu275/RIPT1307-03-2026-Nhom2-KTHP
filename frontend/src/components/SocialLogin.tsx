@@ -3,7 +3,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import { authApi } from '../api';
 interface SocialLoginProps {
   mode?: 'login' | 'register';
 }
@@ -25,27 +25,17 @@ const SocialLogin: React.FC<SocialLoginProps> = () => {
         // Tự động đăng ký / đăng nhập bằng Google account
         // Gửi lên backend (nếu BE chưa hỗ trợ OAuth, dùng username = email, pass = sub)
         try {
-          const res = await axios.post('http://localhost:8080/auth/login', {
-            username: email,
-            password: sub,
-          });
-          localStorage.setItem('token', res.data);
+          const res = await authApi.login(email, sub);
+          localStorage.setItem('token', res.data as string);
           localStorage.setItem('username', name || email);
           message.success(`Chào mừng, ${name}! 🎉`);
           navigate('/welcome');
         } catch {
           // Nếu chưa có account → tự đăng ký
-          const regRes = await axios.post('http://localhost:8080/auth/register', {
-            username: email,
-            email: email,
-            password: sub,
-          });
+          const regRes = await authApi.register(email, sub, email);
           if (regRes.data === 'Register success' || regRes.data === 'Username already exists') {
-            const loginRes = await axios.post('http://localhost:8080/auth/login', {
-              username: email,
-              password: sub,
-            });
-            localStorage.setItem('token', loginRes.data);
+            const loginRes = await authApi.login(email, sub);
+            localStorage.setItem('token', loginRes.data as string);
             localStorage.setItem('username', name || email);
             message.success(`Chào mừng, ${name}! 🎉`);
             navigate('/welcome');

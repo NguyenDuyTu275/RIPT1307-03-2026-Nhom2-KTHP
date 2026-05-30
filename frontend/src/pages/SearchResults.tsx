@@ -21,8 +21,9 @@ const SearchResults: React.FC = () => {
   const [hotels, setHotels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('rating');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [selectedRatings, setSelectedRatings] = useState<number[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [wishlist, setWishlist] = useState<number[]>(() => {
     try { return JSON.parse(localStorage.getItem('wishlist') || '[]'); } catch { return []; }
   });
@@ -50,8 +51,22 @@ const SearchResults: React.FC = () => {
     // Filter by rating
     if (selectedRatings.length > 0) {
       result = result.filter(h => {
-        const r = h.ratingAvg || 7;
+        const r = h.ratingAvg || 0;
         return selectedRatings.some(sel => r >= sel);
+      });
+    }
+
+    // Filter by price range
+    result = result.filter(h => {
+      const price = h.rooms?.[0]?.pricePerNight ?? 0;
+      return price >= priceRange[0] && price <= priceRange[1];
+    });
+
+    // Filter by property type / features (using simple keyword matching)
+    if (selectedTypes.length > 0) {
+      result = result.filter(h => {
+        const textToSearch = `${h.name} ${h.description}`.toLowerCase();
+        return selectedTypes.some(type => textToSearch.includes(type.toLowerCase()));
       });
     }
 
@@ -104,35 +119,118 @@ const SearchResults: React.FC = () => {
           <div className="search-results">
             {/* ── FILTER SIDEBAR ── */}
             <aside className="filter-sidebar">
-              <div className="filter-card">
-                <div className="filter-title">🎯 Lọc theo</div>
+              {/* Map Box */}
+              <div 
+                style={{
+                  borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0',
+                  height: 150, marginBottom: 16,
+                  backgroundImage: 'url(https://cf.bstatic.com/static/img/map/map-entry-point/462d770529d1ffb8580556f8f110c735dbe199e7.png)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(city || 'Việt Nam')}`, '_blank')}
+              >
+                <button style={{ 
+                    fontSize: 14, fontWeight: 700, borderRadius: 4, 
+                    padding: '0 16px', height: 36, background: '#006ce4', color: '#fff',
+                    border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  📍 Xem trên bản đồ
+                </button>
+              </div>
 
-                {/* Rating filter */}
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: '#595959' }}>Điểm đánh giá</div>
+              {/* Main Filter Card */}
+              <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#1a1a1a' }}>Chọn lọc theo:</h3>
+                </div>
+
+                <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: '#1a1a1a' }}>Dùng các bộ lọc cũ</div>
                   {[
-                    { label: 'Tuyệt vời: 9+', val: 9 },
-                    { label: 'Rất tốt: 8+', val: 8 },
-                    { label: 'Tốt: 7+', val: 7 },
-                  ].map(({ label, val }) => (
-                    <div key={val} style={{ marginBottom: 8 }}>
-                      <Checkbox
-                        checked={selectedRatings.includes(val)}
+                    { label: 'Nhà nghỉ mát', keyword: 'nhà nghỉ mát' },
+                    { label: 'Chỗ nghỉ nhà dân', keyword: 'nhà dân' },
+                    { label: 'Nhà nghỉ nông thôn', keyword: 'nông thôn' },
+                    { label: 'Căn hộ', keyword: 'căn hộ' },
+                    { label: 'Biệt thự', keyword: 'biệt thự' },
+                  ].map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
+                      <Checkbox 
+                        checked={selectedTypes.includes(item.keyword)}
                         onChange={(e) => {
-                          if (e.target.checked) setSelectedRatings([...selectedRatings, val]);
-                          else setSelectedRatings(selectedRatings.filter(r => r !== val));
+                          if (e.target.checked) setSelectedTypes([...selectedTypes, item.keyword]);
+                          else setSelectedTypes(selectedTypes.filter(t => t !== item.keyword));
                         }}
                       >
-                        <span style={{ fontSize: 13 }}>{label}</span>
+                        <span style={{ fontSize: 14, color: '#333' }}>{item.label}</span>
                       </Checkbox>
                     </div>
                   ))}
                 </div>
 
-                {/* Status filter */}
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 10, color: '#595959' }}>Trạng thái</div>
-                  <Checkbox defaultChecked><span style={{ fontSize: 13 }}>Còn phòng</span></Checkbox>
+                <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12, color: '#1a1a1a' }}>Ngân sách của bạn (mỗi đêm)</div>
+                  <div style={{ fontSize: 13, marginBottom: 16, color: '#333' }}>
+                    VND {priceRange[0].toLocaleString('vi-VN')} - VND {priceRange[1].toLocaleString('vi-VN')}{priceRange[1] === 10000000 ? '+' : ''}
+                  </div>
+                  
+                  {/* Histogram Chart */}
+                  <div style={{ height: 40, display: 'flex', alignItems: 'flex-end', gap: '2px', padding: '0 10px', marginBottom: -10 }}>
+                    {[1, 2, 1, 9, 4, 3, 5, 2, 1, 2, 1, 2, 1, 1, 2, 1, 1, 0, 1, 0, 0].map((h, i) => (
+                      <div key={i} style={{ flex: 1, background: '#e0e0e0', height: `${h * 10}%`, borderRadius: '2px 2px 0 0' }}></div>
+                    ))}
+                  </div>
+                  <Slider 
+                    range 
+                    min={0}
+                    max={10000000}
+                    step={100000}
+                    value={[priceRange[0], priceRange[1]]}
+                    onChange={(val) => setPriceRange([val[0], val[1]])}
+                    tooltip={{ formatter: null }} 
+                    trackStyle={[{ backgroundColor: '#006ce4', height: 4 }]}
+                    handleStyle={[
+                      { borderColor: '#006ce4', backgroundColor: '#006ce4', width: 18, height: 18, marginTop: -7 },
+                      { borderColor: '#006ce4', backgroundColor: '#006ce4', width: 18, height: 18, marginTop: -7 }
+                    ]}
+                  />
+                </div>
+
+                <div style={{ padding: '16px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: '#1a1a1a' }}>Các bộ lọc phổ biến</div>
+                  {[
+                    { label: 'Khách sạn', keyword: 'khách sạn' },
+                    { label: 'Bao gồm bữa sáng', keyword: 'bữa sáng' },
+                    { label: 'Đặt phòng không cần thẻ tín dụng', keyword: 'thẻ tín dụng' },
+                    { label: 'Giáp biển', keyword: 'biển' },
+                    { label: 'Căn hộ', keyword: 'căn hộ' },
+                    { label: 'Rất tốt: 8 điểm trở lên', sub: 'Dựa trên đánh giá của khách', val: 8 },
+                    { label: 'Resort', keyword: 'resort' },
+                  ].map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14, alignItems: 'flex-start' }}>
+                      <Checkbox 
+                        checked={item.val ? selectedRatings.includes(item.val) : selectedTypes.includes(item.keyword!)}
+                        onChange={(e) => {
+                          if (item.val) {
+                            if (e.target.checked) setSelectedRatings([...selectedRatings, item.val]);
+                            else setSelectedRatings(selectedRatings.filter(r => r !== item.val));
+                          } else if (item.keyword) {
+                            if (e.target.checked) setSelectedTypes([...selectedTypes, item.keyword]);
+                            else setSelectedTypes(selectedTypes.filter(t => t !== item.keyword));
+                          }
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: 14, color: '#333' }}>{item.label}</div>
+                          {item.sub && <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>{item.sub}</div>}
+                        </div>
+                      </Checkbox>
+                    </div>
+                  ))}
                 </div>
               </div>
             </aside>

@@ -6,41 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/auth': {
+      '/proxy': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-      },
-      '/hotels': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      '/bookings': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      '/users': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      '/rooms': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      '/notifications': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      '/admin': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      '/api/reviews': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-      '/api/images': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/proxy/, ''),
       },
       '/uploads': {
         target: 'http://localhost:8080',

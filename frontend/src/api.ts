@@ -13,7 +13,7 @@ import {
 // ─── Khởi tạo Swagger client ──────────────────────────────────
 // baseUrl = '' để dựa vào Vite proxy (forward tới localhost:8080)
 const swaggerApi = new Api({
-  baseUrl: '',
+  baseUrl: '/proxy',
   // Tự động gắn JWT token cho mọi request
   securityWorker: () => {
     const token = localStorage.getItem('token');
@@ -116,4 +116,12 @@ export const adminApi = {
 export const reviewApi = {
   getAll: () => swaggerApi.api.getAll2(JSON_FMT),
   create: (data: Review) => swaggerApi.api.create3(data, JSON_FMT),
+};
+
+// ─── IMAGES ───────────────────────────────────────────────────
+export const imageApi = {
+  uploadHotelImage: (hotelId: number, file: File) =>
+    swaggerApi.images.uploadHotelImage(hotelId, { file }, JSON_FMT),
+  uploadRoomImage: (roomId: number, file: File) =>
+    swaggerApi.images.uploadRoomImage(roomId, { file }, JSON_FMT),
 };
