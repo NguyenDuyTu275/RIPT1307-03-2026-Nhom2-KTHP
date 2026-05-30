@@ -53,6 +53,9 @@ public class SecurityConfig {
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/bookings/**").authenticated()
                         .requestMatchers("/notifications/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/hotels/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/hotels/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/hotels/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
 
