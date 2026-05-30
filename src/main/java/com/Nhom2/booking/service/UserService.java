@@ -17,6 +17,11 @@ import java.util.Optional;
 @Service
 public class UserService {
 
+    private static final int MIN_PASSWORD_LENGTH = 8;
+    private static final int MAX_PASSWORD_LENGTH = 72;
+    private static final String PASSWORD_POLICY_MESSAGE =
+            "Mật khẩu phải chứ từ 8-72 ký tự bào gồm chữ hoa, chữ thường, số , ký tự đặc biệt và không có khoảng trống.";
+
     private final Map<String, RegisterRequest> pendingUsers = new HashMap<>();
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
@@ -51,12 +56,29 @@ public class UserService {
 
     // CREATE / UPDATE
     public User create(User user) {
-        if (user.getRole() == null) {
-            user.setRole(UserRole.USER);
+        User existingUser = null;
+
+        if (user.getId() != null) {
+            existingUser = userRepository.findById(user.getId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
         }
-        if (user.getPassword() != null && !isBcrypt(user.getPassword())) {
+
+        if (user.getRole() == null) {
+            user.setRole(existingUser != null && existingUser.getRole() != null
+                    ? existingUser.getRole()
+                    : UserRole.USER);
+        }
+
+        if (isBlank(user.getPassword())) {
+            if (existingUser == null) {
+                throw new RuntimeException(PASSWORD_POLICY_MESSAGE);
+            }
+            user.setPassword(existingUser.getPassword());
+        } else if (!isBcrypt(user.getPassword())) {
+            validatePasswordStrength(user.getPassword(), user.getUsername(), user.getEmail());
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         }
+
         return userRepository.save(user);
     }
 
@@ -154,5 +176,28 @@ public class UserService {
 
     private boolean isBcrypt(String password) {
         return password != null && password.startsWith("$2");
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
+    private void validatePasswordStrength(String password, String username, String email) {
+        if (password.length() < MIN_PASSWORD_LENGTH || password.length() > MAX_PASSWORD_LENGTH) {
+            throw new RuntimeException(PASSWORD_POLICY_MESSAGE);
+        }
+        if (password.contains(" ")) {
+            throw new RuntimeException(PASSWORD_POLICY_MESSAGE);
+        }
+        boolean hasUpper = false, hasLower = false, hasDigit = false, hasSpecial = false;
+        for (char c : password.toCharArray()) {
+            if (Character.isUpperCase(c)) hasUpper = true;
+            else if (Character.isLowerCase(c)) hasLower = true;
+            else if (Character.isDigit(c)) hasDigit = true;
+            else hasSpecial = true;
+        }
+        if (!hasUpper || !hasLower || !hasDigit || !hasSpecial) {
+            throw new RuntimeException(PASSWORD_POLICY_MESSAGE);
+        }
     }
 }
