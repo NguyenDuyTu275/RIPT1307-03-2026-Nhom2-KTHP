@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { hotelApi, reviewApi } from '../api';
 
+
 /* ── Helper Functions ── */
 const getRatingLabel = (score: number) => {
   if (score >= 9) return 'Xuất sắc';
@@ -85,6 +86,8 @@ const HotelReviewAndChatPage: React.FC = () => {
     { sender: 'bot', text: 'Xin chào! Tôi là trợ lý ảo của khách sạn. Tôi có thể giúp gì cho bạn?', time: new Date() }
   ]);
   const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatHistory, setChatHistory] = useState<{role: 'user'|'assistant', content: string}[]>([]);
 
   const isLoggedIn = !!localStorage.getItem('token');
   const currentUsername = useMemo(() => {
@@ -148,21 +151,53 @@ const HotelReviewAndChatPage: React.FC = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!chatInput.trim()) return;
-    const newMsg = { sender: 'user' as const, text: chatInput, time: new Date() };
-    setMessages(prev => [...prev, newMsg]);
-    setChatInput('');
+const handleSendMessage = async () => {
+  if (!chatInput.trim() || chatLoading) return;
 
-    // Simulate Bot response
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev, 
-        { sender: 'bot', text: 'Cảm ơn bạn đã liên hệ. Hiện tại nhân viên đang bận, tôi đã ghi nhận tin nhắn của bạn.', time: new Date() }
-      ]);
-    }, 1000);
-  };
+  const userText = chatInput.trim();
+  setChatInput('');
+  setMessages(prev => [...prev, { sender: 'user', text: userText, time: new Date() }]);
+  const newHistory = [...chatHistory, { role: 'user' as const, content: userText }];
+  setChatHistory(newHistory);
+  setChatLoading(true);
 
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: `Bạn là trợ lý AI của khách sạn "${hotelName}" tại Hà Nội. 
+Trả lời ngắn gọn, thân thiện bằng tiếng Việt.
+Thông tin khách sạn: ${hotel?.description || ''}
+Địa chỉ: ${hotel?.address || ''}, ${hotel?.city || ''}
+Rating: ${hotel?.ratingAvg || ''}/10
+Hỗ trợ: đặt phòng, giá phòng, tiện nghi, check-in/check-out, chính sách huỷ phòng, hướng dẫn di chuyển đến khách sạn.`,
+          },
+          ...newHistory,
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+      }),
+    });
+
+    const data = await res.json();
+    const botReply = data.choices?.[0]?.message?.content || 'Xin lỗi, tôi không hiểu câu hỏi này.';
+
+    setMessages(prev => [...prev, { sender: 'bot', text: botReply, time: new Date() }]);
+    setChatHistory(prev => [...prev, { role: 'assistant', content: botReply }]);
+  } catch {
+    setMessages(prev => [...prev, { sender: 'bot', text: '⚠️ Lỗi kết nối. Vui lòng thử lại sau.', time: new Date() }]);
+  } finally {
+    setChatLoading(false);
+  }
+};
   const hotelName = hotel?.name || 'Khách sạn';
 
   return (
@@ -277,6 +312,33 @@ const HotelReviewAndChatPage: React.FC = () => {
 
               {/* Chat Messages */}
               <div style={{ flex: 1, padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, background: '#f9fafd' }}>
+                                  {/* Quick suggestions - chỉ hiện khi mới vào */}
+                {messages.length === 1 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {[
+                      '🏨 Khách sạn có những tiện nghi gì?',
+                      '💰 Giá phòng bao nhiêu?',
+                      '📅 Check-in lúc mấy giờ?',
+                      '🚗 Đi đến khách sạn thế nào?',
+                      '🔄 Chính sách huỷ phòng?',
+                    ].map(q => (
+                      <button
+                        key={q}
+                        onClick={() => { setChatInput(q); }}
+                        style={{
+                          background: '#f0f6ff', border: '1px solid #c8deff',
+                          borderRadius: 16, padding: '4px 12px',
+                          fontSize: 12, color: '#006ce4', cursor: 'pointer',
+                          transition: 'all .15s',
+                        }}
+                        onMouseEnter={e => { (e.target as HTMLElement).style.background = '#006ce4'; (e.target as HTMLElement).style.color = '#fff'; }}
+                        onMouseLeave={e => { (e.target as HTMLElement).style.background = '#f0f6ff'; (e.target as HTMLElement).style.color = '#006ce4'; }}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {messages.map((msg, idx) => (
                   <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{
@@ -299,23 +361,44 @@ const HotelReviewAndChatPage: React.FC = () => {
                 ))}
               </div>
 
+              {chatLoading && (
+              <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                <div style={{
+                  padding: '10px 16px',
+                  borderRadius: '12px 12px 12px 0',
+                  background: '#fff',
+                  border: '1px solid #e7e7e7',
+                  display: 'flex', gap: 4, alignItems: 'center'
+                }}>
+                  {[0,1,2].map(i => (
+                    <span key={i} style={{
+                      width: 7, height: 7, borderRadius: '50%', background: '#aaa', display: 'inline-block',
+                      animation: 'dot 1.2s infinite', animationDelay: `${i * 0.2}s`
+                    }} />
+                  ))}
+                </div>
+              </div>
+            )}
+
               {/* Chat Input */}
               <div style={{ padding: 16, borderTop: '1px solid #f0f0f0', background: '#fff', borderRadius: '0 0 8px 8px' }}>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <Input 
-                    placeholder="Nhập tin nhắn..." 
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onPressEnter={handleSendMessage}
-                    style={{ borderRadius: 20 }}
-                  />
-                  <Button 
-                    type="primary" 
-                    icon={<SendOutlined />} 
-                    shape="circle" 
-                    onClick={handleSendMessage}
-                    style={{ flexShrink: 0 }}
-                  />
+            <Input
+              placeholder={chatLoading ? 'Đang trả lời...' : 'Nhập tin nhắn...'}
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value)}
+              onPressEnter={handleSendMessage}
+              disabled={chatLoading}
+              style={{ borderRadius: 20 }}
+            />
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              shape="circle"
+              onClick={handleSendMessage}
+              disabled={chatLoading}
+              style={{ flexShrink: 0 }}
+            />
                 </div>
               </div>
             </div>
