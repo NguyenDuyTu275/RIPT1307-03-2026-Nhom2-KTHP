@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import SearchWidget from '../components/SearchWidget';
 import HotelCard, { getHotelImage } from '../components/HotelCard';
 import { hotelApi } from '../api';
+import { useWishlist } from '../context/WishlistContext';
 
 const { Option } = Select;
 
@@ -17,16 +18,19 @@ const SearchResults: React.FC = () => {
   const checkIn = searchParams.get('checkIn') || '';
   const checkOut = searchParams.get('checkOut') || '';
   const guests = searchParams.get('guests') || '2';
+  const roomsStr = searchParams.get('rooms') || '1';
+  
+  const numGuests = Number(guests) || 2;
+  const numRooms = Number(roomsStr) || 1;
 
   const [hotels, setHotels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('rating');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [selectedRatings, setSelectedRatings] = useState<number[]>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [wishlist, setWishlist] = useState<number[]>(() => {
-    try { return JSON.parse(localStorage.getItem('wishlist') || '[]'); } catch { return []; }
-  });
+  const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>([]);
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const { isInWishlist, toggleWish } = useWishlist();
 
   useEffect(() => {
     setLoading(true);
@@ -62,13 +66,29 @@ const SearchResults: React.FC = () => {
       return price >= priceRange[0] && price <= priceRange[1];
     });
 
-    // Filter by property type / features (using simple keyword matching)
-    if (selectedTypes.length > 0) {
+    // Filter by property type (OR logic)
+    if (selectedPropertyTypes.length > 0) {
       result = result.filter(h => {
         const textToSearch = `${h.name} ${h.description}`.toLowerCase();
-        return selectedTypes.some(type => textToSearch.includes(type.toLowerCase()));
+        return selectedPropertyTypes.some(type => textToSearch.includes(type.toLowerCase()));
       });
     }
+
+    // Filter by features/amenities (AND logic)
+    if (selectedFeatures.length > 0) {
+      result = result.filter(h => {
+        const textToSearch = `${h.name} ${h.description}`.toLowerCase();
+        return selectedFeatures.every(feature => textToSearch.includes(feature.toLowerCase()));
+      });
+    }
+
+    // Filter by guests and rooms capacity
+    result = result.filter(h => {
+      if (!h.rooms || h.rooms.length === 0) return false;
+      const totalCapacity = h.rooms.reduce((sum: number, r: any) => sum + (r.capacity || 0) * (r.quantity || 0), 0);
+      const totalRooms = h.rooms.reduce((sum: number, r: any) => sum + (r.quantity || 0), 0);
+      return totalCapacity >= numGuests && totalRooms >= numRooms;
+    });
 
     // Sort
     result.sort((a, b) => {
@@ -78,13 +98,8 @@ const SearchResults: React.FC = () => {
     });
 
     return result;
-  }, [hotels, city, selectedRatings, sortBy]);
+  }, [hotels, city, selectedRatings, sortBy, priceRange, selectedPropertyTypes, selectedFeatures, numGuests, numRooms]);
 
-  const toggleWish = (id: number) => {
-    const next = wishlist.includes(id) ? wishlist.filter(w => w !== id) : [...wishlist, id];
-    setWishlist(next);
-    localStorage.setItem('wishlist', JSON.stringify(next));
-  };
 
   return (
     <div className="page-wrapper">
@@ -160,10 +175,10 @@ const SearchResults: React.FC = () => {
                   ].map((item, idx) => (
                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
                       <Checkbox 
-                        checked={selectedTypes.includes(item.keyword)}
+                        checked={selectedPropertyTypes.includes(item.keyword)}
                         onChange={(e) => {
-                          if (e.target.checked) setSelectedTypes([...selectedTypes, item.keyword]);
-                          else setSelectedTypes(selectedTypes.filter(t => t !== item.keyword));
+                          if (e.target.checked) setSelectedPropertyTypes([...selectedPropertyTypes, item.keyword]);
+                          else setSelectedPropertyTypes(selectedPropertyTypes.filter(t => t !== item.keyword));
                         }}
                       >
                         <span style={{ fontSize: 14, color: '#333' }}>{item.label}</span>
@@ -200,27 +215,34 @@ const SearchResults: React.FC = () => {
                   />
                 </div>
 
-                <div style={{ padding: '16px' }}>
+                <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0' }}>
                   <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: '#1a1a1a' }}>Các bộ lọc phổ biến</div>
                   {[
-                    { label: 'Khách sạn', keyword: 'khách sạn' },
-                    { label: 'Bao gồm bữa sáng', keyword: 'bữa sáng' },
-                    { label: 'Đặt phòng không cần thẻ tín dụng', keyword: 'thẻ tín dụng' },
-                    { label: 'Giáp biển', keyword: 'biển' },
-                    { label: 'Căn hộ', keyword: 'căn hộ' },
+                    { label: 'Khách sạn', keyword: 'khách sạn', group: 'property' },
+                    { label: 'Bao gồm bữa sáng', keyword: 'bữa sáng', group: 'feature' },
+                    { label: 'Đặt phòng không cần thẻ tín dụng', keyword: 'thẻ tín dụng', group: 'feature' },
+                    { label: 'Giáp biển', keyword: 'biển', group: 'feature' },
+                    { label: 'Căn hộ', keyword: 'căn hộ', group: 'property' },
                     { label: 'Rất tốt: 8 điểm trở lên', sub: 'Dựa trên đánh giá của khách', val: 8 },
-                    { label: 'Resort', keyword: 'resort' },
+                    { label: 'Resort', keyword: 'resort', group: 'property' },
                   ].map((item, idx) => (
                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14, alignItems: 'flex-start' }}>
                       <Checkbox 
-                        checked={item.val ? selectedRatings.includes(item.val) : selectedTypes.includes(item.keyword!)}
+                        checked={
+                          item.val ? selectedRatings.includes(item.val) 
+                          : item.group === 'property' ? selectedPropertyTypes.includes(item.keyword!) 
+                          : selectedFeatures.includes(item.keyword!)
+                        }
                         onChange={(e) => {
                           if (item.val) {
                             if (e.target.checked) setSelectedRatings([...selectedRatings, item.val]);
                             else setSelectedRatings(selectedRatings.filter(r => r !== item.val));
-                          } else if (item.keyword) {
-                            if (e.target.checked) setSelectedTypes([...selectedTypes, item.keyword]);
-                            else setSelectedTypes(selectedTypes.filter(t => t !== item.keyword));
+                          } else if (item.keyword && item.group === 'property') {
+                            if (e.target.checked) setSelectedPropertyTypes([...selectedPropertyTypes, item.keyword]);
+                            else setSelectedPropertyTypes(selectedPropertyTypes.filter(t => t !== item.keyword));
+                          } else if (item.keyword && item.group === 'feature') {
+                            if (e.target.checked) setSelectedFeatures([...selectedFeatures, item.keyword]);
+                            else setSelectedFeatures(selectedFeatures.filter(t => t !== item.keyword));
                           }
                         }}
                       >
@@ -228,6 +250,50 @@ const SearchResults: React.FC = () => {
                           <div style={{ fontSize: 14, color: '#333' }}>{item.label}</div>
                           {item.sub && <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>{item.sub}</div>}
                         </div>
+                      </Checkbox>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ padding: '16px', borderBottom: '1px solid #e2e8f0' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: '#1a1a1a' }}>Tiện nghi</div>
+                  {[
+                    { label: 'Hồ bơi', keyword: 'hồ bơi' },
+                    { label: 'Wi-Fi miễn phí', keyword: 'wifi' },
+                    { label: 'Xe đưa đón sân bay', keyword: 'sân bay' },
+                    { label: 'Chỗ đậu xe', keyword: 'đậu xe' },
+                    { label: 'Trung tâm Spa & chăm sóc sức khoẻ', keyword: 'spa' },
+                    { label: 'Phòng gym', keyword: 'gym' },
+                  ].map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
+                      <Checkbox 
+                        checked={selectedFeatures.includes(item.keyword)}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedFeatures([...selectedFeatures, item.keyword]);
+                          else setSelectedFeatures(selectedFeatures.filter(t => t !== item.keyword));
+                        }}
+                      >
+                        <span style={{ fontSize: 14, color: '#333' }}>{item.label}</span>
+                      </Checkbox>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ padding: '16px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 14, color: '#1a1a1a' }}>Chính sách đặt phòng</div>
+                  {[
+                    { label: 'Miễn phí hủy phòng', keyword: 'hủy' },
+                    { label: 'Không cần thanh toán trước', keyword: 'thanh toán trước' },
+                  ].map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
+                      <Checkbox 
+                        checked={selectedFeatures.includes(item.keyword)}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedFeatures([...selectedFeatures, item.keyword]);
+                          else setSelectedFeatures(selectedFeatures.filter(t => t !== item.keyword));
+                        }}
+                      >
+                        <span style={{ fontSize: 14, color: '#333' }}>{item.label}</span>
                       </Checkbox>
                     </div>
                   ))}
@@ -244,7 +310,7 @@ const SearchResults: React.FC = () => {
                   </div>
                   {(checkIn && checkOut) && (
                     <div style={{ fontSize: 14, color: '#595959', marginTop: 4 }}>
-                      {checkIn} → {checkOut} · {guests} khách
+                      {checkIn} → {checkOut} · {guests} khách · {roomsStr} phòng
                     </div>
                   )}
                 </div>

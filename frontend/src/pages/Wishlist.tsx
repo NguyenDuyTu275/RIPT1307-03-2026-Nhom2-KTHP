@@ -1,89 +1,90 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Empty, Button } from 'antd';
+import { Row, Col, Button, Skeleton } from 'antd';
 import { HeartFilled, DeleteOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HotelCard from '../components/HotelCard';
 import { hotelApi } from '../api';
+import { useWishlist } from '../context/WishlistContext';
 
 const Wishlist: React.FC = () => {
   const navigate = useNavigate();
-  const [wishlist, setWishlist] = useState<number[]>(() => {
-    try { return JSON.parse(localStorage.getItem('wishlist') || '[]'); } catch { return []; }
-  });
+  const { wishlist, removeWish, clearAll } = useWishlist();
   const [hotels, setHotels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    hotelApi.getAll()
-      .then(res => setHotels(res.data || []))
+    if (wishlist.length === 0) {
+      setHotels([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    Promise.all(wishlist.map(id => hotelApi.getById(Number(id))))
+      .then(responses => {
+        const fetchedHotels = responses.map(res => res.data).filter(Boolean);
+        setHotels(fetchedHotels);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
-
-  const wishedHotels = hotels.filter(h => wishlist.includes(h.id));
-
-  const removeWish = (id: number) => {
-    const next = wishlist.filter(w => w !== id);
-    setWishlist(next);
-    localStorage.setItem('wishlist', JSON.stringify(next));
-  };
-
-  const clearAll = () => {
-    setWishlist([]);
-    localStorage.setItem('wishlist', '[]');
-  };
+  }, [wishlist]);
 
   return (
-    <div className="page-wrapper">
+    <div className="page-wrapper flex flex-col min-h-screen">
       <Header showSearch />
 
-      <div style={{ background: '#003b95', padding: '24px 0' }}>
-        <div className="container">
+      <div className="bg-[#003b95] py-6">
+        <div className="container mx-auto px-4">
           <button
             onClick={() => navigate('/')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 600,
-              padding: '0 0 12px',
-            }}
+            className="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-white/80 text-sm font-semibold pb-3"
           >
             ← Quay lại trang chủ
           </button>
-          <h1 style={{ color: '#fff', fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
-            <HeartFilled style={{ color: '#ff4d4f', marginRight: 10 }} />
+          <h1 className="text-white text-2xl font-extrabold mb-1 flex items-center">
+            <HeartFilled className="text-[#ff4d4f] mr-2.5" />
             Danh sách yêu thích
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 14 }}>
-            {wishedHotels.length} khách sạn đã lưu
+          <p className="text-white/80 text-sm m-0">
+            {wishlist.length} khách sạn đã lưu
           </p>
         </div>
       </div>
 
-      <div style={{ background: '#f5f5f5', flex: 1, padding: '24px 0 48px' }}>
-        <div className="container">
-          {wishedHotels.length === 0 ? (
-            <div style={{ background: '#fff', borderRadius: 8, padding: '64px 24px', textAlign: 'center' }}>
-              <div style={{ fontSize: 56 }}>💔</div>
-              <h2 style={{ marginTop: 16, fontSize: 20, fontWeight: 700 }}>Chưa có gì trong danh sách yêu thích</h2>
-              <p style={{ color: '#595959', marginBottom: 24 }}>Khi tìm kiếm khách sạn, nhấn ❤️ để lưu lại nhé!</p>
-              <Button type="primary" size="large" onClick={() => navigate('/search')} style={{ fontWeight: 700 }}>
+      <div className="bg-[#f5f5f5] flex-1 py-6 pb-12">
+        <div className="container mx-auto px-4">
+          {loading ? (
+            <Row gutter={[16, 20]}>
+              {[...Array(wishlist.length || 4)].map((_, i) => (
+                <Col key={i} xs={24} sm={12} md={6}>
+                  <div className="bg-white rounded-lg p-4 h-[300px]">
+                    <Skeleton active paragraph={{ rows: 4 }} />
+                  </div>
+                </Col>
+              ))}
+            </Row>
+          ) : hotels.length === 0 ? (
+            <div className="bg-white rounded-lg py-16 px-6 text-center">
+              <div className="text-6xl mb-4">💔</div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Chưa có gì trong danh sách yêu thích</h2>
+              <p className="text-gray-600 mb-6">Khi tìm kiếm khách sạn, nhấn ❤️ để lưu lại nhé!</p>
+              <Button type="primary" size="large" onClick={() => navigate('/search')} className="font-bold">
                 Tìm kiếm khách sạn
               </Button>
             </div>
           ) : (
             <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <span style={{ fontWeight: 700, fontSize: 16 }}>{wishedHotels.length} khách sạn yêu thích</span>
+              <div className="flex justify-between items-center mb-5">
+                <span className="font-bold text-base text-gray-900">{hotels.length} khách sạn yêu thích</span>
                 <Button icon={<DeleteOutlined />} danger onClick={clearAll} size="small">
                   Xóa tất cả
                 </Button>
               </div>
 
               <Row gutter={[16, 20]}>
-                {wishedHotels.map(hotel => (
+                {hotels.map(hotel => (
                   <Col key={hotel.id} xs={24} sm={12} md={6}>
                     <HotelCard
                       hotel={hotel}

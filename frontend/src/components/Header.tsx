@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Popover } from 'antd';
+import { useWishlist } from '../context/WishlistContext';
 
 interface HeaderProps {
   showSearch?: boolean;
@@ -11,6 +12,7 @@ const Header: React.FC<HeaderProps> = () => {
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username');
   const isAdmin = localStorage.getItem('role') === 'ADMIN';
+  const { wishlist } = useWishlist();
 
   const [avatarUrl, setAvatarUrl] = useState<string>(
     localStorage.getItem('avatarUrl') || ''
@@ -65,7 +67,14 @@ const Header: React.FC<HeaderProps> = () => {
       <div style={{ borderTop: '1px solid #e7e7e7' }} />
       <div className="bk-popover-item" onClick={() => navigate('/profile')}>Hồ sơ của tôi</div>
       <div className="bk-popover-item" onClick={() => navigate('/my-bookings')}>Lịch sử đặt phòng</div>
-      <div className="bk-popover-item" onClick={() => navigate('/wishlist')}>Danh sách yêu thích</div>
+      <div className="bk-popover-item" onClick={() => navigate('/wishlist')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>Danh sách yêu thích</span>
+        {wishlist.length > 0 && (
+          <span style={{ background: '#006ce4', color: '#fff', borderRadius: 10, padding: '1px 8px', fontSize: 12, fontWeight: 700 }}>
+            {wishlist.length}
+          </span>
+        )}
+      </div>
       {isAdmin && (
         <div className="bk-popover-item bk-popover-item-admin" onClick={() => navigate('/admin')}>
           Quản lý Admin

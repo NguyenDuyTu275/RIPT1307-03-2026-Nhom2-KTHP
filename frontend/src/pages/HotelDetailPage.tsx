@@ -13,6 +13,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { getHotelImage } from '../components/HotelCard';
 import { hotelApi, reviewApi } from '../api';
+import { useWishlist } from '../context/WishlistContext';
 import { transformImageUrl } from '../utils/imageUtils';
 
 const AMENITIES = [
@@ -107,12 +108,8 @@ const HotelDetailPage: React.FC = () => {
   const [hotel, setHotel] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Tổng quan');
-  const [wished, setWished] = useState(() => {
-    try {
-      const list = JSON.parse(localStorage.getItem('wishlist') || '[]');
-      return list.includes(Number(id));
-    } catch { return false; }
-  });
+  const { isInWishlist, toggleWish } = useWishlist();
+  const wished = isInWishlist(Number(id));
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   // ── Review state ──
@@ -241,12 +238,6 @@ const HotelDetailPage: React.FC = () => {
     }
   };
 
-  const toggleWish = () => {
-    const list = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    const next = wished ? list.filter((w: number) => w !== Number(id)) : [...list, Number(id)];
-    localStorage.setItem('wishlist', JSON.stringify(next));
-    setWished(!wished);
-  };
 
   const handleTabClick = (tab: string) => {
     if (tab === 'Đánh giá của khách') {
@@ -377,7 +368,7 @@ const HotelDetailPage: React.FC = () => {
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexShrink: 0 }}>
             <Button
               icon={wished ? <HeartFilled style={{ color: '#d4111e' }} /> : <HeartOutlined />}
-              onClick={toggleWish}
+              onClick={() => toggleWish(Number(id))}
               size="large"
             />
             <Button icon={<ShareAltOutlined />} size="large" />

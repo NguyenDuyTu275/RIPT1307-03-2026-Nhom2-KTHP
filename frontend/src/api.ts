@@ -13,7 +13,7 @@ import {
 // ─── Khởi tạo Swagger client ──────────────────────────────────
 // baseUrl = '' để dựa vào Vite proxy (forward tới localhost:8080)
 const swaggerApi = new Api({
-  baseUrl: '/proxy',
+  baseURL: '/proxy',
   // Tự động gắn JWT token cho mọi request
   securityWorker: () => {
     const token = localStorage.getItem('token');

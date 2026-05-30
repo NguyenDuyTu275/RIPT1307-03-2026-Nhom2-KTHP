@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { WishlistProvider } from './context/WishlistContext';
 
 // ── Auth Pages
 import LoginPage from './pages/LoginPage';
@@ -28,40 +29,42 @@ import './App.css';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* ── Root redirect */}
-        <Route path="/" element={<HomePage />} />
+    <WishlistProvider>
+      <Router>
+        <Routes>
+          {/* ── Root redirect */}
+          <Route path="/" element={<HomePage />} />
 
-        {/* ── Auth */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+          {/* ── Auth */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* ── Core Search & Hotel Flow */}
-        <Route path="/search" element={<SearchResults />} />
-        <Route path="/hotels/:id" element={<HotelDetailPage />} />
-        <Route path="/hotels/:id/reviews" element={<HotelReviewAndChatPage />} />
-        <Route path="/booking/:hotelId/guest" element={<GuestInfoPage />} />
-        <Route path="/booking/confirmation" element={<BookingConfirmation />} />
+          {/* ── Core Search & Hotel Flow */}
+          <Route path="/search" element={<SearchResults />} />
+          <Route path="/hotels/:id" element={<HotelDetailPage />} />
+          <Route path="/hotels/:id/reviews" element={<HotelReviewAndChatPage />} />
+          <Route path="/booking/:hotelId/guest" element={<GuestInfoPage />} />
+          <Route path="/booking/confirmation" element={<BookingConfirmation />} />
 
-        {/* ── Account */}
-        <Route path="/my-bookings" element={<MyBookingsPage />} />
-        <Route path="/profile" element={<Profile />} />
+          {/* ── Account */}
+          <Route path="/my-bookings" element={<MyBookingsPage />} />
+          <Route path="/profile" element={<Profile />} />
 
-        {/* ── UX Extras */}
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/deals" element={<Deals />} />
+          {/* ── UX Extras */}
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/deals" element={<Deals />} />
 
-        {/* ── Admin */}
-        <Route path="/admin" element={<AdminDashboard />} />
+          {/* ── Admin */}
+          <Route path="/admin" element={<AdminDashboard />} />
 
-        {/* ── Fallback */}
-        <Route path="/dashboard" element={<Navigate to="/" replace />} />
-        <Route path="/welcome" element={<Navigate to="/" replace />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+          {/* ── Fallback */}
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
+          <Route path="/welcome" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </WishlistProvider>
   );
 }
 

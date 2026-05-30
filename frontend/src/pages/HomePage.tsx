@@ -6,15 +6,14 @@ import Footer from '../components/Footer';
 import SearchWidget from '../components/SearchWidget';
 import HotelCard from '../components/HotelCard';
 import { hotelApi } from '../api';
+import { useWishlist } from '../context/WishlistContext';
 import { TrophyTwoTone, SafetyCertificateTwoTone, CustomerServiceTwoTone, StarTwoTone } from '@ant-design/icons';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [hotels, setHotels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [wishlist, setWishlist] = useState<number[]>(() => {
-    try { return JSON.parse(localStorage.getItem('wishlist') || '[]'); } catch { return []; }
-  });
+  const { isInWishlist, toggleWish } = useWishlist();
 
   useEffect(() => {
     hotelApi.getAll()
@@ -23,11 +22,6 @@ const HomePage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const toggleWish = (id: number) => {
-    const next = wishlist.includes(id) ? wishlist.filter(w => w !== id) : [...wishlist, id];
-    setWishlist(next);
-    localStorage.setItem('wishlist', JSON.stringify(next));
-  };
 
   return (
     <div className="page-wrapper">
@@ -74,7 +68,7 @@ const HomePage: React.FC = () => {
                 <Col key={hotel.id} xs={24} sm={12} md={6}>
                   <HotelCard
                     hotel={hotel}
-                    wished={wishlist.includes(hotel.id)}
+                    wished={isInWishlist(hotel.id)}
                     onWishToggle={() => toggleWish(hotel.id)}
                     onClick={() => navigate(`/hotels/${hotel.id}`)}
                   />
