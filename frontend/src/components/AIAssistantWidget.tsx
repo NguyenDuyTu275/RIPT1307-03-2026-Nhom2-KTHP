@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { chatApi } from '../api';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -16,56 +17,7 @@ const QUICK_QUESTIONS = [
   { label: '🛎️ Dịch vụ có gì?',          value: 'Các khách sạn có những dịch vụ đặc biệt gì như spa, rooftop, bar?' },
 ];
 
-async function callOpenAI(messages: Message[]): Promise<string> {
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-        role: 'system',
-        content: `Bạn là trợ lý AI của website đặt phòng khách sạn tại Hà Nội. Trả lời ngắn gọn, thân thiện bằng tiếng Việt.
 
-        Dữ liệu khách sạn thực tế trên hệ thống:
-        1. Lucien Hanoi Lakeside Rooftop & Bar – 02 Alley Cau Go – Rating 4.8⭐ – Có rooftop bar view hồ Hoàn Kiếm
-        2. Solare De Monte Hotel & Spa – 23-25 Nguyen Sieu – Rating 4.7⭐ – Boutique + spa cao cấp
-        3. Hanoi Emerald Waters Hotel & Spa – 47 Lo Su – Rating 4.6⭐ – Spa đẳng cấp phố cổ
-        4. Hotel Emerald Waters Classy – 27-29 Gia Ngu – Rating 4.5⭐ – Phong cách lịch lãm
-        5. Hanoi Emerald Waters Hotel Valley – 22 Lo Su – Rating 4.5⭐ – Yên tĩnh thư giãn
-        6. Hanoi Dalvostro Valentino Hotel – 12 Bao Khanh – Rating 4.7⭐ – Phong cách Ý
-        7. San Premium Hotel – 36 Ha Trung – Rating 4.6⭐ – Cao cấp view thành phố
-        8. H Hotel L Art Hanoi – 74-76 Hang Ga – Rating 4.8⭐ – Phong cách nghệ thuật độc đáo
-        9. La Belle Maison – 55 Cau Go – Rating 4.7⭐ – Phong cách Pháp nhìn ra hồ Hoàn Kiếm
-        10. San Palace Hotel – 187 Hang Bong – Rating 4.6⭐ – Palace sang trọng
-        11. San Boutique Hotel – 24 Hang Hanh – Rating 4.5⭐ – Boutique ấm cúng
-        12. Old Quarter Hotel – 23 Hang Hanh – Rating 4.4⭐ – Nét cổ kính phố cổ
-        13. Casa Valentina Hotel – 49 Hang Ga – Rating 4.6⭐ – Mediterranean sang trọng
-
-        Các loại phòng: STANDARD (1.1–1.4tr), SUPERIOR (1.4–2.1tr), DELUXE (1.6–2.8tr), SUITE (3.2–6tr/đêm)
-        Sức chứa: 2 người (phổ biến), 3-4 người (Family/Suite)
-
-        Chính sách:
-        - Đặt phòng: chọn khách sạn → chọn phòng → chọn ngày → thanh toán
-        - Huỷ/đổi ngày: vào mục "Đặt phòng của tôi" → gửi yêu cầu → chờ admin duyệt
-        - Trạng thái: PENDING (chờ xác nhận) | CONFIRMED (đã xác nhận) | CANCELLED (đã huỷ)
-        - Thanh toán: PAID | UNPAID | REFUNDED (hoàn tiền khi huỷ)
-        - Nếu hỏi ngoài chủ đề đặt phòng, vẫn trả lời bình thường và hữu ích.`,
-        },
-        ...messages.map((m) => ({ role: m.role, content: m.content })),
-      ],
-      max_tokens: 500,
-      temperature: 0.7,
-    }),
-  });
-  if (!res.ok) throw new Error('API error');
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? 'Xin lỗi, tôi không hiểu câu hỏi này.';
-}
 
 const AIAssistantWidget: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -87,9 +39,17 @@ const AIAssistantWidget: React.FC = () => {
     setMessages(updated);
     setInput('');
     setLoading(true);
-    try {
-      const reply = await callOpenAI(updated);
-      setMessages([...updated, { role: 'assistant', content: reply }]);
+try {
+      // 🟢 Thay vì gọi callOpenAI, giờ ta gọi chatApi chọc xuống Backend
+      const data = await chatApi.sendMessage(updated, {
+        name: "Hệ thống Booking Nhom2",
+        description: "Hệ thống đặt phòng trực tuyến tại Hà Nội.",
+        city: "Hà Nội",
+        ratingAvg: 9.5
+      });
+      
+      const botReply = data.reply || 'Xin lỗi, tôi không hiểu câu hỏi này.';
+      setMessages([...updated, { role: 'assistant', content: botReply }]);
     } catch {
       setMessages([...updated, { role: 'assistant', content: '⚠️ Lỗi kết nối. Vui lòng thử lại sau.' }]);
     } finally {

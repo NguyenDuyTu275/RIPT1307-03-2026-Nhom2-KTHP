@@ -4,7 +4,7 @@ import { Row, Col, Input, Button, message, Divider } from 'antd';
 import { SendOutlined, StarFilled, LeftOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { hotelApi, reviewApi } from '../api';
+import { hotelApi, reviewApi, chatApi } from '../api';
 
 
 /* ── Helper Functions ── */
@@ -162,33 +162,15 @@ const handleSendMessage = async () => {
   setChatLoading(true);
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: `Bạn là trợ lý AI của khách sạn "${hotelName}" tại Hà Nội. 
-Trả lời ngắn gọn, thân thiện bằng tiếng Việt.
-Thông tin khách sạn: ${hotel?.description || ''}
-Địa chỉ: ${hotel?.address || ''}, ${hotel?.city || ''}
-Rating: ${hotel?.ratingAvg || ''}/10
-Hỗ trợ: đặt phòng, giá phòng, tiện nghi, check-in/check-out, chính sách huỷ phòng, hướng dẫn di chuyển đến khách sạn.`,
-          },
-          ...newHistory,
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-      }),
+    const data = await chatApi.sendMessage(newHistory, {
+      name: hotel?.name,
+      description: hotel?.description,
+      address: hotel?.address,
+      city: hotel?.city,
+      ratingAvg: hotel?.ratingAvg
     });
 
-    const data = await res.json();
-    const botReply = data.choices?.[0]?.message?.content || 'Xin lỗi, tôi không hiểu câu hỏi này.';
+    const botReply = data.reply || 'Xin lỗi, tôi không hiểu câu hỏi này.';
 
     setMessages(prev => [...prev, { sender: 'bot', text: botReply, time: new Date() }]);
     setChatHistory(prev => [...prev, { role: 'assistant', content: botReply }]);
