@@ -75,12 +75,7 @@ const Header: React.FC<HeaderProps> = () => {
           </span>
         )}
       </div>
-      {isAdmin && (
-        <div className="bk-popover-item bk-popover-item-admin" onClick={() => navigate('/admin')}>
-          Quản lý Admin
-        </div>
-      )}
-      <div style={{ borderTop: '1px solid #e7e7e7' }} />
+
       <div className="bk-popover-item bk-popover-item-danger" onClick={handleLogout}>
         Đăng xuất
       </div>
@@ -101,6 +96,16 @@ const Header: React.FC<HeaderProps> = () => {
           <div className="bk-header-actions">
             {token ? (
               <>
+                {isAdmin && (
+                  <button
+                    className="bk-header-action-btn"
+                    onClick={() => navigate('/admin')}
+                    style={{ fontWeight: 600 }}
+                  >
+                    Quản lý Admin
+                  </button>
+                )}
+                
                 <button
                   className="bk-header-action-btn"
                   onClick={() => navigate('/my-bookings')}
