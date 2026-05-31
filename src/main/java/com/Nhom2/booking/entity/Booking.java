@@ -17,8 +17,6 @@ import lombok.AllArgsConstructor;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
-
 @Entity
 @Table(name = "bookings")
 public class Booking {
