@@ -8,6 +8,8 @@ import HotelCard from '../components/HotelCard';
 import { hotelApi } from '../api';
 import { useWishlist } from '../context/WishlistContext';
 import { TrophyTwoTone, SafetyCertificateTwoTone, CustomerServiceTwoTone, StarTwoTone } from '@ant-design/icons';
+import AIAssistantWidget from '../components/AIAssistantWidget';
+
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -105,6 +107,7 @@ const HomePage: React.FC = () => {
       </section>
 
       <Footer />
+      <AIAssistantWidget /> 
     </div>
   );
 };

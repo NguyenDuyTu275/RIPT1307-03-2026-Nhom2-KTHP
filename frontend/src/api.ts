@@ -42,6 +42,19 @@ export const authApi = {
     swaggerApi.auth.verifyOtp({ email, otp }, TEXT_FMT),
 };
 
+export const chatApi = {
+  sendMessage: (messages: any[], hotelInfo: any) => {
+    return fetch('/proxy/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ messages, hotelInfo })
+    }).then(res => res.json());
+  }
+};
+
 // ─── USERS ────────────────────────────────────────────────────
 export const userApi = {
   getAll: () => swaggerApi.users.getAll(JSON_FMT),
