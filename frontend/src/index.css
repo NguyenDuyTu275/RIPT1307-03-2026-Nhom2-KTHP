@@ -172,7 +172,6 @@ button {
   cursor: pointer;
   letter-spacing: -0.5px;
   flex-shrink: 0;
-  font-style: italic;
 }
 
 .bk-logo span {
@@ -2119,4 +2118,5 @@ button {
     border-right: none;
     border-bottom: 1px solid #e7e7e7;
   }
-}
+}@media (max-width: 768px) { .hide-on-mobile { display: none !important; } .mobile-only-flex { display: flex !important; } }
+.mobile-only-flex { display: none; }

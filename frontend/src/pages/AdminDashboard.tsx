@@ -6,6 +6,7 @@ import {
   UserOutlined, 
   DashboardOutlined, 
   BookOutlined,
+  BankOutlined,
   ReconciliationOutlined
 } from '@ant-design/icons';
 import Header from '../components/Header';
@@ -15,8 +16,9 @@ import AdminOverview from '../components/admin/AdminOverview';
 import AdminUsers from '../components/admin/AdminUsers';
 import AdminBookings from '../components/admin/AdminBookings';
 import AdminBookingRequests from '../components/admin/AdminBookingRequests';
+import AdminHotels from '../components/admin/AdminHotels';
 
-type TabKey = 'overview' | 'users' | 'bookings' | 'requests';
+type TabKey = 'overview' | 'users' | 'hotels' | 'bookings' | 'requests';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -38,6 +40,8 @@ const AdminDashboard: React.FC = () => {
         return <AdminOverview />;
       case 'users':
         return <AdminUsers />;
+      case 'hotels':
+        return <AdminHotels />;
       case 'bookings':
         return <AdminBookings />;
       case 'requests':
@@ -72,6 +76,14 @@ const AdminDashboard: React.FC = () => {
             style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, background: activeTab === 'users' ? '#e6f7ff' : 'transparent', color: activeTab === 'users' ? '#1890ff' : '#333', borderRight: activeTab === 'users' ? '3px solid #1890ff' : 'none' }}
           >
             <UserOutlined /> Quản lý Người dùng
+          </div>
+
+          <div 
+            className={`admin-menu-item ${activeTab === 'hotels' ? 'active' : ''}`}
+            onClick={() => setActiveTab('hotels')}
+            style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, background: activeTab === 'hotels' ? '#e6f7ff' : 'transparent', color: activeTab === 'hotels' ? '#1890ff' : '#333', borderRight: activeTab === 'hotels' ? '3px solid #1890ff' : 'none' }}
+          >
+            <BankOutlined /> Quản lý Khách sạn
           </div>
 
           <div 

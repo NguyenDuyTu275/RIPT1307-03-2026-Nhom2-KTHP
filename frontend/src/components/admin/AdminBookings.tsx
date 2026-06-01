@@ -7,7 +7,7 @@ const AdminBookings: React.FC = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<any>(null);
-  
+
   // Modal từ chối
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -93,18 +93,18 @@ const AdminBookings: React.FC = () => {
 
   const columns = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-    { 
-      title: 'Khách hàng', 
-      key: 'user', 
+    {
+      title: 'Khách hàng',
+      key: 'user',
       render: (_: any, record: any) => <b>{record.user?.username || 'N/A'}</b>
     },
-    { 
-      title: 'Khách sạn', 
+    {
+      title: 'Khách sạn',
       key: 'hotel',
       render: (_: any, record: any) => <span>{record.hotel?.name || 'N/A'}</span>
     },
-    { 
-      title: 'Thời gian', 
+    {
+      title: 'Thời gian',
       key: 'dates',
       render: (_: any, record: any) => (
         <div style={{ fontSize: 13 }}>
@@ -113,14 +113,14 @@ const AdminBookings: React.FC = () => {
         </div>
       )
     },
-    { 
-      title: 'Tổng tiền', 
-      dataIndex: 'totalPrice', 
+    {
+      title: 'Tổng tiền',
+      dataIndex: 'totalPrice',
       key: 'totalPrice',
       render: (v: number) => <b style={{ color: '#006ce4' }}>{v?.toLocaleString('vi-VN')}₫</b>
     },
-    { 
-      title: 'Trạng thái', 
+    {
+      title: 'Trạng thái',
       key: 'status',
       render: (_: any, record: any) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

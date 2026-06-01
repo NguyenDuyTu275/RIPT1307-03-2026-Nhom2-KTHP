@@ -42,40 +42,42 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="auth-page">
+    <div className="auth-page" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Header */}
       <div className="auth-header">
         <div className="auth-header-logo" onClick={() => navigate('/')}>
-          Booking.com
+          Booking<span style={{ color: '#febb02' }}>.com</span>
         </div>
       </div>
 
       <div className="auth-container">
-        <div className="auth-box">
-          <h1 className="auth-title">Đăng nhập</h1>
-          <p className="auth-subtitle">Chào mừng bạn quay lại Booking.com</p>
+        <div className="auth-box" style={{ padding: '40px 32px' }}>
+          <h1 className="auth-title" style={{ fontSize: 28, fontWeight: 800, color: '#1a1a1a', marginBottom: 8 }}>Đăng nhập</h1>
+          <p className="auth-subtitle" style={{ fontSize: 15, color: '#595959', marginBottom: 24 }}>Chào mừng bạn quay lại Booking.com</p>
 
           <Form name="login" onFinish={onFinish} layout="vertical" size="large">
             <Form.Item
               name="username"
-              label="Tên đăng nhập"
+              label={<span style={{ fontWeight: 600 }}>Tên đăng nhập</span>}
               rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
             >
               <Input
                 prefix={<UserOutlined style={{ color: '#929292' }} />}
                 placeholder="Nhập tên đăng nhập"
+                style={{ borderRadius: 8 }}
               />
             </Form.Item>
 
             <Form.Item
               name="password"
-              label="Mật khẩu"
+              label={<span style={{ fontWeight: 600 }}>Mật khẩu</span>}
               rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
             >
               <Input.Password
                 prefix={<LockOutlined style={{ color: '#929292' }} />}
                 placeholder="Nhập mật khẩu"
                 iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
+                style={{ borderRadius: 8 }}
               />
             </Form.Item>
 
@@ -85,27 +87,27 @@ const LoginPage: React.FC = () => {
               </Link>
             </div>
 
-            <Form.Item>
-              <Button type="primary" htmlType="submit" block loading={loading} style={{ height: 44, fontSize: 15, fontWeight: 700 }}>
+            <Form.Item style={{ marginTop: 12 }}>
+              <Button type="primary" htmlType="submit" block loading={loading} style={{ height: 44, fontSize: 15, fontWeight: 700, borderRadius: 8, background: '#006ce4' }}>
                 Đăng nhập
               </Button>
             </Form.Item>
           </Form>
 
-          <Divider plain style={{ color: '#929292', fontSize: 13 }}>hoặc</Divider>
+          <Divider plain style={{ color: '#8c8c8c', fontSize: 13, margin: '24px 0' }}>hoặc</Divider>
 
           <div style={{ textAlign: 'center', fontSize: 14 }}>
             <span style={{ color: '#595959' }}>Chưa có tài khoản? </span>
-            <Link to="/register" style={{ color: '#006ce4', fontWeight: 700 }}>
+            <Link to="/register" style={{ color: '#006ce4', fontWeight: 700, marginLeft: 4 }}>
               Đăng ký miễn phí
             </Link>
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 12, color: '#929292' }}>
+        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 12, color: '#929292', lineHeight: 1.5 }}>
           Bằng cách đăng nhập, bạn đồng ý với{' '}
-          <Link to="/privacy" style={{ color: '#006ce4' }}>Điều khoản sử dụng</Link>{' '}và{' '}
-          <Link to="/privacy" style={{ color: '#006ce4' }}>Chính sách bảo mật</Link> của chúng tôi.
+          <Link to="/privacy" style={{ color: '#006ce4', fontWeight: 500 }}>Điều khoản sử dụng</Link>{' '}và{' '}
+          <Link to="/privacy" style={{ color: '#006ce4', fontWeight: 500 }}>Chính sách bảo mật</Link> của chúng tôi.
         </div>
       </div>
     </div>

@@ -32,53 +32,68 @@ const Wishlist: React.FC = () => {
   }, [wishlist]);
 
   return (
-    <div className="page-wrapper flex flex-col min-h-screen">
-      <Header showSearch />
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
+      <Header />
 
-      <div className="bg-[#003b95] py-6">
-        <div className="container mx-auto px-4">
+      {/* Blue Header Section */}
+      <div style={{ background: '#003b95', padding: '24px 0', color: '#fff' }}>
+        <div style={{ maxWidth: 1024, margin: '0 auto', padding: '0 24px' }}>
           <button
             onClick={() => navigate('/')}
-            className="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-white/80 text-sm font-semibold pb-3"
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              color: 'rgba(255,255,255,0.8)', 
+              cursor: 'pointer', 
+              fontSize: 14, 
+              fontWeight: 600,
+              padding: 0,
+              marginBottom: 16,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4
+            }}
           >
             ← Quay lại trang chủ
           </button>
-          <h1 className="text-white text-2xl font-extrabold mb-1 flex items-center">
-            <HeartFilled className="text-[#ff4d4f] mr-2.5" />
+          
+          <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 4px 0', display: 'flex', alignItems: 'center' }}>
+            <HeartFilled style={{ color: '#ff4d4f', marginRight: 12, fontSize: 24 }} />
             Danh sách yêu thích
           </h1>
-          <p className="text-white/80 text-sm m-0">
+          <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
             {wishlist.length} khách sạn đã lưu
           </p>
         </div>
       </div>
 
-      <div className="bg-[#f5f5f5] flex-1 py-6 pb-12">
-        <div className="container mx-auto px-4">
+      {/* Main Content */}
+      <div style={{ flex: 1, padding: '32px 0' }}>
+        <div style={{ maxWidth: 1024, margin: '0 auto', padding: '0 24px' }}>
           {loading ? (
             <Row gutter={[16, 20]}>
               {[...Array(wishlist.length || 4)].map((_, i) => (
                 <Col key={i} xs={24} sm={12} md={6}>
-                  <div className="bg-white rounded-lg p-4 h-[300px]">
+                  <div style={{ background: '#fff', borderRadius: 8, padding: 16, height: 300 }}>
                     <Skeleton active paragraph={{ rows: 4 }} />
                   </div>
                 </Col>
               ))}
             </Row>
           ) : hotels.length === 0 ? (
-            <div className="bg-white rounded-lg py-16 px-6 text-center">
-              <div className="text-6xl mb-4">💔</div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Chưa có gì trong danh sách yêu thích</h2>
-              <p className="text-gray-600 mb-6">Khi tìm kiếm khách sạn, nhấn ❤️ để lưu lại nhé!</p>
-              <Button type="primary" size="large" onClick={() => navigate('/search')} className="font-bold">
+            <div style={{ background: '#fff', borderRadius: 8, padding: '64px 24px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+              <div style={{ fontSize: 64, marginBottom: 16 }}>💔</div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', margin: '0 0 8px 0' }}>Chưa có gì trong danh sách yêu thích</h2>
+              <p style={{ color: '#595959', marginBottom: 24, fontSize: 15 }}>Khi tìm kiếm khách sạn, nhấn ❤️ để lưu lại nhé!</p>
+              <Button type="primary" size="large" onClick={() => navigate('/')} style={{ fontWeight: 700, borderRadius: 4 }}>
                 Tìm kiếm khách sạn
               </Button>
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-center mb-5">
-                <span className="font-bold text-base text-gray-900">{hotels.length} khách sạn yêu thích</span>
-                <Button icon={<DeleteOutlined />} danger onClick={clearAll} size="small">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <span style={{ fontWeight: 700, fontSize: 16, color: '#1a1a1a' }}>{hotels.length} khách sạn yêu thích</span>
+                <Button icon={<DeleteOutlined />} danger onClick={clearAll} size="small" style={{ borderRadius: 4 }}>
                   Xóa tất cả
                 </Button>
               </div>

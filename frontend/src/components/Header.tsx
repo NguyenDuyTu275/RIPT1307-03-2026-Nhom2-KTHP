@@ -1,7 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Popover } from 'antd';
+import { Popover, Badge, List, Typography, Spin } from 'antd';
+import { BellOutlined } from '@ant-design/icons';
 import { useWishlist } from '../context/WishlistContext';
+import { notificationApi } from '../api';
+
+const { Text } = Typography;
 
 interface HeaderProps {
   showSearch?: boolean;
@@ -18,6 +22,47 @@ const Header: React.FC<HeaderProps> = () => {
     localStorage.getItem('avatarUrl') || ''
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const fetchNotifications = async () => {
+    if (!token) return;
+    setLoadingNotifications(true);
+    try {
+      const res = await notificationApi.getMy();
+      setNotifications(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchNotifications();
+      // Polling every 1 minute
+      const intervalId = setInterval(fetchNotifications, 60000);
+      return () => clearInterval(intervalId);
+    }
+  }, [token]);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const handleReadNotification = async (notification: any) => {
+    if (notification.isRead) return;
+    try {
+      await notificationApi.markAsRead(notification.id);
+      setNotifications(prev => 
+        prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
+      );
+    } catch (error) {
+      console.error('Lỗi khi đánh dấu thông báo đã đọc', error);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -36,6 +81,43 @@ const Header: React.FC<HeaderProps> = () => {
     reader.readAsDataURL(file);
   };
 
+  const notificationContent = (
+    <div style={{ width: 320, maxHeight: 400, overflowY: 'auto', padding: '0 8px' }}>
+      <div style={{ padding: '8px 0', borderBottom: '1px solid #f0f0f0', marginBottom: 8 }}>
+        <b style={{ fontSize: 16 }}>Thông báo</b>
+      </div>
+      {loadingNotifications && notifications.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 20 }}><Spin /></div>
+      ) : notifications.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 20, color: '#888' }}>Không có thông báo nào</div>
+      ) : (
+        <List
+          dataSource={notifications}
+          renderItem={(item) => (
+            <List.Item 
+              style={{ 
+                cursor: 'pointer', 
+                background: item.isRead ? 'transparent' : '#e6f7ff',
+                padding: '12px 8px',
+                borderRadius: 8,
+                marginBottom: 4,
+                border: 'none'
+              }}
+              onClick={() => handleReadNotification(item)}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                <Text strong={!item.isRead}>{item.title}</Text>
+                <Text type="secondary" style={{ fontSize: 13, marginTop: 4 }}>{item.message}</Text>
+                <Text type="secondary" style={{ fontSize: 11, marginTop: 8, color: '#bfbfbf' }}>
+                  {new Date(item.createdAt).toLocaleString('vi-VN')}
+                </Text>
+              </div>
+            </List.Item>
+          )}
+        />
+      )}
+    </div>
+  );
 
   const popoverContent = (
     <div style={{ minWidth: 200 }}>
@@ -66,6 +148,14 @@ const Header: React.FC<HeaderProps> = () => {
       </div>
       <div style={{ borderTop: '1px solid #e7e7e7' }} />
       <div className="bk-popover-item" onClick={() => navigate('/profile')}>Hồ sơ của tôi</div>
+      
+      {/* Hiện menu Admin trên mobile */}
+      {isAdmin && (
+        <div className="bk-popover-item mobile-only-flex" onClick={() => navigate('/admin')} style={{ fontWeight: 700, color: '#006ce4' }}>
+          Quản lý Admin
+        </div>
+      )}
+
       <div className="bk-popover-item" onClick={() => navigate('/my-bookings')}>Lịch sử đặt phòng</div>
       <div className="bk-popover-item" onClick={() => navigate('/wishlist')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>Danh sách yêu thích</span>
@@ -98,7 +188,7 @@ const Header: React.FC<HeaderProps> = () => {
               <>
                 {isAdmin && (
                   <button
-                    className="bk-header-action-btn"
+                    className="bk-header-action-btn hide-on-mobile"
                     onClick={() => navigate('/admin')}
                     style={{ fontWeight: 600 }}
                   >
@@ -107,11 +197,26 @@ const Header: React.FC<HeaderProps> = () => {
                 )}
                 
                 <button
-                  className="bk-header-action-btn"
+                  className="bk-header-action-btn hide-on-mobile"
                   onClick={() => navigate('/my-bookings')}
                 >
                   Đặt chỗ của tôi
                 </button>
+
+                <Popover
+                  content={notificationContent}
+                  trigger="click"
+                  placement="bottomRight"
+                  open={showNotifications}
+                  onOpenChange={setShowNotifications}
+                  overlayInnerStyle={{ borderRadius: 12, padding: 8 }}
+                >
+                  <button className="bk-header-action-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+                      <BellOutlined style={{ color: '#fff', fontSize: 20 }} />
+                    </Badge>
+                  </button>
+                </Popover>
 
                 <Popover
                   content={popoverContent}
@@ -127,7 +232,7 @@ const Header: React.FC<HeaderProps> = () => {
                         username?.charAt(0).toUpperCase() || 'U'
                       )}
                     </div>
-                    <div className="bk-avatar-name">{username}</div>
+                    <div className="bk-avatar-name hide-on-mobile">{username}</div>
                   </button>
                 </Popover>
               </>
