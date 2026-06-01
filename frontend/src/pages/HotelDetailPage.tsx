@@ -17,14 +17,14 @@ import { useWishlist } from '../context/WishlistContext';
 import { transformImageUrl } from '../utils/imageUtils';
 
 const AMENITIES = [
-  { icon: <WifiOutlined />, label: 'Wi-Fi miễn phí' },
-  { icon: <CarOutlined />, label: 'Bãi đỗ xe' },
-  { icon: <CoffeeOutlined />, label: 'Bữa sáng' },
-  { icon: '🏊', label: 'Hồ bơi' },
-  { icon: '🏋️', label: 'Phòng gym' },
-  { icon: '🍽️', label: 'Nhà hàng' },
-  { icon: '🛎️', label: 'Lễ tân 24/7' },
-  { icon: '❄️', label: 'Điều hoà' },
+  { label: 'Wi-Fi miễn phí' },
+  { label: 'Bãi đỗ xe' },
+  { label: 'Bữa sáng' },
+  { label: 'Hồ bơi' },
+  { label: 'Phòng gym' },
+  { label: 'Nhà hàng' },
+  { label: 'Lễ tân 24/7' },
+  { label: 'Điều hoà' },
 ];
 
 const NAV_TABS = ['Tổng quan', 'Thông tin & giá', 'Tiện nghi', 'Quy tắc chung', 'Đánh giá của khách'];
@@ -164,14 +164,14 @@ const HotelDetailPage: React.FC = () => {
   const fetchReviews = useCallback(() => {
     reviewApi.getAll()
       .then((res: any) => setAllReviews(res.data || []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
     if (!id) return;
     hotelApi.getById(Number(id))
       .then(res => setHotel(res.data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -252,7 +252,7 @@ const HotelDetailPage: React.FC = () => {
       'Tiện nghi': 'amenities-section',
       'Quy tắc chung': 'policies-section',
     }[tab];
-    
+
     if (sectionId) {
       // Add a slight offset to account for the sticky header
       const element = document.getElementById(sectionId);
@@ -260,7 +260,7 @@ const HotelDetailPage: React.FC = () => {
         const headerOffset = 110; // Adjust this based on your actual sticky header height
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-  
+
         window.scrollTo({
           top: offsetPosition,
           behavior: 'smooth'
@@ -350,17 +350,16 @@ const HotelDetailPage: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              {[1,2,3].map(i => (
+              {[1, 2, 3].map(i => (
                 <span key={i} style={{ color: '#febb02', fontSize: 14 }}>★</span>
               ))}
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, lineHeight: 1.3 }}>{hotelName}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-              <span 
+              <span
                 style={{ fontSize: 13, color: '#006ce4', cursor: 'pointer' }}
                 onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotelName} ${hotel.address || ''} ${hotel.city || ''}`)}`, '_blank')}
               >
-                <EnvironmentOutlined style={{ marginRight: 3 }} />
                 {hotel.city || hotel.address || 'Việt Nam'} – <span style={{ textDecoration: 'underline' }}>Vị trí xuất sắc - hiển thị bản đồ</span>
               </span>
             </div>
@@ -421,7 +420,7 @@ const HotelDetailPage: React.FC = () => {
           {/* Rating Sidebar & Map */}
           <Col xs={24} md={7}>
             {/* Map Box */}
-            <div 
+            <div
               style={{
                 position: 'relative',
                 borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0',
@@ -431,7 +430,7 @@ const HotelDetailPage: React.FC = () => {
               }}
               onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotelName} ${hotel.address || ''} ${hotel.city || ''}`)}`, '_blank')}
             >
-              <iframe 
+              <iframe
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(`${hotelName} ${hotel.address || ''} ${hotel.city || ''}`)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
                 style={{ position: 'absolute', top: -50, left: 0, width: '100%', height: 250, border: 0, pointerEvents: 'none' }}
                 aria-hidden="true"
@@ -442,11 +441,11 @@ const HotelDetailPage: React.FC = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'rgba(255,255,255,0.15)'
               }}>
-                <Button 
-                  type="primary" 
+                <Button
+                  type="primary"
                   icon={<EnvironmentOutlined />}
-                  style={{ 
-                    fontSize: 14, fontWeight: 700, borderRadius: 4, 
+                  style={{
+                    fontSize: 14, fontWeight: 700, borderRadius: 4,
                     padding: '0 16px', height: 36, background: '#006ce4',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                   }}
@@ -486,9 +485,9 @@ const HotelDetailPage: React.FC = () => {
               <Divider style={{ margin: '16px 0' }} />
 
               <div style={{ fontSize: 13, color: '#333', lineHeight: 1.8, marginBottom: 16 }}>
-                <div><span style={{ color: '#008234', marginRight: 6 }}>✓</span> Vị trí thuận lợi, gần trung tâm</div>
-                <div><span style={{ color: '#008234', marginRight: 6 }}>✓</span> Nhân viên thân thiện và nhiệt tình</div>
-                <div><span style={{ color: '#008234', marginRight: 6 }}>✓</span> Phòng sạch sẽ, tiện nghi đầy đủ</div>
+                <div>Vị trí thuận lợi, gần trung tâm</div>
+                <div>Nhân viên thân thiện và nhiệt tình</div>
+                <div>Phòng sạch sẽ, tiện nghi đầy đủ</div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
@@ -542,7 +541,7 @@ const HotelDetailPage: React.FC = () => {
             {/* Rooms & Prices */}
             {hotel.rooms && hotel.rooms.length > 0 && (
               <div id="rooms-section" style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 4, padding: 20, marginBottom: 16 }}>
-                <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>🛏️ Phòng trống</h3>
+                <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Phòng trống</h3>
                 {hotel.rooms.map((room: any) => {
                   const roomImg = room.images?.[0]?.imageUrl;
                   return (
@@ -554,14 +553,14 @@ const HotelDetailPage: React.FC = () => {
                         {roomImg ? (
                           <img src={transformImageUrl(roomImg)} alt={room.name} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🛏️</div>
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#999' }}>Chưa có ảnh</div>
                         )}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, fontSize: 14, color: '#006ce4', marginBottom: 2 }}>{room.name}</div>
                         <div style={{ fontSize: 12, color: '#595959' }}>
                           {room.type && <Tag style={{ fontSize: 11 }}>{room.type}</Tag>}
-                          {room.capacity && <span>👥 {room.capacity} khách</span>}
+                          {room.capacity && <span>{room.capacity} khách</span>}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -579,12 +578,11 @@ const HotelDetailPage: React.FC = () => {
 
             {/* Amenities */}
             <div id="amenities-section" style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 4, padding: 20, marginBottom: 16 }}>
-              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>🎯 Tiện nghi nổi bật</h3>
+              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Tiện nghi nổi bật</h3>
               <Row gutter={[10, 10]}>
                 {AMENITIES.map((a) => (
                   <Col key={a.label} xs={12} sm={8}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                      <CheckCircleOutlined style={{ color: '#008234' }} />
                       <span>{a.label}</span>
                     </div>
                   </Col>
@@ -594,7 +592,7 @@ const HotelDetailPage: React.FC = () => {
 
             {/* Policies */}
             <div id="policies-section" style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 4, padding: 20, marginBottom: 16 }}>
-              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 12 }}>📋 Quy tắc chung</h3>
+              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 12 }}>Quy tắc chung</h3>
               {[
                 ['Nhận phòng', 'Từ 14:00'],
                 ['Trả phòng', 'Trước 12:00'],
@@ -653,15 +651,15 @@ const HotelDetailPage: React.FC = () => {
               </Button>
 
               <div style={{ textAlign: 'center', marginTop: 8, fontSize: 12, color: '#008234' }}>
-                ✓ Không mất phí đặt phòng · Hủy miễn phí
+                Không mất phí đặt phòng · Hủy miễn phí
               </div>
 
               <Divider style={{ margin: '12px 0' }} />
 
               <div style={{ fontSize: 12, color: '#595959' }}>
-                <div style={{ marginBottom: 4 }}>🏨 {hotelName}</div>
-                <div style={{ marginBottom: 4 }}>📍 {hotel.city || hotel.address || 'Việt Nam'}</div>
-                <div>⭐ {displayRating ? `${displayRating}/10` : 'Chưa đánh giá'}</div>
+                <div style={{ marginBottom: 4 }}>Khách sạn: {hotelName}</div>
+                <div style={{ marginBottom: 4 }}>Địa điểm: {hotel.city || hotel.address || 'Việt Nam'}</div>
+                <div>Đánh giá: {displayRating ? `${displayRating}/10` : 'Chưa đánh giá'}</div>
               </div>
             </div>
           </Col>
@@ -674,27 +672,27 @@ const HotelDetailPage: React.FC = () => {
           position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)',
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
-          <div 
+          <div
             style={{ position: 'absolute', top: 20, right: 24, cursor: 'pointer', color: '#fff', fontSize: 44, zIndex: 10, padding: 10, lineHeight: 1 }}
             onClick={() => setPreviewIndex(null)}
           >
             ×
           </div>
-          <div 
+          <div
             style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#fff', fontSize: 40, zIndex: 10, padding: 20 }}
             onClick={(e) => { e.stopPropagation(); setPreviewIndex((prev) => (prev! > 0 ? prev! - 1 : allImages.length - 1)); }}
           >
             <LeftOutlined />
           </div>
-          
-          <img 
-            src={allImages[previewIndex]} 
-            alt="" 
-            style={{ maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain' }} 
+
+          <img
+            src={allImages[previewIndex]}
+            alt=""
+            style={{ maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain' }}
             referrerPolicy="no-referrer"
           />
-          
-          <div 
+
+          <div
             style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#fff', fontSize: 40, zIndex: 10, padding: 20 }}
             onClick={(e) => { e.stopPropagation(); setPreviewIndex((prev) => (prev! < allImages.length - 1 ? prev! + 1 : 0)); }}
           >

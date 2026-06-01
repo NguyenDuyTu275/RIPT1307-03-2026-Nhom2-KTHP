@@ -14,7 +14,7 @@ const Register: React.FC = () => {
     try {
       const res = await authApi.register(values.username, values.password, values.email);
       const msg: string = res.data as unknown as string;
-      
+
       if (msg === 'Username already exists') {
         message.error('Tên đăng nhập đã tồn tại! Vui lòng chọn tên khác.');
         return;
@@ -44,7 +44,7 @@ const Register: React.FC = () => {
         message.error('Mã OTP không hợp lệ! Vui lòng thử lại.');
         return;
       }
-      
+
       if (msg === 'No registration request found') {
         message.error('Không tìm thấy yêu cầu đăng ký. Vui lòng đăng ký lại.');
         setStep('register');
@@ -104,7 +104,7 @@ const Register: React.FC = () => {
                   label="Mật khẩu"
                   rules={[
                     { required: true, message: 'Vui lòng nhập mật khẩu!' },
-                    { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự!' },
+                    { min: 8, message: "Mật khẩu phải chứ từ 8 ký tự bào gồm chữ hoa, chữ thường, số , ký tự đặc biệt và không có khoảng trống." },
                   ]}
                 >
                   <Input.Password placeholder="Nhập mật khẩu" />

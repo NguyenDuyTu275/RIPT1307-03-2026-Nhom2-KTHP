@@ -388,7 +388,7 @@ const SearchResults: React.FC = () => {
                       <div className="hotel-result-body">
                         <div className="hotel-result-info">
                           <div className="hotel-result-name">{hotel.name}</div>
-                          <div className="hotel-result-city">📍 {hotel.city || hotel.address || 'Việt Nam'}</div>
+                          <div className="hotel-result-city">{hotel.city || hotel.address || 'Hà Nội'}</div>
                           <div className="hotel-result-desc">{hotel.description || 'Khách sạn cao cấp với đầy đủ tiện nghi, phù hợp cho cả du lịch công tác và nghỉ dưỡng.'}</div>
 
                           <div style={{ marginTop: 12, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -398,13 +398,18 @@ const SearchResults: React.FC = () => {
                         </div>
 
                         <div className="hotel-result-pricing">
-                          <div>
-                             <span className="rating-badge" style={{ fontSize: 14 }}>{rating !== null ? rating.toFixed(1) : 'N/A'}</span>
-                             <div style={{ fontSize: 12, color: '#595959', marginTop: 4 }}>{ratingLabel || 'Chưa đánh giá'}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', marginBottom: 'auto' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+                              <span className="rating-word">{ratingLabel || 'Chưa đánh giá'}</span>
+                              <span className="rating-count">{hotel.reviewCount || 0} đánh giá</span>
+                            </div>
+                            <div className="hotel-card-rating-score">
+                              {rating !== null ? rating.toFixed(1) : 'N/A'}
+                            </div>
                           </div>
-                          <div>
-                           <div className="hotel-result-price">{price !== null ? price.toLocaleString('vi-VN') + '₫' : 'Liên hệ để biết giá'}</div>
-                            <div className="hotel-result-price-label">mỗi đêm, đã bao gồm thuế</div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div className="hotel-card-price-label">Bắt đầu từ</div>
+                            <div className="hotel-card-price-new" style={{ marginBottom: 4 }}>{price !== null ? 'VND ' + price.toLocaleString('vi-VN') : 'Liên hệ'}</div>
                             <button
                               className="hotel-result-cta"
                               style={{ marginTop: 8, padding: '8px 16px', borderRadius: 4, cursor: 'pointer', background: '#006ce4', color: '#fff', border: 'none', fontWeight: 700, fontSize: 14, width: '100%' }}

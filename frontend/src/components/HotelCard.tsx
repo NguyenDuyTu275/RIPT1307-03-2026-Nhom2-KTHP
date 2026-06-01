@@ -11,6 +11,10 @@ interface HotelCardProps {
     status?: string;
     imageUrl?: string;
     rooms?: { pricePerNight?: number; images?: { imageUrl?: string }[] }[];
+    stars?: number;
+    reviewCount?: number;
+    type?: string;
+    oldPrice?: number;
   };
   onClick?: () => void;
   wished?: boolean;
@@ -58,72 +62,66 @@ const HotelCard: React.FC<HotelCardProps> = ({
   showPrice = true,
   estimatedPrice,
 }) => {
-  const rating = hotel.ratingAvg ?? null;
-  // Lấy giá từ phòng đầu tiên (backend trả rooms[] kèm theo hotel)
-  const price = estimatedPrice ?? hotel.rooms?.[0]?.pricePerNight ?? null;
-  const imgUrl = getHotelImage(hotel);
-
-  const ratingLabel = rating === null ? 'Chưa đánh giá' : rating >= 9 ? 'Tuyệt vời' : rating >= 8 ? 'Rất tốt' : rating >= 7 ? 'Tốt' : 'Ổn';
+  const rating = hotel.ratingAvg ?? 0;
+  // Lấy giá từ backend, không tự sinh giá
+  const price = estimatedPrice ?? hotel.rooms?.[0]?.pricePerNight;
+  const imgUrl = getHotelImage(hotel) || 'https://images.unsplash.com/photo-1542314831-c6a4d1409e15?auto=format&fit=crop&q=80&w=1000'; // fallback đẹp
+  
+  const ratingLabel = rating >= 9 ? 'Xuất sắc' : rating >= 8.5 ? 'Tuyệt vời' : rating >= 8 ? 'Rất tốt' : rating > 0 ? 'Tốt' : 'Chưa đánh giá';
 
   const [imageError, setImageError] = React.useState(false);
 
   return (
-    <div className="hotel-card" onClick={onClick} style={{ position: 'relative' }}>
-      {/* Wishlist button */}
-      {onWishToggle && (
-        <button
-          className={`wishlist-btn ${wished ? 'active' : ''}`}
-          onClick={(e) => { e.stopPropagation(); onWishToggle(); }}
-        >
-          {wished ? '❤️' : '🤍'}
-        </button>
-      )}
-
-      {/* Image — hiển thị ảnh thật nếu có, fallback gradient */}
-      {imgUrl && !imageError ? (
-        <img
-          className="hotel-card-img"
-          src={imgUrl}
-          alt={hotel.name}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          onError={() => setImageError(true)}
-        />
-      ) : (
-        <div
-          className="hotel-card-img hotel-card-img-fallback"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 48, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)'
-          }}
-        >
-          🏨
-        </div>
-      )}
+    <div className="hotel-card" onClick={onClick}>
+      {/* Container ảnh */}
+      <div className="hotel-card-img-container">
+        {onWishToggle && (
+          <button
+            className={`hotel-card-wish-btn ${wished ? 'active' : ''}`}
+            onClick={(e) => { e.stopPropagation(); onWishToggle(); }}
+          >
+            <svg viewBox="0 0 24 24" fill={wished ? "#e71d36" : "none"} stroke={wished ? "#e71d36" : "#666"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </button>
+        )}
+        {!imageError ? (
+          <img
+            className="hotel-card-img"
+            src={imgUrl}
+            alt={hotel.name}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="hotel-card-img hotel-card-img-fallback">🏨</div>
+        )}
+      </div>
 
       {/* Body */}
       <div className="hotel-card-body">
         <div className="hotel-card-name">{hotel.name}</div>
         <div className="hotel-card-city">
-          📍 {hotel.city || hotel.address || 'Việt Nam'}
+          {hotel.city || hotel.address || 'Đang cập nhật'}
         </div>
 
-        <div className="hotel-card-footer">
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span className="rating-badge">{rating !== null ? rating.toFixed(1) : 'N/A'}</span>
-              <span className="rating-text">{ratingLabel}</span>
-            </div>
+        <div className="hotel-card-rating-container">
+          <div className="hotel-card-rating-score">{rating > 0 ? rating.toFixed(1) : 'N/A'}</div>
+          <div className="hotel-card-rating-text">
+            <span className="rating-word">{ratingLabel}</span>
+            <span className="rating-count">{hotel.reviewCount || 0} đánh giá</span>
           </div>
-          {showPrice && (
-            <div className="hotel-card-price">
-              <div className="hotel-card-price-amount">
-                {price !== null ? price.toLocaleString('vi-VN') + '₫' : 'Liên hệ'}
-              </div>
-              <div className="hotel-card-price-label">mỗi đêm</div>
-            </div>
-          )}
         </div>
+
+        {showPrice && (
+          <div className="hotel-card-price-wrapper">
+            <span className="hotel-card-price-label">Bắt đầu từ</span>
+            <span className="hotel-card-price-new">
+              {price ? `VND ${price.toLocaleString('vi-VN')}` : 'Liên hệ'}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -38,7 +38,6 @@ public class Hotel {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "hotel")
-    @JsonIgnoreProperties({"hotel", "bookingRooms"})
+    @JsonIgnoreProperties({ "hotel", "bookingRooms" })
     private Set<Room> rooms = new HashSet<>();
 }
-
