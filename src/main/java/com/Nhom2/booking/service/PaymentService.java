@@ -52,7 +52,7 @@ public class PaymentService {
         User user = getCurrentUser();
         Booking booking = getBooking(bookingId);
 
-        // Chỉ chủ booking mới được xem QR
+
         if (!booking.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("You can only access your own booking");
         }

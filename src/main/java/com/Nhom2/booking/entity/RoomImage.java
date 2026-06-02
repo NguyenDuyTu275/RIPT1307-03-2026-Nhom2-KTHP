@@ -1,7 +1,6 @@
 package com.Nhom2.booking.entity;
 
-
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -19,5 +18,7 @@ public class RoomImage {
 
     @ManyToOne
     @JoinColumn(name = "room_id")
+    @JsonIgnore
     private Room room;
 }
+

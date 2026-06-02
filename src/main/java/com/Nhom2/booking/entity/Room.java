@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import org.hibernate.annotations.CreationTimestamp;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,9 +39,9 @@ public class Room {
 
     @OneToMany(mappedBy = "room")
     @JsonIgnore
-    private List<BookingRoom> bookingRooms;
+    private Set<BookingRoom> bookingRooms = new HashSet<>();
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("room")
-    private List<RoomImage> images;
+    private Set<RoomImage> images = new HashSet<>();
 }
