@@ -11,7 +11,7 @@ const ForgotPassword: React.FC = () => {
 
   const handleEmail = (values: { email: string }) => {
     setLoading(true);
-    // Mock: simulate sending OTP
+    // Giả lập: mô phỏng việc gửi mã OTP
     setTimeout(() => {
       setEmail(values.email);
       setStep(1);

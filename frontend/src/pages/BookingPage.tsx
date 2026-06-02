@@ -29,12 +29,15 @@ const BookingPage: React.FC = () => {
         checkInDate: checkIn.format('YYYY-MM-DD'),
         checkOutDate: checkOut.format('YYYY-MM-DD'),
         totalPrice,
+        rooms: room ? [{ roomId: room.id, quantity: 1 }] : []
       } as any;
       await bookingApi.create(hotel?.id, bookingData);
       message.success('Đặt phòng thành công! 🎉');
       navigate('/my-bookings');
     } catch (error: any) {
-      const msg = error?.response?.data || 'Đặt phòng thất bại. Vui lòng thử lại.';
+      const msg = typeof error?.response?.data === 'string' 
+        ? error.response.data 
+        : error?.response?.data?.message || error?.message || 'Đặt phòng thất bại. Vui lòng thử lại.';
       message.error(msg);
     } finally {
       setLoading(false);

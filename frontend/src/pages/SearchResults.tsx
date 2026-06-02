@@ -43,7 +43,7 @@ const SearchResults: React.FC = () => {
   const filtered = useMemo(() => {
     let result = [...hotels];
 
-    // Filter by city
+    // Lọc theo thành phố
     if (city) {
       result = result.filter(h =>
         h.city?.toLowerCase().includes(city.toLowerCase()) ||
@@ -52,7 +52,7 @@ const SearchResults: React.FC = () => {
       );
     }
 
-    // Filter by rating
+    // Lọc theo đánh giá
     if (selectedRatings.length > 0) {
       result = result.filter(h => {
         const r = h.ratingAvg || 0;
@@ -60,13 +60,13 @@ const SearchResults: React.FC = () => {
       });
     }
 
-    // Filter by price range
+    // Lọc theo khoảng giá
     result = result.filter(h => {
       const price = h.rooms?.[0]?.pricePerNight ?? 0;
       return price >= priceRange[0] && price <= priceRange[1];
     });
 
-    // Filter by property type (OR logic)
+    // Lọc theo loại chỗ nghỉ (logic OR)
     if (selectedPropertyTypes.length > 0) {
       result = result.filter(h => {
         const textToSearch = `${h.name} ${h.description}`.toLowerCase();
@@ -74,7 +74,7 @@ const SearchResults: React.FC = () => {
       });
     }
 
-    // Filter by features/amenities (AND logic)
+    // Lọc theo tiện nghi (logic AND)
     if (selectedFeatures.length > 0) {
       result = result.filter(h => {
         const textToSearch = `${h.name} ${h.description}`.toLowerCase();
@@ -82,7 +82,7 @@ const SearchResults: React.FC = () => {
       });
     }
 
-    // Filter by guests and rooms capacity
+    // Lọc theo sức chứa khách và phòng
     result = result.filter(h => {
       if (!h.rooms || h.rooms.length === 0) return false;
       const totalCapacity = h.rooms.reduce((sum: number, r: any) => sum + (r.capacity || 0) * (r.quantity || 0), 0);
@@ -90,7 +90,7 @@ const SearchResults: React.FC = () => {
       return totalCapacity >= numGuests && totalRooms >= numRooms;
     });
 
-    // Sort
+    // Sắp xếp
     result.sort((a, b) => {
       if (sortBy === 'rating') return (b.ratingAvg || 0) - (a.ratingAvg || 0);
       if (sortBy === 'name') return a.name.localeCompare(b.name);

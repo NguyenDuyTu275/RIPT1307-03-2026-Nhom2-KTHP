@@ -129,19 +129,19 @@ const HotelDetailPage: React.FC = () => {
     } catch { return null; }
   }, []);
 
-  // Filter reviews for this hotel
+  // Lọc đánh giá cho khách sạn này
   const reviews = useMemo(() => {
     return allReviews.filter((r: any) => r.hotel?.id === Number(id));
   }, [allReviews, id]);
 
-  // Compute stats from filtered reviews
+  // Tính toán thống kê từ các đánh giá đã lọc
   const reviewStats = useMemo(() => {
     if (reviews.length === 0) return { avg: null, total: 0 };
     const sum = reviews.reduce((acc: number, r: any) => acc + (r.rating || 0), 0);
     return { avg: sum / reviews.length, total: reviews.length };
   }, [reviews]);
 
-  // Rating distribution
+  // Phân bổ đánh giá
   const ratingDistribution = useMemo(() => {
     const dist = [
       { label: 'Xuất sắc', range: '9-10', count: 0, color: '#008234' },
@@ -177,7 +177,7 @@ const HotelDetailPage: React.FC = () => {
 
   useEffect(() => { fetchReviews(); }, [fetchReviews]);
 
-  // Collect all images from rooms
+  // Thu thập tất cả hình ảnh từ các phòng
   const allImages = useMemo(() => {
     if (!hotel) return [];
     const imgs: string[] = [];
@@ -205,7 +205,7 @@ const HotelDetailPage: React.FC = () => {
 
     setSubmittingReview(true);
     try {
-      // Parse current user ID from token
+      // Lấy ID người dùng hiện tại từ token
       const token = localStorage.getItem('token');
       let userId: number | null = null;
       if (token) {
@@ -221,7 +221,7 @@ const HotelDetailPage: React.FC = () => {
         hotel: { id: Number(id) },
       };
 
-      // If we have userId, include it
+      // Thêm ID người dùng nếu đã đăng nhập
       if (userId) {
         reviewData.user = { id: userId };
       }
@@ -254,10 +254,10 @@ const HotelDetailPage: React.FC = () => {
     }[tab];
 
     if (sectionId) {
-      // Add a slight offset to account for the sticky header
+      // Thêm khoảng cách bù cho header cố định
       const element = document.getElementById(sectionId);
       if (element) {
-        const headerOffset = 110; // Adjust this based on your actual sticky header height
+        const headerOffset = 110; // Điều chỉnh theo chiều cao thực tế của header
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -300,7 +300,7 @@ const HotelDetailPage: React.FC = () => {
     ? getRatingLabel(displayRatingNum)
     : null;
 
-  // Check if current user already reviewed this hotel
+  // Kiểm tra xem người dùng hiện tại đã đánh giá chưa
   const hasReviewed = reviews.some((r: any) => r.user?.username === currentUsername);
 
   return (

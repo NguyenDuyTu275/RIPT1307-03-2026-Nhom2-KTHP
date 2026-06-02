@@ -6,7 +6,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AuthGuard from '../components/AuthGuard';
 import { getHotelImage } from '../components/HotelCard';
-import { bookingApi } from '../api';
+import { bookingApi, paymentApi } from '../api';
 
 const statusConfig: Record<string, { label: string; color: string; className: string }> = {
   PENDING: { label: 'Chờ xác nhận', color: 'warning', className: 'status-pending' },
@@ -20,6 +20,10 @@ const MyBookingsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [paymentQrData, setPaymentQrData] = useState<any>(null);
+  const [payingBookingId, setPayingBookingId] = useState<number | null>(null);
 
   const fetchBookings = () => {
     setLoading(true);
@@ -51,6 +55,35 @@ const MyBookingsPage: React.FC = () => {
         }
       },
     });
+  };
+
+  const handleOpenPayment = async (bookingId: number) => {
+    setLoading(true);
+    try {
+      const data = await paymentApi.getPaymentQr(bookingId);
+      setPaymentQrData(data);
+      setPayingBookingId(bookingId);
+      setPaymentModalVisible(true);
+    } catch (e) {
+      message.error('Không thể tải thông tin thanh toán');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!payingBookingId) return;
+    setLoading(true);
+    try {
+      await paymentApi.confirmPayment(payingBookingId);
+      message.success('Đã gửi thông báo xác nhận thanh toán!');
+      setPaymentModalVisible(false);
+      fetchBookings();
+    } catch (e: any) {
+      message.error(e?.response?.data || e?.message || 'Xác nhận thanh toán thất bại');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filtered = bookings.filter(b => {
@@ -119,6 +152,15 @@ const MyBookingsPage: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', gap: 8 }}>
+              {booking.status === 'CONFIRMED' && booking.paymentStatus !== 'PAID' && (
+                <Button
+                  size="small"
+                  type="primary"
+                  onClick={() => handleOpenPayment(booking.id)}
+                >
+                  Thanh toán (QR)
+                </Button>
+              )}
               <Button
                 size="small"
                 icon={<EyeOutlined />}
@@ -211,6 +253,36 @@ const MyBookingsPage: React.FC = () => {
         </div>
 
         <Footer />
+
+        <Modal
+          title="Thanh toán qua QR Code"
+          open={paymentModalVisible}
+          onCancel={() => setPaymentModalVisible(false)}
+          footer={null}
+          centered
+        >
+          {paymentQrData && (
+            <div style={{ textAlign: 'center' }}>
+              <img src={paymentQrData.qrCodeUrl} alt="QR Code" style={{ maxWidth: '100%', maxHeight: 300, marginBottom: 16, borderRadius: 8, border: '1px solid #e0e0e0' }} />
+              <div style={{ textAlign: 'left', background: '#f5f5f5', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+                <p><strong>Ngân hàng:</strong> {paymentQrData.bankName}</p>
+                <p><strong>Số tài khoản:</strong> {paymentQrData.accountNumber}</p>
+                <p><strong>Chủ tài khoản:</strong> {paymentQrData.accountName}</p>
+                <p><strong>Số tiền:</strong> <span style={{ color: '#006ce4', fontWeight: 'bold' }}>{paymentQrData.amount?.toLocaleString('vi-VN')}₫</span></p>
+                <p><strong>Nội dung:</strong> {paymentQrData.transferContent}</p>
+              </div>
+              <Button 
+                type="primary" 
+                size="large" 
+                block 
+                onClick={handleConfirmPayment}
+                loading={loading}
+              >
+                Xác nhận đã thanh toán
+              </Button>
+            </div>
+          )}
+        </Modal>
       </div>
     </AuthGuard>
   );

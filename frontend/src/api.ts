@@ -93,6 +93,26 @@ export const bookingApi = {
     swaggerApi.bookings.getRequests(bookingId, JSON_FMT),
 };
 
+// ─── PAYMENTS ─────────────────────────────────────────────────
+export const paymentApi = {
+  getPaymentQr: (bookingId: number) => {
+    return fetch(`/proxy/bookings/${bookingId}/payment-qr`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    }).then(res => res.json());
+  },
+  confirmPayment: (bookingId: number) => {
+    return fetch(`/proxy/bookings/${bookingId}/confirm-payment`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    }).then(res => res.json());
+  }
+};
+
 // ─── NOTIFICATIONS ────────────────────────────────────────────
 export const notificationApi = {
   getMy: () => swaggerApi.notifications.getMyNotifications(JSON_FMT),
@@ -102,7 +122,7 @@ export const notificationApi = {
 
 // ─── ADMIN ────────────────────────────────────────────────────
 export const adminApi = {
-  // Bookings
+  // Đặt phòng
   getBookings: (status?: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') =>
     swaggerApi.admin.getBookings(status ? { status } : {}, JSON_FMT),
   approveBooking: (bookingId: number) =>
@@ -112,7 +132,7 @@ export const adminApi = {
   markBookingPaid: (bookingId: number) =>
     swaggerApi.admin.markBookingPaid(bookingId, JSON_FMT),
 
-  // Booking Requests
+  // Yêu cầu đặt phòng
   getBookingRequests: (status?: 'PENDING' | 'APPROVED' | 'REJECTED') =>
     swaggerApi.admin.getBookingRequests(status ? { status } : {}, JSON_FMT),
   approveBookingRequest: (requestId: number, response?: string) =>
@@ -120,7 +140,7 @@ export const adminApi = {
   rejectBookingRequest: (requestId: number, response?: string) =>
     swaggerApi.admin.rejectBookingRequest(requestId, { response } as ProcessBookingRequestDto, JSON_FMT),
 
-  // Statistics & Reports
+  // Thống kê & Báo cáo
   getOverview: () => swaggerApi.admin.getOverview(JSON_FMT),
   exportBookingsExcel: () => swaggerApi.admin.exportBookings(JSON_FMT),
 };

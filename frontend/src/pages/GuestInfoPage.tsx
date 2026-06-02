@@ -42,8 +42,7 @@ const GuestInfoPage: React.FC = () => {
       const bookingData = {
         checkInDate: checkIn?.format('YYYY-MM-DD'),
         checkOutDate: checkOut?.format('YYYY-MM-DD'),
-        totalPrice: totalPrice,
-        rooms: [] // Simplified for now, should include actual rooms
+        rooms: hotel?.rooms?.[0] ? [{ roomId: hotel.rooms[0].id, quantity: 1 }] : []
       } as any;
       const booking = await bookingApi.create(Number(hotelId), bookingData);
       navigate('/booking/confirmation', {
@@ -58,7 +57,10 @@ const GuestInfoPage: React.FC = () => {
         },
       });
     } catch (err: any) {
-      message.error(err?.response?.data || 'Đặt phòng thất bại. Vui lòng thử lại!');
+      const errorMsg = typeof err?.response?.data === 'string' 
+        ? err.response.data 
+        : err?.response?.data?.message || err?.message || 'Đặt phòng thất bại. Vui lòng thử lại!';
+      message.error(errorMsg);
     } finally {
       setSubmitting(false);
     }

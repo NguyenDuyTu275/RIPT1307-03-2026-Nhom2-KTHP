@@ -35,7 +35,7 @@ const Wishlist: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#f5f5f5' }}>
       <Header />
 
-      {/* Blue Header Section */}
+      {/* Phần Banner Xanh Đậm */}
       <div style={{ background: '#003b95', padding: '24px 0', color: '#fff' }}>
         <div style={{ maxWidth: 1024, margin: '0 auto', padding: '0 24px' }}>
           <button
@@ -67,7 +67,7 @@ const Wishlist: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Phần Nội Dung Chính */}
       <div style={{ flex: 1, padding: '32px 0' }}>
         <div style={{ maxWidth: 1024, margin: '0 auto', padding: '0 24px' }}>
           {loading ? (

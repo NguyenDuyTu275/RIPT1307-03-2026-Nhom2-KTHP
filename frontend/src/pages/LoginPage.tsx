@@ -14,7 +14,7 @@ const LoginPage: React.FC = () => {
       const res = await authApi.login(values.username, values.password);
       const token: string = res.data as unknown as string;
 
-      // Parse role from JWT token
+      // Phân tích quyền (role) từ JWT token
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="auth-page" style={{ fontFamily: 'Inter, sans-serif' }}>
-      {/* Header */}
+      {/* Phần Đầu Trang (Header) */}
       <div className="auth-header">
         <div className="auth-header-logo" onClick={() => navigate('/')}>
           Booking<span style={{ color: '#febb02' }}>.com</span>

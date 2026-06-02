@@ -23,7 +23,7 @@ const Header: React.FC<HeaderProps> = () => {
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Notifications state
+  // State thông báo
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -44,7 +44,7 @@ const Header: React.FC<HeaderProps> = () => {
   useEffect(() => {
     if (token) {
       fetchNotifications();
-      // Polling every 1 minute
+      // Gọi API mỗi phút một lần
       const intervalId = setInterval(fetchNotifications, 60000);
       return () => clearInterval(intervalId);
     }

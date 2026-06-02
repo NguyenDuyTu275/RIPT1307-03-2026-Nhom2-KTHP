@@ -74,14 +74,14 @@ const HotelReviewAndChatPage: React.FC = () => {
   const navigate = useNavigate();
   const [hotel, setHotel] = useState<any>(null);
   
-  // Review States
+  // State đánh giá
   const [allReviews, setAllReviews] = useState<any[]>([]);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewHover, setReviewHover] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // Chat States
+  // State trò chuyện
   const [messages, setMessages] = useState<{ sender: 'user' | 'bot', text: string, time: Date }[]>([
     { sender: 'bot', text: 'Xin chào! Tôi là trợ lý ảo của khách sạn. Tôi có thể giúp gì cho bạn?', time: new Date() }
   ]);

@@ -64,7 +64,7 @@ const Register: React.FC = () => {
 
   return (
     <div className="auth-page" style={{ fontFamily: 'Inter, sans-serif' }}>
-      {/* Header */}
+      {/* Phần Đầu Trang (Header) */}
       <div className="auth-header">
         <div className="auth-header-logo" onClick={() => navigate('/')}>
           Booking<span style={{ color: '#febb02' }}>.com</span>
@@ -104,8 +104,8 @@ const Register: React.FC = () => {
                   rules={[
                     { required: true, message: 'Vui lòng nhập mật khẩu!' },
                     { 
-                      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, 
-                      message: "Mật khẩu phải chứa ít nhất 8 ký tự bao gồm chữ hoa, chữ thường, số, ký tự đặc biệt và không có khoảng trống." 
+                      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,72}$/, 
+                      message: "Mật khẩu phải chứa từ 8-72 ký tự bao gồm chữ hoa, chữ thường, số, ký tự đặc biệt và không có khoảng trống." 
                     },
                   ]}
                 >
