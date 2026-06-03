@@ -10,8 +10,8 @@ COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 
-# Cấp quyền thực thi cho Maven wrapper
-RUN chmod +x mvnw
+# Cấp quyền thực thi cho Maven wrapper + fix line endings (CRLF -> LF)
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 
 # Tải dependencies trước (cache layer này nếu pom.xml không đổi)
 RUN ./mvnw dependency:resolve -DskipTests
@@ -43,10 +43,6 @@ USER appuser
 
 # Expose port mặc định của Spring Boot
 EXPOSE 8080
-
-# Health check - kiểm tra app có hoạt động không
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
 # Chạy ứng dụng với các tùy chọn JVM tối ưu cho container
 ENTRYPOINT ["java", \

@@ -31,8 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
-src/main/resources/application.properties
+
 
 ### Frontend ###
 node_modules/
 frontend/dist/
+
+### Environment ###
+.env
