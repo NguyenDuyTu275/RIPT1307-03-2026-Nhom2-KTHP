@@ -1,12 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/proxy/(.*)",
-      "destination": "https://ript1307-03-2026-nhom2-kthp-1.onrender.com/$1"
+      "source": "/proxy/:path*",
+      "destination": "https://ript1307-03-2026-nhom2-kthp-1.onrender.com/:path*"
     },
     {
-      "source": "/uploads/(.*)",
-      "destination": "https://ript1307-03-2026-nhom2-kthp-1.onrender.com/uploads/$1"
+      "source": "/uploads/:path*",
+      "destination": "https://ript1307-03-2026-nhom2-kthp-1.onrender.com/uploads/:path*"
     },
     {
       "source": "/(.*)",
