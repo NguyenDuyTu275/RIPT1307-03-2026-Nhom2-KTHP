@@ -143,10 +143,13 @@ const SearchResults: React.FC = () => {
                   cursor: 'pointer',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
                 }}
-                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(city || 'Việt Nam')}`, '_blank')}
+                onClick={() => {
+                  const loc = city || (filtered.length > 0 ? (filtered[0].city || filtered[0].address || 'Hà Nội, Việt Nam') : 'Việt Nam');
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`, '_blank');
+                }}
               >
                 <iframe 
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(city || 'Việt Nam')}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(city || (filtered.length > 0 ? (filtered[0].city || filtered[0].address || 'Hà Nội, Việt Nam') : 'Việt Nam'))}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
                   style={{ position: 'absolute', top: -50, left: 0, width: '100%', height: 250, border: 0, pointerEvents: 'none' }}
                   aria-hidden="true"
                   title="map"

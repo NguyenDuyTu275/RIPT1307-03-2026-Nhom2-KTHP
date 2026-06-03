@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, DatePicker, Button, Divider, message, Row, Col } from 'antd';
-import { UserOutlined, MailOutlined, PhoneOutlined, CalendarOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined, PhoneOutlined, CalendarOutlined, ProfileOutlined, BankOutlined } from '@ant-design/icons';
 import moment, { Moment } from 'moment';
 import Header from '../components/Header';
 import { getHotelImage } from '../components/HotelCard';
@@ -10,17 +10,29 @@ import { hotelApi, bookingApi } from '../api';
 const GuestInfoPage: React.FC = () => {
   const { hotelId } = useParams<{ hotelId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = (location.state as any) || {};
   const [form] = Form.useForm();
   const [hotel, setHotel] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [checkIn, setCheckIn] = useState<Moment | null>(moment().add(1, 'day'));
-  const [checkOut, setCheckOut] = useState<Moment | null>(moment().add(3, 'day'));
+  const [checkIn, setCheckIn] = useState<Moment | null>(
+    locationState.checkIn ? moment(locationState.checkIn, 'YYYY-MM-DD') : moment().add(1, 'day')
+  );
+  const [checkOut, setCheckOut] = useState<Moment | null>(
+    locationState.checkOut ? moment(locationState.checkOut, 'YYYY-MM-DD') : moment().add(3, 'day')
+  );
+
+  // roomId được truyền từ HotelDetailPage (nếu có), fallback về rooms[0]
+  const selectedRoomId: number | null = locationState.roomId ?? null;
 
   const token = localStorage.getItem('token');
   const nights = checkIn && checkOut ? checkOut.diff(checkIn, 'day') : 2;
-  const pricePerNight = hotel?.rooms?.[0]?.pricePerNight ?? 0;
+
+  // Tính giá dựa trên phòng được chọn
+  const selectedRoom = hotel?.rooms?.find((r: any) => r.id === selectedRoomId) ?? hotel?.rooms?.[0] ?? null;
+  const pricePerNight = selectedRoom?.pricePerNight ?? 0;
   const totalPrice = pricePerNight * Math.max(1, nights);
 
   useEffect(() => {
@@ -39,10 +51,16 @@ const GuestInfoPage: React.FC = () => {
     }
     setSubmitting(true);
     try {
+      const roomToBook = selectedRoom;
+      if (!roomToBook) {
+        message.error('Không tìm thấy thông tin phòng. Vui lòng quay lại trang khách sạn và thử lại!');
+        setSubmitting(false);
+        return;
+      }
       const bookingData = {
         checkInDate: checkIn?.format('YYYY-MM-DD'),
         checkOutDate: checkOut?.format('YYYY-MM-DD'),
-        rooms: hotel?.rooms?.[0] ? [{ roomId: hotel.rooms[0].id, quantity: 1 }] : []
+        rooms: [{ roomId: roomToBook.id, quantity: 1 }]
       } as any;
       const booking = await bookingApi.create(Number(hotelId), bookingData);
       navigate('/booking/confirmation', {
@@ -50,6 +68,7 @@ const GuestInfoPage: React.FC = () => {
           booking: booking.data,
           hotel,
           guestInfo: values,
+          room: roomToBook,
           checkIn: checkIn.format('DD/MM/YYYY'),
           checkOut: checkOut.format('DD/MM/YYYY'),
           nights,
@@ -105,7 +124,7 @@ const GuestInfoPage: React.FC = () => {
           {/* Left: Form */}
           <div>
             <div className="booking-form-card">
-              <div className="booking-form-title">👤 Thông tin khách lưu trú</div>
+              <div className="booking-form-title"><UserOutlined style={{ marginRight: 8, color: '#006ce4' }} />Thông tin khách lưu trú</div>
               <Form form={form} layout="vertical" onFinish={handleSubmit}>
                 <Row gutter={16}>
                   <Col xs={24} sm={12}>
@@ -135,34 +154,32 @@ const GuestInfoPage: React.FC = () => {
             </div>
 
             <div className="booking-form-card">
-              <div className="booking-form-title">📅 Ngày lưu trú</div>
+              <div className="booking-form-title"><CalendarOutlined style={{ marginRight: 8, color: '#006ce4' }} />Ngày lưu trú</div>
               <Row gutter={16}>
                 <Col xs={24} sm={12}>
-                  <Form.Item label="Ngày nhận phòng">
-                    <DatePicker
-                      value={checkIn}
-                      onChange={(val) => {
-                        setCheckIn(val);
-                        if (val && checkOut && val.isSameOrAfter(checkOut)) {
-                          setCheckOut(val.clone().add(1, 'day'));
-                        }
-                      }}
-                      format="DD/MM/YYYY"
-                      disabledDate={(d) => d.isBefore(moment(), 'day')}
-                      style={{ width: '100%' }}
-                    />
-                  </Form.Item>
+                  <div style={{ marginBottom: 8 }}>Ngày nhận phòng <span style={{ color: '#ff4d4f' }}>*</span></div>
+                  <DatePicker
+                    value={checkIn}
+                    onChange={(val) => {
+                      setCheckIn(val);
+                      if (val && checkOut && val.isSameOrAfter(checkOut)) {
+                        setCheckOut(val.clone().add(1, 'day'));
+                      }
+                    }}
+                    format="DD/MM/YYYY"
+                    disabledDate={(d) => d.isBefore(moment(), 'day')}
+                    style={{ width: '100%', height: 40 }}
+                  />
                 </Col>
                 <Col xs={24} sm={12}>
-                  <Form.Item label="Ngày trả phòng">
-                    <DatePicker
-                      value={checkOut}
-                      onChange={setCheckOut}
-                      format="DD/MM/YYYY"
-                      disabledDate={(d) => d.isBefore(checkIn || moment(), 'day')}
-                      style={{ width: '100%' }}
-                    />
-                  </Form.Item>
+                  <div style={{ marginBottom: 8 }}>Ngày trả phòng <span style={{ color: '#ff4d4f' }}>*</span></div>
+                  <DatePicker
+                    value={checkOut}
+                    onChange={setCheckOut}
+                    format="DD/MM/YYYY"
+                    disabledDate={(d) => d.isBefore(checkIn || moment(), 'day')}
+                    style={{ width: '100%', height: 40 }}
+                  />
                 </Col>
               </Row>
             </div>
@@ -181,7 +198,7 @@ const GuestInfoPage: React.FC = () => {
 
           {/* Right: Summary */}
           <div className="booking-summary">
-            <div className="booking-summary-title">📋 Chi tiết đặt phòng</div>
+            <div className="booking-summary-title"><ProfileOutlined style={{ marginRight: 8, color: '#006ce4' }} />Chi tiết đặt phòng</div>
 
             <div className="booking-summary-hotel">
               <div className="booking-summary-hotel-img">
@@ -204,7 +221,7 @@ const GuestInfoPage: React.FC = () => {
                   ) : null;
                 })()}
                 <div style={{ display: getHotelImage(hotel) ? 'none' : 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', fontSize: 32, background: 'linear-gradient(135deg, #e8f0fe, #f0f0f0)', borderRadius: 4 }}>
-                  🏨
+                  <BankOutlined style={{ color: '#006ce4' }} />
                 </div>
               </div>
               <div>

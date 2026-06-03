@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button, Result, Divider } from 'antd';
-import { CheckCircleFilled, PrinterOutlined, HomeOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { CheckCircleFilled, PrinterOutlined, HomeOutlined, UnorderedListOutlined, FrownOutlined, ProfileOutlined, BankOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -14,7 +14,7 @@ const BookingConfirmation: React.FC = () => {
       <div className="page-wrapper">
         <Header />
         <div style={{ textAlign: 'center', padding: '80px 24px' }}>
-          <div style={{ fontSize: 48 }}>😕</div>
+          <div style={{ fontSize: 48, color: '#faad14' }}><FrownOutlined /></div>
           <p style={{ fontSize: 16, marginTop: 12 }}>Không tìm thấy thông tin đặt phòng</p>
           <Button type="primary" onClick={() => navigate('/')} style={{ marginTop: 16 }}>Về trang chủ</Button>
         </div>
@@ -23,7 +23,7 @@ const BookingConfirmation: React.FC = () => {
     );
   }
 
-  const { booking, hotel, guestInfo, checkIn, checkOut, nights, totalPrice } = state;
+  const { booking, hotel, guestInfo, room, checkIn, checkOut, nights, totalPrice } = state;
   const bookingId = booking?.id || Math.floor(Math.random() * 90000 + 10000);
 
   return (
@@ -42,7 +42,7 @@ const BookingConfirmation: React.FC = () => {
           borderTop: '4px solid #008234',
         }}>
           <CheckCircleFilled style={{ fontSize: 56, color: '#008234', marginBottom: 16 }} />
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Đặt phòng thành công! 🎉</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Đặt phòng thành công!</h1>
           <p style={{ color: '#595959', marginBottom: 16 }}>
             Cảm ơn bạn đã đặt phòng. Chúng tôi đã gửi xác nhận đến email của bạn.
           </p>
@@ -61,7 +61,7 @@ const BookingConfirmation: React.FC = () => {
 
         {/* Booking details */}
         <div style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 12, padding: 24, marginBottom: 16 }}>
-          <h3 style={{ fontWeight: 700, marginBottom: 16 }}>📋 Chi tiết đặt phòng</h3>
+          <h3 style={{ fontWeight: 700, marginBottom: 16 }}><ProfileOutlined style={{ marginRight: 8, color: '#006ce4' }} />Chi tiết đặt phòng</h3>
 
           <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
             <div style={{
@@ -70,7 +70,7 @@ const BookingConfirmation: React.FC = () => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 32, flexShrink: 0,
             }}>
-              🏨
+              <BankOutlined style={{ color: '#fff' }} />
             </div>
             <div>
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>{hotel?.name || 'Khách sạn'}</div>
@@ -84,10 +84,12 @@ const BookingConfirmation: React.FC = () => {
             ['Khách lưu trú', `${guestInfo?.firstName || ''} ${guestInfo?.lastName || ''}`],
             ['Email', guestInfo?.email],
             ['Điện thoại', guestInfo?.phone],
+            ['Khách sạn', hotel?.name || '—'],
+            ['Loại phòng', room?.roomType || 'Phòng tiêu chuẩn'],
             ['Ngày nhận phòng', `${checkIn} (từ 14:00)`],
             ['Ngày trả phòng', `${checkOut} (trước 12:00)`],
             ['Số đêm', `${Math.max(1, nights || 2)} đêm`],
-            ['Trạng thái thanh toán', 'Thanh toán tại khách sạn'],
+            ['Trạng thái thanh toán', 'Thanh toán sau khi duyệt (hoặc tại khách sạn)'],
           ].map(([label, value]) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
               <span style={{ color: '#595959', fontSize: 14 }}>{label}</span>
@@ -107,7 +109,7 @@ const BookingConfirmation: React.FC = () => {
 
         {/* Info box */}
         <div style={{ background: '#e8f0fe', border: '1px solid #c2d5f5', borderRadius: 8, padding: 16, marginBottom: 20 }}>
-          <div style={{ fontWeight: 700, marginBottom: 8, color: '#003b95' }}>ℹ️ Lưu ý quan trọng</div>
+          <div style={{ fontWeight: 700, marginBottom: 8, color: '#003b95' }}><InfoCircleOutlined style={{ marginRight: 6 }} />Lưu ý quan trọng</div>
           <ul style={{ color: '#595959', fontSize: 13, paddingLeft: 20, margin: 0 }}>
             <li style={{ marginBottom: 6 }}>Mang theo CMND/CCCD hoặc hộ chiếu khi nhận phòng</li>
             <li style={{ marginBottom: 6 }}>Nhận phòng từ 14:00, trả phòng trước 12:00</li>

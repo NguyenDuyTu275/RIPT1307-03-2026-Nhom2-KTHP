@@ -74,74 +74,74 @@ const AdminBookings: React.FC = () => {
 
   const getStatusTag = (status: string) => {
     switch (status) {
-      case 'PENDING': return <Tag color="gold">Chờ duyệt</Tag>;
-      case 'CONFIRMED': return <Tag color="green">Đã duyệt</Tag>;
-      case 'REJECTED': return <Tag color="red">Từ chối</Tag>;
-      case 'CANCELLED': return <Tag color="default">Đã hủy</Tag>;
-      default: return <Tag>{status}</Tag>;
+      case 'PENDING': return <Tag color="orange" style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 600 }}>Chờ duyệt</Tag>;
+      case 'CONFIRMED': return <Tag color="green" style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 600 }}>Đã duyệt</Tag>;
+      case 'REJECTED': return <Tag color="red" style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 600 }}>Từ chối</Tag>;
+      case 'CANCELLED': return <Tag color="default" style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 600 }}>Đã hủy</Tag>;
+      default: return <Tag style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 600 }}>{status}</Tag>;
     }
   };
 
   const getPaymentStatusTag = (status: string) => {
     switch (status) {
-      case 'UNPAID': return <Tag color="red">Chưa thanh toán</Tag>;
-      case 'PAID': return <Tag color="green">Đã thanh toán</Tag>;
-      case 'REFUNDED': return <Tag color="default">Đã hoàn tiền</Tag>;
-      default: return <Tag>{status}</Tag>;
+      case 'UNPAID': return <Tag color="volcano" style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 600 }}>Chưa thanh toán</Tag>;
+      case 'PAID': return <Tag color="cyan" style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 600 }}>Đã thanh toán</Tag>;
+      case 'REFUNDED': return <Tag color="default" style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 600 }}>Đã hoàn tiền</Tag>;
+      default: return <Tag style={{ borderRadius: 12, padding: '2px 10px', fontWeight: 600 }}>{status}</Tag>;
     }
   };
 
   const columns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
+    { title: <span style={{ color: '#595959', fontWeight: 700 }}>ID</span>, dataIndex: 'id', key: 'id', width: 60 },
     {
-      title: 'Khách hàng',
+      title: <span style={{ color: '#595959', fontWeight: 700 }}>Khách hàng</span>,
       key: 'user',
-      render: (_: any, record: any) => <b>{record.user?.username || 'N/A'}</b>
+      render: (_: any, record: any) => <span style={{ fontWeight: 600, color: '#1a1a1a' }}>{record.user?.username || 'N/A'}</span>
     },
     {
-      title: 'Khách sạn',
+      title: <span style={{ color: '#595959', fontWeight: 700 }}>Khách sạn</span>,
       key: 'hotel',
-      render: (_: any, record: any) => <span>{record.hotel?.name || 'N/A'}</span>
+      render: (_: any, record: any) => <span style={{ color: '#1a1a1a', fontWeight: 500 }}>{record.hotel?.name || 'N/A'}</span>
     },
     {
-      title: 'Thời gian',
+      title: <span style={{ color: '#595959', fontWeight: 700 }}>Thời gian</span>,
       key: 'dates',
       render: (_: any, record: any) => (
-        <div style={{ fontSize: 13 }}>
-          <div><b>In:</b> {record.checkInDate}</div>
-          <div><b>Out:</b> {record.checkOutDate}</div>
+        <div style={{ fontSize: 13, color: '#595959' }}>
+          <div><span style={{ color: '#8c8c8c' }}>In:</span> <b style={{ color: '#1a1a1a' }}>{record.checkInDate}</b></div>
+          <div><span style={{ color: '#8c8c8c' }}>Out:</span> <b style={{ color: '#1a1a1a' }}>{record.checkOutDate}</b></div>
         </div>
       )
     },
     {
-      title: 'Tổng tiền',
+      title: <span style={{ color: '#595959', fontWeight: 700 }}>Tổng tiền</span>,
       dataIndex: 'totalPrice',
       key: 'totalPrice',
-      render: (v: number) => <b style={{ color: '#006ce4' }}>{v?.toLocaleString('vi-VN')}₫</b>
+      render: (v: number) => <span style={{ color: '#006ce4', fontWeight: 800, fontSize: 15 }}>{v?.toLocaleString('vi-VN')}₫</span>
     },
     {
-      title: 'Trạng thái',
+      title: <span style={{ color: '#595959', fontWeight: 700 }}>Trạng thái</span>,
       key: 'status',
       render: (_: any, record: any) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
           {getStatusTag(record.status)}
           {getPaymentStatusTag(record.paymentStatus)}
         </div>
       )
     },
     {
-      title: 'Hành động',
+      title: <span style={{ color: '#595959', fontWeight: 700 }}>Hành động</span>,
       key: 'action',
       render: (_: any, record: any) => (
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {record.status === 'PENDING' && (
             <>
-              <Button size="small" type="primary" icon={<CheckOutlined />} onClick={() => handleApprove(record.id)}>Duyệt</Button>
-              <Button size="small" danger icon={<CloseOutlined />} onClick={() => openRejectModal(record.id)}>Từ chối</Button>
+              <Button size="small" type="primary" style={{ borderRadius: 6, fontWeight: 600, background: '#1890ff' }} icon={<CheckOutlined />} onClick={() => handleApprove(record.id)}>Duyệt</Button>
+              <Button size="small" danger style={{ borderRadius: 6, fontWeight: 600 }} icon={<CloseOutlined />} onClick={() => openRejectModal(record.id)}>Từ chối</Button>
             </>
           )}
           {record.paymentStatus === 'UNPAID' && record.status !== 'CANCELLED' && record.status !== 'REJECTED' && (
-            <Button size="small" icon={<DollarOutlined />} style={{ color: '#52c41a', borderColor: '#52c41a' }} onClick={() => handleMarkPaid(record.id)}>
+            <Button size="small" icon={<DollarOutlined />} style={{ borderRadius: 6, fontWeight: 600, color: '#52c41a', borderColor: '#b7eb8f', background: '#f6ffed' }} onClick={() => handleMarkPaid(record.id)}>
               Đã thu tiền
             </Button>
           )}

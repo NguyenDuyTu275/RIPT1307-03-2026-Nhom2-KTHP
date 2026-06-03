@@ -60,6 +60,18 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
+    public void deleteNotification(Long notificationId) {
+        User user = getCurrentUser();
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found"));
+
+        if (!notification.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You can only delete your own notification");
+        }
+
+        notificationRepository.delete(notification);
+    }
+
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext()
                 .getAuthentication()

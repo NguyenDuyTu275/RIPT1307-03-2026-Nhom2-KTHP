@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Popover, Badge, List, Typography, Spin } from 'antd';
-import { BellOutlined } from '@ant-design/icons';
+import { BellOutlined, DeleteOutlined, SyncOutlined, CheckOutlined, DownOutlined } from '@ant-design/icons';
 import { useWishlist } from '../context/WishlistContext';
 import { notificationApi } from '../api';
 
@@ -64,6 +64,16 @@ const Header: React.FC<HeaderProps> = () => {
     }
   };
 
+  const handleDeleteNotification = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation(); // Ngăn sự kiện click lan ra ngoài (không trigger handleReadNotification)
+    try {
+      await notificationApi.delete(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (error) {
+      console.error('Lỗi khi xóa thông báo', error);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
@@ -81,10 +91,34 @@ const Header: React.FC<HeaderProps> = () => {
     reader.readAsDataURL(file);
   };
 
+  const timeAgo = (dateString: string) => {
+    const diff = Date.now() - new Date(dateString).getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor(diff / (1000 * 60));
+    
+    if (days === 1) return `một ngày trước`;
+    if (days > 1) return `${days} ngày trước`;
+    if (hours > 0) return `${hours} giờ trước`;
+    if (minutes > 0) return `${minutes} phút trước`;
+    return `vừa xong`;
+  };
+
   const notificationContent = (
-    <div style={{ width: 320, maxHeight: 400, overflowY: 'auto', padding: '0 8px' }}>
-      <div style={{ padding: '8px 0', borderBottom: '1px solid #f0f0f0', marginBottom: 8 }}>
-        <b style={{ fontSize: 16 }}>Thông báo</b>
+    <div style={{ width: 360, maxHeight: 500, overflowY: 'auto', padding: 0 }}>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <b style={{ fontSize: 15, color: '#333' }}>Thông báo của tôi ({notifications.length})</b>
+        <div style={{ display: 'flex', gap: 12, fontSize: 18, color: '#003b95' }}>
+          <SyncOutlined style={{ cursor: 'pointer' }} onClick={fetchNotifications} spin={loadingNotifications} />
+          <CheckOutlined 
+            style={{ cursor: 'pointer' }} 
+            onClick={async () => {
+              for (const n of notifications.filter(x => !x.isRead)) {
+                await handleReadNotification(n);
+              }
+            }} 
+          />
+        </div>
       </div>
       {loadingNotifications && notifications.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 20 }}><Spin /></div>
@@ -97,24 +131,43 @@ const Header: React.FC<HeaderProps> = () => {
             <List.Item 
               style={{ 
                 cursor: 'pointer', 
-                background: item.isRead ? 'transparent' : '#e6f7ff',
-                padding: '12px 8px',
-                borderRadius: 8,
-                marginBottom: 4,
-                border: 'none'
+                background: item.isRead ? '#fff' : '#f4f9fd',
+                padding: '16px 16px',
+                borderBottom: '1px solid #e8e8e8',
+                position: 'relative'
               }}
               onClick={() => handleReadNotification(item)}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                <Text strong={!item.isRead}>{item.title}</Text>
-                <Text type="secondary" style={{ fontSize: 13, marginTop: 4 }}>{item.message}</Text>
-                <Text type="secondary" style={{ fontSize: 11, marginTop: 8, color: '#bfbfbf' }}>
-                  {new Date(item.createdAt).toLocaleString('vi-VN')}
-                </Text>
-              </div>
-            </List.Item>
+                <div style={{ display: 'flex', flexDirection: 'column', width: '100%', paddingRight: 28 }}>
+                  <Text strong style={{ color: '#c00000', fontSize: 14, lineHeight: 1.4 }}>{item.title}</Text>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                    <Text type="secondary" style={{ fontSize: 12, fontStyle: 'italic', color: '#b3b3b3' }}>
+                      {timeAgo(item.createdAt)}
+                    </Text>
+                  </div>
+                </div>
+                <DeleteOutlined 
+                  onClick={(e) => handleDeleteNotification(e, item.id)}
+                  style={{ 
+                    position: 'absolute', 
+                    top: 16, 
+                    right: 16, 
+                    color: '#999', 
+                    fontSize: 16,
+                    padding: 4,
+                    cursor: 'pointer'
+                  }} 
+                  title="Xóa thông báo"
+                />
+              </List.Item>
           )}
         />
+      )}
+      {notifications.length > 0 && (
+        <div style={{ padding: '12px', textAlign: 'center', color: '#c00000', cursor: 'pointer', fontSize: 14 }}>
+          <DownOutlined style={{ marginRight: 4 }} /> Tải thêm
+        </div>
       )}
     </div>
   );

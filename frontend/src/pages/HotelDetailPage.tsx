@@ -311,8 +311,14 @@ const HotelDetailPage: React.FC = () => {
       <div style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="container" style={{ padding: '10px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#595959' }}>
-            <span style={{ cursor: 'pointer', color: '#006ce4' }} onClick={() => navigate('/')}>Trang chủ</span>
-            <span>›</span>
+            <Button 
+              type="text" 
+              icon={<LeftOutlined />} 
+              onClick={() => navigate('/')} 
+              style={{ padding: '0 8px', marginRight: 12, fontWeight: 600, color: '#006ce4', background: '#e6f2ff', borderRadius: 4 }}
+            >
+              Về trang chủ
+            </Button>
             <span style={{ cursor: 'pointer', color: '#006ce4' }} onClick={() => navigate('/search')}>Khách sạn</span>
             <span>›</span>
             <span style={{ color: '#1a1a1a', fontWeight: 500 }}>{hotelName}</span>
@@ -545,7 +551,7 @@ const HotelDetailPage: React.FC = () => {
                 {hotel.rooms.map((room: any) => {
                   const roomImg = room.images?.[0]?.imageUrl;
                   return (
-                    <div key={room.id} style={{
+                    <div key={room.id} className="room-item-row" style={{
                       display: 'flex', gap: 14, padding: '12px 0',
                       borderBottom: '1px solid #f0f0f0', alignItems: 'center'
                     }}>
@@ -567,7 +573,7 @@ const HotelDetailPage: React.FC = () => {
                         <div style={{ fontSize: 18, fontWeight: 800 }}>{room.pricePerNight?.toLocaleString('vi-VN')}₫</div>
                         <div style={{ fontSize: 11, color: '#595959' }}>mỗi đêm</div>
                       </div>
-                      <Button type="primary" size="small" onClick={() => navigate(`/booking/${id}/guest`)}>
+                      <Button type="primary" size="small" onClick={() => navigate(`/booking/${id}/guest`, { state: { roomId: room.id } })}>
                         Đặt
                       </Button>
                     </div>

@@ -101,7 +101,13 @@ export const paymentApi = {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
-    }).then(res => res.json());
+    }).then(async res => {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Lỗi lấy QR');
+      }
+      return res.json();
+    });
   },
   confirmPayment: (bookingId: number) => {
     return fetch(`/proxy/bookings/${bookingId}/confirm-payment`, {
@@ -109,7 +115,13 @@ export const paymentApi = {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
-    }).then(res => res.json());
+    }).then(async res => {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Lỗi xác nhận');
+      }
+      return res.json();
+    });
   }
 };
 
@@ -118,6 +130,11 @@ export const notificationApi = {
   getMy: () => swaggerApi.notifications.getMyNotifications(JSON_FMT),
   markAsRead: (notificationId: number) =>
     swaggerApi.notifications.markAsRead(notificationId, JSON_FMT),
+  delete: (notificationId: number) =>
+    fetch(`/proxy/notifications/${notificationId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    }),
 };
 
 // ─── ADMIN ────────────────────────────────────────────────────

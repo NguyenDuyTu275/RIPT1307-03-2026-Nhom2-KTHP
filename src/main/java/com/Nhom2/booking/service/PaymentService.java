@@ -17,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 @Service
 public class PaymentService {
 
-
     private static final String BANK_BIN = "970423";
 
     @Value("${payment.bank.name:TPBank}")
@@ -39,19 +38,16 @@ public class PaymentService {
     public PaymentService(
             BookingRepository bookingRepository,
             UserRepository userRepository,
-            NotificationService notificationService
-    ) {
+            NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
     }
 
-
     public PaymentQrResponse generatePaymentQr(Long bookingId) {
 
         User user = getCurrentUser();
         Booking booking = getBooking(bookingId);
-
 
         if (!booking.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("You can only access your own booking");
@@ -60,19 +56,15 @@ public class PaymentService {
         // Chỉ booking CONFIRMED + UNPAID mới được thanh toán
         if (booking.getStatus() != BookingStatus.CONFIRMED) {
             throw new RuntimeException(
-                    "Booking must be confirmed before payment. Current status: "
-                            + booking.getStatus()
-            );
+                    "Booking must be confirmed before payment. Current status: " + booking.getStatus());
         }
 
         if (booking.getPaymentStatus() == PaymentStatus.PAID) {
             throw new RuntimeException("Booking has already been paid");
         }
 
-
         String transferContent = "DH " + bookingId;
         long amount = booking.getTotalPrice().longValue();
-
 
         String qrCodeUrl = String.format(
                 "https://img.vietqr.io/image/%s-%s-%s.png?amount=%d&addInfo=%s&accountName=%s",
@@ -81,8 +73,7 @@ public class PaymentService {
                 qrTemplate,
                 amount,
                 URLEncoder.encode(transferContent, StandardCharsets.UTF_8),
-                URLEncoder.encode(accountName, StandardCharsets.UTF_8)
-        );
+                URLEncoder.encode(accountName, StandardCharsets.UTF_8));
 
         PaymentQrResponse response = new PaymentQrResponse();
         response.setBookingId(bookingId);
@@ -122,8 +113,7 @@ public class PaymentService {
                 "User " + user.getUsername()
                         + " has transferred payment for booking #" + bookingId
                         + ". Amount: " + String.format("%,.0f", booking.getTotalPrice())
-                        + " VND. Please verify and confirm."
-        );
+                        + " VND. Please verify and confirm.");
 
         return booking;
     }

@@ -12,6 +12,7 @@ import SearchResults from './pages/SearchResults';
 import HotelDetailPage from './pages/HotelDetailPage';
 import HotelReviewAndChatPage from './pages/HotelReviewAndChatPage';
 import GuestInfoPage from './pages/GuestInfoPage';
+import PaymentPage from './pages/PaymentPage';
 import BookingConfirmation from './pages/BookingConfirmation';
 
 // ── Account
@@ -45,6 +46,7 @@ function App() {
           <Route path="/hotels/:id" element={<HotelDetailPage />} />
           <Route path="/hotels/:id/reviews" element={<HotelReviewAndChatPage />} />
           <Route path="/booking/:hotelId/guest" element={<GuestInfoPage />} />
+          <Route path="/booking/payment" element={<PaymentPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmation />} />
 
           {/* ── Account */}

@@ -24,6 +24,7 @@ const MyBookingsPage: React.FC = () => {
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [paymentQrData, setPaymentQrData] = useState<any>(null);
   const [payingBookingId, setPayingBookingId] = useState<number | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const fetchBookings = () => {
     setLoading(true);
@@ -58,31 +59,31 @@ const MyBookingsPage: React.FC = () => {
   };
 
   const handleOpenPayment = async (bookingId: number) => {
-    setLoading(true);
+    setPaymentLoading(true);
     try {
       const data = await paymentApi.getPaymentQr(bookingId);
       setPaymentQrData(data);
       setPayingBookingId(bookingId);
       setPaymentModalVisible(true);
-    } catch (e) {
-      message.error('Không thể tải thông tin thanh toán');
+    } catch (e: any) {
+      message.error(e?.response?.data?.message || e?.message || 'Không thể tải thông tin thanh toán. Booking phải được CONFIRMED mới thanh toán được!');
     } finally {
-      setLoading(false);
+      setPaymentLoading(false);
     }
   };
 
   const handleConfirmPayment = async () => {
     if (!payingBookingId) return;
-    setLoading(true);
+    setPaymentLoading(true);
     try {
       await paymentApi.confirmPayment(payingBookingId);
-      message.success('Đã gửi thông báo xác nhận thanh toán!');
+      message.success('Đã gửi thông báo xác nhận thanh toán tới Admin!');
       setPaymentModalVisible(false);
       fetchBookings();
     } catch (e: any) {
-      message.error(e?.response?.data || e?.message || 'Xác nhận thanh toán thất bại');
+      message.error(e?.response?.data?.message || e?.message || 'Xác nhận thanh toán thất bại');
     } finally {
-      setLoading(false);
+      setPaymentLoading(false);
     }
   };
 
@@ -276,7 +277,7 @@ const MyBookingsPage: React.FC = () => {
                 size="large" 
                 block 
                 onClick={handleConfirmPayment}
-                loading={loading}
+                loading={paymentLoading}
               >
                 Xác nhận đã thanh toán
               </Button>

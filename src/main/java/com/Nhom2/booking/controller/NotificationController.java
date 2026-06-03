@@ -29,4 +29,9 @@ public class NotificationController {
     public Notification markAsRead(@PathVariable Long notificationId) {
         return notificationService.markAsRead(notificationId);
     }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/{notificationId}")
+    public void deleteNotification(@PathVariable Long notificationId) {
+        notificationService.deleteNotification(notificationId);
+    }
 }
