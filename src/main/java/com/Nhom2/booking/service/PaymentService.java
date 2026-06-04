@@ -162,8 +162,10 @@ public class PaymentService {
             return false;
         }
 
-        // Sepay gửi header: "Bearer <api_key>"
-        String token = authorization.replace("Bearer ", "").trim();
+        // Sepay gửi header: "Apikey <api_key>"
+        String token = authorization.replace("Apikey ", "")
+                .replace("Bearer ", "")
+                .trim();
         boolean valid = sepayApiKey.equals(token);
 
         if (!valid) {
