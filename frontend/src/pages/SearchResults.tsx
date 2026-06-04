@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Row, Col, Slider, Checkbox, Select, Skeleton, Empty } from 'antd';
+import { Row, Col, Slider, Checkbox, Select, Empty } from 'antd';
 import { FilterOutlined, SortAscendingOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -8,6 +8,7 @@ import SearchWidget from '../components/SearchWidget';
 import HotelCard, { getHotelImage } from '../components/HotelCard';
 import { hotelApi } from '../api';
 import { useWishlist } from '../context/WishlistContext';
+import { cachedFetch, HOTEL_LIST_TTL } from '../utils/apiCache';
 
 const { Option } = Select;
 
@@ -34,8 +35,9 @@ const SearchResults: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    hotelApi.getAll()
-      .then(res => setHotels(res.data || []))
+    // Tái dùng cache hotels_all từ HomePage nếu có
+    cachedFetch('hotels_all', () => hotelApi.getAll(), HOTEL_LIST_TTL)
+      .then(data => setHotels(data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -121,13 +123,8 @@ const SearchResults: React.FC = () => {
         <div className="container">
           {/* Back button */}
           <button
+            className="bk-btn-back-blue"
             onClick={() => navigate('/')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: '#006ce4', fontSize: 14, fontWeight: 600,
-              padding: '12px 0 0',
-            }}
           >
             ← Quay lại trang chủ
           </button>
@@ -339,8 +336,14 @@ const SearchResults: React.FC = () => {
 
               {loading ? (
                 [...Array(4)].map((_, i) => (
-                  <div key={i} className="hotel-result-card" style={{ padding: 16, pointerEvents: 'none' }}>
-                    <Skeleton active avatar={{ shape: 'square', size: 200 }} paragraph={{ rows: 3 }} />
+                  <div key={i} className="hotel-result-card" style={{ padding: 0, overflow: 'hidden', pointerEvents: 'none', display: 'flex' }}>
+                    <div style={{ width: 220, minHeight: 150, flexShrink: 0, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                    <div style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ height: 20, width: '55%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                      <div style={{ height: 14, width: '35%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                      <div style={{ height: 14, width: '45%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                      <div style={{ height: 20, width: '25%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite', marginTop: 'auto' }} />
+                    </div>
                   </div>
                 ))
               ) : filtered.length === 0 ? (

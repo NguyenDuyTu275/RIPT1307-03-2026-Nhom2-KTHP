@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Popover, Badge, List, Typography, Spin } from 'antd';
-import { BellOutlined, DeleteOutlined, SyncOutlined, CheckOutlined, DownOutlined } from '@ant-design/icons';
+import { Popover, Badge, List, Typography, Spin, Tooltip, Modal } from 'antd';
+import { BellOutlined, DeleteOutlined, SyncOutlined, CheckOutlined, DownOutlined, HeartOutlined, CarryOutOutlined } from '@ant-design/icons';
 import { useWishlist } from '../context/WishlistContext';
 import { notificationApi } from '../api';
 
@@ -27,6 +27,10 @@ const Header: React.FC<HeaderProps> = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  
+  // State modal chi tiết thông báo
+  const [selectedNotification, setSelectedNotification] = useState<any>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const fetchNotifications = async () => {
     if (!token) return;
@@ -62,6 +66,13 @@ const Header: React.FC<HeaderProps> = () => {
     } catch (error) {
       console.error('Lỗi khi đánh dấu thông báo đã đọc', error);
     }
+  };
+
+  const handleNotificationClick = (item: any) => {
+    handleReadNotification(item);
+    setSelectedNotification(item);
+    setIsModalVisible(true);
+    setShowNotifications(false); // Ẩn menu dropdown khi mở popup
   };
 
   const handleDeleteNotification = async (e: React.MouseEvent, id: number) => {
@@ -136,7 +147,7 @@ const Header: React.FC<HeaderProps> = () => {
                 borderBottom: '1px solid #e8e8e8',
                 position: 'relative'
               }}
-              onClick={() => handleReadNotification(item)}
+              onClick={() => handleNotificationClick(item)}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', width: '100%', paddingRight: 28 }}>
                   <Text strong style={{ color: '#c00000', fontSize: 14, lineHeight: 1.4 }}>{item.title}</Text>
@@ -209,16 +220,6 @@ const Header: React.FC<HeaderProps> = () => {
         </div>
       )}
 
-      <div className="bk-popover-item" onClick={() => navigate('/my-bookings')}>Lịch sử đặt phòng</div>
-      <div className="bk-popover-item" onClick={() => navigate('/wishlist')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>Danh sách yêu thích</span>
-        {wishlist.length > 0 && (
-          <span style={{ background: '#006ce4', color: '#fff', borderRadius: 10, padding: '1px 8px', fontSize: 12, fontWeight: 700 }}>
-            {wishlist.length}
-          </span>
-        )}
-      </div>
-
       <div className="bk-popover-item bk-popover-item-danger" onClick={handleLogout}>
         Đăng xuất
       </div>
@@ -249,12 +250,19 @@ const Header: React.FC<HeaderProps> = () => {
                   </button>
                 )}
                 
-                <button
-                  className="bk-header-action-btn hide-on-mobile"
-                  onClick={() => navigate('/my-bookings')}
-                >
-                  Đặt chỗ của tôi
-                </button>
+                <Tooltip title="Danh sách yêu thích">
+                  <button className="bk-header-action-btn" onClick={() => navigate('/wishlist')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Badge count={wishlist.length} size="small" offset={[-2, 2]}>
+                      <HeartOutlined style={{ color: '#fff', fontSize: 20 }} />
+                    </Badge>
+                  </button>
+                </Tooltip>
+
+                <Tooltip title="Lịch sử đặt phòng">
+                  <button className="bk-header-action-btn" onClick={() => navigate('/my-bookings')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CarryOutOutlined style={{ color: '#fff', fontSize: 21 }} />
+                  </button>
+                </Tooltip>
 
                 <Popover
                   content={notificationContent}
@@ -302,6 +310,25 @@ const Header: React.FC<HeaderProps> = () => {
           </div>
         </div>
       </div>
+      
+      {/* Modal chi tiết thông báo */}
+      <Modal
+        title={<span style={{ fontSize: 18, color: '#003b95' }}>{selectedNotification?.title}</span>}
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+        centered
+        width={500}
+      >
+        <div style={{ padding: '10px 0' }}>
+          <p style={{ fontSize: 15, lineHeight: 1.6, color: '#333', whiteSpace: 'pre-wrap' }}>
+            {selectedNotification?.message}
+          </p>
+          <div style={{ marginTop: 24, fontSize: 13, color: '#8c8c8c', fontStyle: 'italic', textAlign: 'right' }}>
+            Nhận lúc: {selectedNotification?.createdAt ? new Date(selectedNotification.createdAt).toLocaleString('vi-VN') : ''}
+          </div>
+        </div>
+      </Modal>
     </header>
   );
 };

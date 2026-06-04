@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Button, Skeleton } from 'antd';
+import { Row, Col, Button } from 'antd';
 import { HeartFilled, DeleteOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HotelCard from '../components/HotelCard';
 import { hotelApi } from '../api';
 import { useWishlist } from '../context/WishlistContext';
+import { cachedFetch, HOTEL_DETAIL_TTL } from '../utils/apiCache';
 
 const Wishlist: React.FC = () => {
   const navigate = useNavigate();
@@ -22,11 +23,11 @@ const Wishlist: React.FC = () => {
     }
 
     setLoading(true);
-    Promise.all(wishlist.map(id => hotelApi.getById(Number(id))))
-      .then(responses => {
-        const fetchedHotels = responses.map(res => res.data).filter(Boolean);
-        setHotels(fetchedHotels);
-      })
+    // Cache từng KS theo ID, tái dùng cache từ trang chi tiết nếu có
+    Promise.all(
+      wishlist.map(id => cachedFetch(`hotel_${id}`, () => hotelApi.getById(Number(id)), HOTEL_DETAIL_TTL))
+    )
+      .then(hotels => setHotels(hotels.filter(Boolean)))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [wishlist]);
@@ -39,20 +40,8 @@ const Wishlist: React.FC = () => {
       <div style={{ background: '#003b95', padding: '24px 0', color: '#fff' }}>
         <div style={{ maxWidth: 1024, margin: '0 auto', padding: '0 24px' }}>
           <button
+            className="bk-btn-back"
             onClick={() => navigate('/')}
-            style={{ 
-              background: 'transparent', 
-              border: 'none', 
-              color: 'rgba(255,255,255,0.8)', 
-              cursor: 'pointer', 
-              fontSize: 14, 
-              fontWeight: 600,
-              padding: 0,
-              marginBottom: 16,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4
-            }}
           >
             ← Quay lại trang chủ
           </button>
@@ -74,8 +63,12 @@ const Wishlist: React.FC = () => {
             <Row gutter={[16, 20]}>
               {[...Array(wishlist.length || 4)].map((_, i) => (
                 <Col key={i} xs={24} sm={12} md={6}>
-                  <div style={{ background: '#fff', borderRadius: 8, padding: 16, height: 300 }}>
-                    <Skeleton active paragraph={{ rows: 4 }} />
+                  <div style={{ borderRadius: 12, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+                    <div style={{ width: '100%', height: 180, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                    <div style={{ padding: '12px 14px 16px' }}>
+                      <div style={{ height: 16, width: '80%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite', marginBottom: 8 }} />
+                      <div style={{ height: 12, width: '50%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                    </div>
                   </div>
                 </Col>
               ))}

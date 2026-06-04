@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, Button, Tag, Empty, Skeleton, message, Modal } from 'antd';
+import { Tabs, Button, Tag, Empty, message, Modal } from 'antd';
 import { CalendarOutlined, CloseCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -66,7 +66,7 @@ const MyBookingsPage: React.FC = () => {
       setPayingBookingId(bookingId);
       setPaymentModalVisible(true);
     } catch (e: any) {
-      message.error(e?.response?.data?.message || e?.message || 'Không thể tải thông tin thanh toán. Booking phải được CONFIRMED mới thanh toán được!');
+      message.error(e?.response?.data?.message || e?.message || 'Không thể tải thông tin thanh toán. Booking phải ở trạng thái Chờ xác nhận mới thanh toán được!');
     } finally {
       setPaymentLoading(false);
     }
@@ -153,7 +153,7 @@ const MyBookingsPage: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', gap: 8 }}>
-              {booking.status === 'CONFIRMED' && booking.paymentStatus !== 'PAID' && (
+              {booking.status === 'PENDING' && booking.paymentStatus !== 'PAID' && (
                 <Button
                   size="small"
                   type="primary"
@@ -195,13 +195,8 @@ const MyBookingsPage: React.FC = () => {
         <div style={{ background: '#003b95', padding: '24px 0' }}>
           <div className="container">
             <button
+              className="bk-btn-back"
               onClick={() => navigate('/')}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 600,
-                padding: '0 0 12px',
-              }}
             >
               ← Quay lại trang chủ
             </button>
@@ -225,8 +220,14 @@ const MyBookingsPage: React.FC = () => {
 
             {loading ? (
               [...Array(3)].map((_, i) => (
-                <div key={i} style={{ background: '#fff', borderRadius: 8, padding: 16, marginBottom: 12 }}>
-                  <Skeleton active avatar={{ shape: 'square', size: 120 }} paragraph={{ rows: 3 }} />
+                <div key={i} style={{ background: '#fff', borderRadius: 12, marginBottom: 12, overflow: 'hidden', display: 'flex', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+                  {/* Image placeholder */}
+                  <div style={{ width: 160, minHeight: 120, flexShrink: 0, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                  <div style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ height: 18, width: '60%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                    <div style={{ height: 13, width: '40%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                    <div style={{ height: 13, width: '30%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                  </div>
                 </div>
               ))
             ) : filtered.length === 0 ? (

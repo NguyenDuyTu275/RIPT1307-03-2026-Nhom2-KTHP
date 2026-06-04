@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Button, Spin, Empty, message, Modal, Form, Input, Select, Card } from 'antd';
+import { Table, Tag, Button, Empty, message, Modal, Form, Input, Select, Card } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { userApi } from '../../api';
 
@@ -114,7 +114,22 @@ const AdminUsers: React.FC = () => {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div>
+        <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          {/* Table header skeleton */}
+          <div style={{ display: 'flex', gap: 0, padding: '12px 16px', borderBottom: '1px solid #f0f0f0', background: '#fafafa' }}>
+            {[80, 160, 200, 100, 120].map((w, i) => (
+              <div key={i} style={{ width: w, height: 14, borderRadius: 4, marginRight: 24, background: 'linear-gradient(90deg, #e8e8e8 25%, #d8d8d8 50%, #e8e8e8 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+            ))}
+          </div>
+          {/* Table rows skeleton */}
+          {[...Array(6)].map((_, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '16px', borderBottom: '1px solid #f5f5f5', gap: 0 }}>
+              {[80, 160, 200, 100, 120].map((w, j) => (
+                <div key={j} style={{ width: w, height: 14, borderRadius: 4, marginRight: 24, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: `shimmer 1.4s ease-in-out ${i * 0.1}s infinite` }} />
+              ))}
+            </div>
+          ))}
+        </div>
       ) : users.length === 0 ? (
         <Empty description="Không có tài khoản nào" />
       ) : (

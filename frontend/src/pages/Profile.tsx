@@ -80,8 +80,12 @@ const Profile: React.FC = () => {
         <div className="profile-layout">
           {/* Sidebar */}
           <aside className="profile-sidebar">
-            <div className="profile-avatar">
-              {localUsername.charAt(0).toUpperCase()}
+            <div className="profile-avatar" style={{ overflow: 'hidden', padding: 0 }}>
+              {localStorage.getItem('avatarUrl') ? (
+                <img src={localStorage.getItem('avatarUrl') as string} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                localUsername.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="profile-username">{localUsername}</div>
             <div className="profile-email">{currentUser?.email || 'Chưa cập nhật email'}</div>

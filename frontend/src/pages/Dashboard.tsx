@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Row, Col, Button, Spin, Empty, message, Checkbox } from 'antd';
+import { Card, Row, Col, Button, Empty, message, Checkbox } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
   GlobalOutlined, MenuOutlined,
@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import { hotelApi } from '../api';
 import { transformImageUrl } from '../utils/imageUtils';
+import { cachedFetch, HOTEL_LIST_TTL } from '../utils/apiCache';
 
 const Dashboard: React.FC = () => {
   const [hotels, setHotels] = useState<any[]>([]);
@@ -21,8 +22,8 @@ const Dashboard: React.FC = () => {
       return;
     }
 
-    hotelApi.getAll()
-      .then(res => setHotels(res.data || []))
+    cachedFetch('hotels_all', () => hotelApi.getAll(), HOTEL_LIST_TTL)
+      .then(data => setHotels(data || []))
       .catch((err) => {
         message.error('Không thể tải danh sách khách sạn từ Backend!');
         console.error(err);
@@ -114,7 +115,19 @@ const Dashboard: React.FC = () => {
         <p className="section-subtitle">Khuyến mãi, giảm giá và ưu đãi đặc biệt dành riêng cho bạn</p>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div>
+          <Row gutter={[16, 16]}>
+            {[...Array(8)].map((_, i) => (
+              <Col xs={24} sm={12} lg={6} key={i}>
+                <div style={{ borderRadius: 12, overflow: 'hidden', background: '#fff', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+                  <div style={{ width: '100%', height: 180, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                  <div style={{ padding: '12px 14px 16px' }}>
+                    <div style={{ height: 16, width: '75%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite', marginBottom: 8 }} />
+                    <div style={{ height: 12, width: '45%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                  </div>
+                </div>
+              </Col>
+            ))}
+          </Row>
         ) : hotels.length === 0 ? (
           <Empty description="Chưa có ưu đãi nào" />
         ) : (

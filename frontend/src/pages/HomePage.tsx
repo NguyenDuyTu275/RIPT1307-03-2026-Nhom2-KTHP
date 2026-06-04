@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Skeleton } from 'antd';
+import { Row, Col } from 'antd';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SearchWidget from '../components/SearchWidget';
@@ -9,6 +9,7 @@ import { hotelApi } from '../api';
 import { useWishlist } from '../context/WishlistContext';
 import { TrophyTwoTone, SafetyCertificateTwoTone, CustomerServiceTwoTone, StarTwoTone } from '@ant-design/icons';
 import AIAssistantWidget from '../components/AIAssistantWidget';
+import { cachedFetch, HOTEL_LIST_TTL } from '../utils/apiCache';
 
 
 const HomePage: React.FC = () => {
@@ -18,8 +19,8 @@ const HomePage: React.FC = () => {
   const { isInWishlist, toggleWish } = useWishlist();
 
   useEffect(() => {
-    hotelApi.getAll()
-      .then(res => setHotels(res.data || []))
+    cachedFetch('hotels_all', () => hotelApi.getAll(), HOTEL_LIST_TTL)
+      .then(data => setHotels(data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -52,10 +53,49 @@ const HomePage: React.FC = () => {
           </div>
 
           {loading ? (
-            <Row gutter={[16, 16]}>
-              {[...Array(4)].map((_, i) => (
+            <Row gutter={[16, 20]}>
+              {[...Array(8)].map((_, i) => (
                 <Col key={i} xs={24} sm={12} md={6}>
-                  <Skeleton active />
+                  <div style={{
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                    background: '#fff',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+                  }}>
+                    {/* Image skeleton with shimmer */}
+                    <div style={{
+                      width: '100%',
+                      height: 180,
+                      background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'shimmer 1.4s ease-in-out infinite',
+                    }} />
+                    <div style={{ padding: '12px 14px 16px' }}>
+                      {/* Title */}
+                      <div style={{
+                        height: 16, width: '80%', borderRadius: 6,
+                        background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer 1.4s ease-in-out infinite',
+                        marginBottom: 8,
+                      }} />
+                      {/* City */}
+                      <div style={{
+                        height: 12, width: '50%', borderRadius: 6,
+                        background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer 1.4s ease-in-out infinite',
+                        marginBottom: 14,
+                      }} />
+                      {/* Price */}
+                      <div style={{
+                        height: 14, width: '60%', borderRadius: 6,
+                        background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer 1.4s ease-in-out infinite',
+                      }} />
+                    </div>
+                  </div>
                 </Col>
               ))}
             </Row>

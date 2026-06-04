@@ -15,6 +15,7 @@ import { getHotelImage } from '../components/HotelCard';
 import { hotelApi, reviewApi } from '../api';
 import { useWishlist } from '../context/WishlistContext';
 import { transformImageUrl } from '../utils/imageUtils';
+import { cachedFetch, HOTEL_DETAIL_TTL } from '../utils/apiCache';
 
 const AMENITIES = [
   { label: 'Wi-Fi miễn phí' },
@@ -162,15 +163,17 @@ const HotelDetailPage: React.FC = () => {
   }, [reviews]);
 
   const fetchReviews = useCallback(() => {
-    reviewApi.getAll()
-      .then((res: any) => setAllReviews(res.data || []))
+    // Reviews ít thay đổi → cache 60s
+    cachedFetch('reviews_all', () => reviewApi.getAll(), 60_000)
+      .then((data: any) => setAllReviews(data || []))
       .catch(() => { });
   }, []);
 
   useEffect(() => {
     if (!id) return;
-    hotelApi.getById(Number(id))
-      .then(res => setHotel(res.data))
+    // Cache chi tiết khách sạn 2 phút
+    cachedFetch(`hotel_${id}`, () => hotelApi.getById(Number(id)), HOTEL_DETAIL_TTL)
+      .then(data => setHotel(data))
       .catch(() => { })
       .finally(() => setLoading(false));
   }, [id]);
@@ -303,6 +306,23 @@ const HotelDetailPage: React.FC = () => {
   // Kiểm tra xem người dùng hiện tại đã đánh giá chưa
   const hasReviewed = reviews.some((r: any) => r.user?.username === currentUsername);
 
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: hotelName,
+          text: `Xem khách sạn ${hotelName} trên Booking!`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        message.success('Đã sao chép liên kết!');
+      }
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+  };
+
   return (
     <div className="page-wrapper">
       <Header showSearch />
@@ -376,7 +396,7 @@ const HotelDetailPage: React.FC = () => {
               onClick={() => toggleWish(Number(id))}
               size="large"
             />
-            <Button icon={<ShareAltOutlined />} size="large" />
+            <Button icon={<ShareAltOutlined />} size="large" onClick={handleShare} />
             <Button
               type="primary"
               size="large"

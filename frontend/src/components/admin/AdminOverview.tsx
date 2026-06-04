@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Col, Row, Statistic, Button, message, Spin } from 'antd';
+import { Card, Col, Row, Statistic, Button, message } from 'antd';
 import {
   FileExcelOutlined,
   UserOutlined,
@@ -9,6 +9,21 @@ import {
 } from '@ant-design/icons';
 import { adminApi } from '../../api';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { cachedFetch } from '../../utils/apiCache';
+
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  if (percent === 0) return null;
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontWeight="bold" fontSize={13}>
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
 
 const AdminOverview: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
@@ -30,11 +45,12 @@ const AdminOverview: React.FC = () => {
   const loadStats = async () => {
     try {
       setLoading(true);
-      const res = await adminApi.getOverview();
-      setStats(res.data);
+      // Cache stats 30 giây (hay thay đổi nên không cache lâu)
+      const statsData = await cachedFetch('admin_stats', () => adminApi.getOverview(), 30_000);
+      setStats(statsData);
 
-      const bookingsRes = await adminApi.getBookings();
-      const bookings = bookingsRes.data || [];
+      // Cache danh sách booking 30 giây
+      const bookings = await cachedFetch('admin_bookings_all', () => adminApi.getBookings(), 30_000) as any[];
       
       const months = Array.from({ length: 6 }).map((_, i) => {
         const d = new Date();
@@ -102,7 +118,41 @@ const AdminOverview: React.FC = () => {
   };
 
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: 100 }}><Spin size="large" /></div>;
+    return (
+      <div>
+        {/* Header skeleton */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <div style={{ height: 24, width: 200, borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+          <div style={{ height: 36, width: 160, borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+        </div>
+        {/* Stat cards skeleton */}
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          {[...Array(4)].map((_, i) => (
+            <Col xs={24} sm={12} md={6} key={i}>
+              <div style={{ borderRadius: 12, background: '#fff', padding: '20px 24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ height: 14, width: '60%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                <div style={{ height: 28, width: '40%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+              </div>
+            </Col>
+          ))}
+        </Row>
+        {/* Chart skeleton */}
+        <Row gutter={[24, 24]}>
+          <Col xs={24} lg={16}>
+            <div style={{ borderRadius: 12, background: '#fff', padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', height: 340 }}>
+              <div style={{ height: 18, width: '40%', borderRadius: 6, marginBottom: 24, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+              <div style={{ height: 260, borderRadius: 8, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+            </div>
+          </Col>
+          <Col xs={24} lg={8}>
+            <div style={{ borderRadius: 12, background: '#fff', padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', height: 340 }}>
+              <div style={{ height: 18, width: '50%', borderRadius: 6, marginBottom: 24, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+              <div style={{ width: 180, height: 180, borderRadius: '50%', margin: '0 auto', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+            </div>
+          </Col>
+        </Row>
+      </div>
+    );
   }
 
   return (
@@ -173,7 +223,7 @@ const AdminOverview: React.FC = () => {
             title={<span style={{ fontSize: 16, fontWeight: 700 }}>Biểu đồ Doanh thu (6 tháng gần nhất)</span>}
           >
             <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -201,7 +251,7 @@ const AdminOverview: React.FC = () => {
             title={<span style={{ fontSize: 16, fontWeight: 700 }}>Tỉ lệ Đặt phòng</span>}
           >
             <div style={{ width: '100%', height: 300, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
@@ -211,6 +261,8 @@ const AdminOverview: React.FC = () => {
                     outerRadius={100}
                     paddingAngle={5}
                     dataKey="value"
+                    labelLine={false}
+                    label={renderCustomizedLabel}
                   >
                     {pieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

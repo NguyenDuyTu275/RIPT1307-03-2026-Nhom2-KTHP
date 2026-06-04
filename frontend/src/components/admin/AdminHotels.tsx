@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, message, Upload, Spin, Switch, Drawer, Tag } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, message, Upload, Switch, Drawer, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, PictureOutlined } from '@ant-design/icons';
 import { hotelApi, imageApi, roomApi } from '../../api';
 import type { UploadFile } from 'antd/es/upload/interface';
+import { cachedFetch, invalidateCache, HOTEL_LIST_TTL } from '../../utils/apiCache';
 
 const { TextArea } = Input;
 
@@ -43,8 +44,8 @@ const AdminHotels: React.FC = () => {
   const loadHotels = async () => {
     try {
       setLoading(true);
-      const res = await hotelApi.getAll();
-      setHotels(res.data || []);
+      const data = await cachedFetch('hotels_all', () => hotelApi.getAll(), HOTEL_LIST_TTL);
+      setHotels(data || []);
     } catch (error) {
       message.error('Không thể tải danh sách khách sạn');
     } finally {
@@ -62,6 +63,8 @@ const AdminHotels: React.FC = () => {
         message.success('Thêm khách sạn thành công');
       }
       setHotelModalOpen(false);
+      // Xóa cache để force reload dữ liệu mới
+      invalidateCache('hotels_all');
       loadHotels();
     } catch (error) {
       message.error('Lưu khách sạn thất bại');
@@ -79,6 +82,9 @@ const AdminHotels: React.FC = () => {
         try {
           await hotelApi.delete(id);
           message.success('Đã xóa khách sạn');
+          // Xóa cache sau khi xóa KS
+          invalidateCache('hotels_all');
+          invalidateCache(`hotel_${id}`);
           loadHotels();
         } catch (error) {
           message.error('Lỗi khi xóa khách sạn');
