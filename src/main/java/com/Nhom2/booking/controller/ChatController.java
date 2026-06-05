@@ -32,15 +32,16 @@ public class ChatController {
             String openAiApiKey = apiKeyConfig.getConfigValue();
 
             String systemPrompt = String.format(
-                    "Bạn là trợ lý AI của khách sạn \"%s\" tại %s. Trả lời ngắn gọn, thân thiện bằng tiếng Việt. Thông tin khách sạn: %s. Rating: %s/10.",
-                    request.getHotelInfo().get("name"), request.getHotelInfo().get("city"),
-                    request.getHotelInfo().get("description"), request.getHotelInfo().get("ratingAvg"));
+                "Bạn là trợ lý AI của khách sạn \"%s\" tại %s. Trả lời ngắn gọn, thân thiện bằng tiếng Việt. Thông tin khách sạn: %s. Rating: %s/10.",
+                request.getHotelInfo().get("name"), request.getHotelInfo().get("city"),
+                request.getHotelInfo().get("description"), request.getHotelInfo().get("ratingAvg")
+            );
 
             List<Map<String, String>> openAiMessages = new ArrayList<>();
             Map<String, String> systemMessage = new HashMap<>();
             systemMessage.put("role", "system");
             systemMessage.put("content", systemPrompt);
-
+            
             openAiMessages.add(systemMessage);
             openAiMessages.addAll(request.getMessages());
 
@@ -55,18 +56,19 @@ public class ChatController {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(openAiRequestBody, headers);
             RestTemplate restTemplate = new RestTemplate();
-
+            
             @SuppressWarnings("rawtypes")
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                    "https://api.openai.com/v1/chat/completions", entity, Map.class);
+                "https://api.openai.com/v1/chat/completions", entity, Map.class
+            );
 
             Map<String, Object> responseBody = response.getBody();
             List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-
+            
             Map<String, String> result = new HashMap<>();
             result.put("reply", (String) message.get("content"));
-
+            
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
@@ -79,20 +81,9 @@ public class ChatController {
         private List<Map<String, String>> messages;
         private Map<String, Object> hotelInfo;
 
-        public List<Map<String, String>> getMessages() {
-            return messages;
-        }
-
-        public void setMessages(List<Map<String, String>> messages) {
-            this.messages = messages;
-        }
-
-        public Map<String, Object> getHotelInfo() {
-            return hotelInfo;
-        }
-
-        public void setHotelInfo(Map<String, Object> hotelInfo) {
-            this.hotelInfo = hotelInfo;
-        }
+        public List<Map<String, String>> getMessages() { return messages; }
+        public void setMessages(List<Map<String, String>> messages) { this.messages = messages; }
+        public Map<String, Object> getHotelInfo() { return hotelInfo; }
+        public void setHotelInfo(Map<String, Object> hotelInfo) { this.hotelInfo = hotelInfo; }
     }
 }

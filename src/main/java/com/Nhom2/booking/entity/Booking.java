@@ -40,15 +40,15 @@ public class Booking {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonIgnoreProperties({ "password", "bookings" })
+    @JsonIgnoreProperties({"password", "bookings"})
     private User user;
 
     @ManyToOne
     @JoinColumn(name = "hotel_id")
-    @JsonIgnoreProperties({ "rooms" })
+    @JsonIgnoreProperties({"rooms"})
     private Hotel hotel;
 
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
-    @JsonIgnoreProperties({ "booking" })
+    @JsonIgnoreProperties({"booking"})
     private List<BookingRoom> bookingRooms;
 }

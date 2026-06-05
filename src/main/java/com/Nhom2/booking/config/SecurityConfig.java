@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/uploads/**"
                         ).permitAll()
                         .requestMatchers("/api/chat").permitAll()
+                        .requestMatchers("/api/webhook/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/hotels/**", "/rooms/**").permitAll()
                         .requestMatchers("/api/images/**").authenticated()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
