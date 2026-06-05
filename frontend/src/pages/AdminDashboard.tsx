@@ -53,7 +53,7 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="page-wrapper" style={{ background: '#f5f5f5', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Header />
+      <Header fullWidth />
 
       <div className="admin-layout" style={{ flex: 1, display: 'flex' }}>
         {/* Sidebar */}

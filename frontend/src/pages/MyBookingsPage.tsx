@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, Button, Tag, Empty, message, Modal } from 'antd';
-import { CalendarOutlined, CloseCircleOutlined, EyeOutlined } from '@ant-design/icons';
+import { Tabs, Button, Tag, Empty, message, Modal, Spin } from 'antd';
+import { CalendarOutlined, CloseCircleOutlined, EyeOutlined, LoadingOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AuthGuard from '../components/AuthGuard';
@@ -71,6 +71,28 @@ const MyBookingsPage: React.FC = () => {
       setPaymentLoading(false);
     }
   };
+
+  // Tự động kiểm tra trạng thái thanh toán khi mở Modal
+  useEffect(() => {
+    if (!paymentModalVisible || !payingBookingId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await bookingApi.getMy();
+        const currentBooking = res.data?.find((b: any) => b.id === payingBookingId);
+        if (currentBooking && currentBooking.paymentStatus === 'PAID') {
+          clearInterval(interval);
+          message.success('Thanh toán thành công! Hệ thống đã tự động xác nhận.');
+          setPaymentModalVisible(false);
+          fetchBookings(); // Reload list
+        }
+      } catch (e) {
+        // ignore
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [paymentModalVisible, payingBookingId]);
 
   const handleConfirmPayment = async () => {
     if (!payingBookingId) return;
@@ -273,14 +295,20 @@ const MyBookingsPage: React.FC = () => {
                 <p><strong>Số tiền:</strong> <span style={{ color: '#006ce4', fontWeight: 'bold' }}>{paymentQrData.amount?.toLocaleString('vi-VN')}₫</span></p>
                 <p><strong>Nội dung:</strong> {paymentQrData.transferContent}</p>
               </div>
+
+              <div style={{ background: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 13, color: '#0050b3', display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
+                <Spin indicator={<LoadingOutlined style={{ fontSize: 18 }} spin />} />
+                <span><strong>Hệ thống đang chờ thanh toán...</strong> Đơn phòng sẽ tự động xác nhận trong 1-3 phút sau khi bạn chuyển khoản thành công.</span>
+              </div>
+
               <Button 
-                type="primary" 
+                type="default" 
                 size="large" 
                 block 
                 onClick={handleConfirmPayment}
                 loading={paymentLoading}
               >
-                Xác nhận đã thanh toán
+                Xác nhận thủ công (Nếu lỗi)
               </Button>
             </div>
           )}

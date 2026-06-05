@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Tag, Button, Spin, Empty, message, Modal, Input, Card, Select } from 'antd';
 import { CheckOutlined, CloseOutlined, DollarOutlined } from '@ant-design/icons';
 import { adminApi } from '../../api';
+import { cachedFetch, invalidateCachePrefix } from '../../utils/apiCache';
 
 const AdminBookings: React.FC = () => {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -13,17 +14,21 @@ const AdminBookings: React.FC = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [currentBookingId, setCurrentBookingId] = useState<number | null>(null);
 
-  const loadBookings = () => {
+  const loadBookings = async () => {
     setLoading(true);
-    adminApi.getBookings(filterStatus)
-      .then(res => {
-        setBookings(res.data || []);
-      })
-      .catch((err) => {
-        message.error('Không thể tải danh sách booking');
-        console.error(err);
-      })
-      .finally(() => setLoading(false));
+    try {
+      const data = await cachedFetch(
+        `admin_bookings_${filterStatus || 'all'}`,
+        () => adminApi.getBookings(filterStatus),
+        15_000 // Cache 15 giây
+      );
+      setBookings(data || []);
+    } catch (err) {
+      message.error('Không thể tải danh sách booking');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -34,6 +39,7 @@ const AdminBookings: React.FC = () => {
     try {
       await adminApi.approveBooking(id);
       message.success('Đã duyệt booking thành công');
+      invalidateCachePrefix('admin_bookings_'); // Xoá cache để lấy data mới
       loadBookings();
     } catch (error) {
       message.error('Lỗi khi duyệt booking');
@@ -44,6 +50,7 @@ const AdminBookings: React.FC = () => {
     try {
       await adminApi.markBookingPaid(id);
       message.success('Đã đánh dấu thanh toán thành công');
+      invalidateCachePrefix('admin_bookings_'); // Xoá cache để lấy data mới
       loadBookings();
     } catch (error) {
       message.error('Lỗi khi cập nhật thanh toán');
@@ -66,6 +73,7 @@ const AdminBookings: React.FC = () => {
       await adminApi.rejectBooking(currentBookingId, rejectReason);
       message.success('Đã từ chối booking');
       setRejectModalOpen(false);
+      invalidateCachePrefix('admin_bookings_'); // Xoá cache để lấy data mới
       loadBookings();
     } catch (error) {
       message.error('Lỗi khi từ chối booking');

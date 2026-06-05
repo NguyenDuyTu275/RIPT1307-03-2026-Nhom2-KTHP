@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Row, Col, Skeleton, Tag, Button, Divider, Empty, Input, message, Modal } from 'antd';
+import { Row, Col, Skeleton, Tag, Button, Divider, Empty, Input, message, Modal, Drawer } from 'antd';
 import {
   EnvironmentOutlined,
   WifiOutlined, CarOutlined, CoffeeOutlined,
@@ -16,6 +16,7 @@ import { hotelApi, reviewApi } from '../api';
 import { useWishlist } from '../context/WishlistContext';
 import { transformImageUrl } from '../utils/imageUtils';
 import { cachedFetch, HOTEL_DETAIL_TTL } from '../utils/apiCache';
+import HotelReviewAndChatPage from './HotelReviewAndChatPage';
 
 const AMENITIES = [
   { label: 'Wi-Fi miễn phí' },
@@ -112,6 +113,7 @@ const HotelDetailPage: React.FC = () => {
   const { isInWishlist, toggleWish } = useWishlist();
   const wished = isInWishlist(Number(id));
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [reviewDrawerVisible, setReviewDrawerVisible] = useState(false);
 
   // ── Review state ──
   const [allReviews, setAllReviews] = useState<any[]>([]);
@@ -244,7 +246,7 @@ const HotelDetailPage: React.FC = () => {
 
   const handleTabClick = (tab: string) => {
     if (tab === 'Đánh giá của khách') {
-      navigate(`/hotels/${id}/reviews`);
+      setReviewDrawerVisible(true);
       return;
     }
 
@@ -692,43 +694,73 @@ const HotelDetailPage: React.FC = () => {
         </Row>
       </div>
 
-      {/* ── Custom Lightbox ── */}
+      {/* ── Photo Grid Lightbox ── */}
       {previewIndex !== null && (
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+          position: 'fixed', inset: 0, zIndex: 99999, background: '#fff',
+          display: 'flex', flexDirection: 'column'
         }}>
-          <div
-            style={{ position: 'absolute', top: 20, right: 24, cursor: 'pointer', color: '#fff', fontSize: 44, zIndex: 10, padding: 10, lineHeight: 1 }}
-            onClick={() => setPreviewIndex(null)}
-          >
-            ×
+          {/* Header */}
+          <div style={{ height: 60, borderBottom: '1px solid #e7e7e7', display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', background: '#fff', flexShrink: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, textTransform: 'uppercase' }}>{hotelName}</div>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+              <Button type="primary" size="large" onClick={() => { setPreviewIndex(null); navigate(`/booking/${id}/guest`); }}>
+                Đặt ngay
+              </Button>
+              <div 
+                style={{ cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }} 
+                onClick={() => setPreviewIndex(null)}
+              >
+                Đóng <span style={{ fontSize: 20 }}>✕</span>
+              </div>
+            </div>
           </div>
-          <div
-            style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#fff', fontSize: 40, zIndex: 10, padding: 20 }}
-            onClick={(e) => { e.stopPropagation(); setPreviewIndex((prev) => (prev! > 0 ? prev! - 1 : allImages.length - 1)); }}
-          >
-            <LeftOutlined />
-          </div>
-
-          <img
-            src={allImages[previewIndex]}
-            alt=""
-            style={{ maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain' }}
-            referrerPolicy="no-referrer"
-          />
-
-          <div
-            style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#fff', fontSize: 40, zIndex: 10, padding: 20 }}
-            onClick={(e) => { e.stopPropagation(); setPreviewIndex((prev) => (prev! < allImages.length - 1 ? prev! + 1 : 0)); }}
-          >
-            <LeftOutlined style={{ transform: 'rotate(180deg)' }} />
-          </div>
-          <div style={{ position: 'absolute', bottom: 20, color: '#fff', fontSize: 16, fontWeight: 500 }}>
-            {previewIndex + 1} / {allImages.length}
+          
+          {/* Grid Content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 40px', background: '#f5f5f5' }}>
+            <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+              <div style={{ marginBottom: 20 }}>
+                <span style={{ fontSize: 24, fontWeight: 700 }}>Tất cả hình ảnh</span>
+                <span style={{ marginLeft: 12, color: '#595959' }}>({allImages.length} ảnh)</span>
+              </div>
+              <Row gutter={[16, 16]}>
+                {allImages.map((img, i) => (
+                  <Col xs={24} sm={12} md={8} lg={6} key={i}>
+                    <div style={{ 
+                      borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                      transition: 'transform 0.2s', cursor: 'pointer', backgroundColor: '#fff'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <img 
+                        src={img} 
+                        alt={`${hotelName} - ảnh ${i + 1}`}
+                        style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }} 
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+            </div>
           </div>
         </div>
       )}
+
+      <Drawer
+        title={<span style={{ fontSize: 20, fontWeight: 700 }}>Đánh giá của khách về {hotelName}</span>}
+        width={1000}
+        onClose={() => setReviewDrawerVisible(false)}
+        open={reviewDrawerVisible}
+        placement="right"
+        bodyStyle={{ padding: 0, background: '#f5f5f5' }}
+        headerStyle={{ borderBottom: '1px solid #e7e7e7', padding: '24px' }}
+        closeIcon={<span style={{ fontSize: 20 }}>✕</span>}
+        maskStyle={{ backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.4)' }}
+      >
+        <HotelReviewAndChatPage isDrawer />
+      </Drawer>
 
       <Footer />
     </div>

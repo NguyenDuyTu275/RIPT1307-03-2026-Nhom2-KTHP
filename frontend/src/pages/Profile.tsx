@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Input, Button, message, Divider, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { UserOutlined, SaveOutlined, MailOutlined, LockOutlined, HeartOutlined, CalendarOutlined } from '@ant-design/icons';
+import { UserOutlined, SaveOutlined, MailOutlined, LockOutlined, HeartOutlined, CalendarOutlined, HomeOutlined } from '@ant-design/icons';
 import { userApi } from '../api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -146,7 +146,10 @@ const Profile: React.FC = () => {
               </Form>
 
               <Divider />
-              <Button danger onClick={handleLogout}>Đăng xuất</Button>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <Button danger onClick={handleLogout}>Đăng xuất</Button>
+                <Button onClick={() => navigate('/')} icon={<HomeOutlined />}>Quay về trang chủ</Button>
+              </div>
             </div>
           </main>
         </div>

@@ -69,8 +69,9 @@ const StarRating = ({
   );
 };
 
-const HotelReviewAndChatPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+const HotelReviewAndChatPage = ({ isDrawer }: { isDrawer?: boolean }) => {
+  const { id: paramsId } = useParams<{ id: string }>();
+  const id = paramsId || window.location.pathname.split('/')[2];
   const navigate = useNavigate();
   const [hotel, setHotel] = useState<any>(null);
   
@@ -182,11 +183,9 @@ const handleSendMessage = async () => {
 };
   const hotelName = hotel?.name || 'Khách sạn';
 
-  return (
-    <div className="page-wrapper" style={{ background: '#f5f5f5', minHeight: '100vh' }}>
-      <Header />
-
-      <div className="container" style={{ padding: '24px' }}>
+  const content = (
+    <div className="container" style={{ padding: isDrawer ? '0' : '24px' }}>
+      {!isDrawer && (
         <Button 
           type="link" 
           icon={<LeftOutlined />} 
@@ -195,6 +194,7 @@ const handleSendMessage = async () => {
         >
           Quay lại {hotelName}
         </Button>
+      )}
 
         <Row gutter={[24, 24]}>
           {/* ── Trái: Đánh giá ── */}
@@ -387,7 +387,16 @@ const handleSendMessage = async () => {
           </Col>
         </Row>
       </div>
-      
+  );
+
+  if (isDrawer) {
+    return content;
+  }
+
+  return (
+    <div className="page-wrapper page-slide-in-right" style={{ background: '#f5f5f5', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Header />
+      {content}
       <Footer />
     </div>
   );

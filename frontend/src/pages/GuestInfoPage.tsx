@@ -63,7 +63,7 @@ const GuestInfoPage: React.FC = () => {
         rooms: [{ roomId: roomToBook.id, quantity: 1 }]
       } as any;
       const booking = await bookingApi.create(Number(hotelId), bookingData);
-      navigate('/booking/confirmation', {
+      navigate('/booking/payment', {
         state: {
           booking: booking.data,
           hotel,

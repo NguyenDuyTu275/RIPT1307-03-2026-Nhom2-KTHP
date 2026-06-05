@@ -74,7 +74,7 @@ const BookingConfirmation: React.FC = () => {
             </div>
             <div>
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4 }}>{hotel?.name || 'Khách sạn'}</div>
-              <div style={{ fontSize: 13, color: '#595959' }}>📍 {hotel?.city || hotel?.address || 'Việt Nam'}</div>
+              <div style={{ fontSize: 13, color: '#595959' }}>{hotel?.city || hotel?.address || 'Việt Nam'}</div>
             </div>
           </div>
 

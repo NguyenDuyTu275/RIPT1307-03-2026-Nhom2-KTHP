@@ -73,10 +73,10 @@ public class PaymentService {
             throw new RuntimeException("You can only access your own booking");
         }
 
-        // Chỉ booking CONFIRMED + UNPAID mới được thanh toán
-        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+        // Chỉ booking PENDING + UNPAID mới được thanh toán
+        if (booking.getStatus() != BookingStatus.PENDING) {
             throw new RuntimeException(
-                    "Booking must be confirmed before payment. Current status: "
+                    "Booking must be pending before payment. Current status: "
                             + booking.getStatus()
             );
         }
@@ -124,8 +124,8 @@ public class PaymentService {
             throw new RuntimeException("You can only access your own booking");
         }
 
-        if (booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new RuntimeException("Booking must be confirmed before payment");
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new RuntimeException("Booking must be pending before payment");
         }
 
         if (booking.getPaymentStatus() == PaymentStatus.PAID) {

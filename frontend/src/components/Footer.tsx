@@ -172,8 +172,8 @@ const Footer: React.FC = () => {
         </div>
       </div>
 
-      {/* Dark footer columns */}
-      <div style={{ background: '#003580', paddingTop: 40, paddingBottom: 0 }}>
+      {/* Modern Light Footer Columns */}
+      <div style={{ background: '#fff', paddingTop: 40, paddingBottom: 0 }}>
         <div
           style={{
             maxWidth: 1200,
@@ -186,16 +186,16 @@ const Footer: React.FC = () => {
         >
           {footerCols.map((col) => (
             <div key={col.title}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 16 }}>
                 {col.title}
               </div>
               {col.links.map((link) => (
                 <a
                   key={link}
                   href="#"
-                  style={{ display: 'block', color: 'rgba(255,255,255,0.7)', fontSize: 13, marginBottom: 10, textDecoration: 'none', transition: 'color 0.2s' }}
-                  onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+                  style={{ display: 'block', color: '#006ce4', fontSize: 13, marginBottom: 12, textDecoration: 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+                  onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
                 >
                   {link}
                 </a>
@@ -209,18 +209,16 @@ const Footer: React.FC = () => {
           style={{
             maxWidth: 1200,
             margin: '0 auto',
-            padding: '20px 24px',
-            borderTop: '1px solid rgba(255,255,255,0.15)',
+            padding: '24px 24px',
+            borderTop: '1px solid #e7e7e7',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: 12,
+            gap: 16,
           }}
         >
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Booking.com™</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-            Bản quyền © 2006–2026 Booking.com™. Bảo lưu mọi quyền.
+          <div style={{ fontSize: 13, color: '#595959', fontWeight: 500 }}>
           </div>
         </div>
       </div>

@@ -9,9 +9,10 @@ const { Text } = Typography;
 
 interface HeaderProps {
   showSearch?: boolean;
+  fullWidth?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = () => {
+const Header: React.FC<HeaderProps> = ({ showSearch, fullWidth }) => {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username');
@@ -230,7 +231,7 @@ const Header: React.FC<HeaderProps> = () => {
     <header className="bk-header">
       {/* Top row */}
       <div className="bk-header-top">
-        <div className="bk-header-top-inner">
+        <div className="bk-header-top-inner" style={fullWidth ? { maxWidth: '100%', padding: '0 24px' } : undefined}>
           {/* Logo */}
           <div className="bk-logo" onClick={() => navigate('/')}>
             Booking<span>.com</span>
@@ -252,7 +253,7 @@ const Header: React.FC<HeaderProps> = () => {
                 
                 <Tooltip title="Danh sách yêu thích">
                   <button className="bk-header-action-btn" onClick={() => navigate('/wishlist')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Badge count={wishlist.length} size="small" offset={[-2, 2]}>
+                    <Badge count={wishlist.length} size="small" offset={[4, -2]}>
                       <HeartOutlined style={{ color: '#fff', fontSize: 20 }} />
                     </Badge>
                   </button>
@@ -273,7 +274,7 @@ const Header: React.FC<HeaderProps> = () => {
                   overlayInnerStyle={{ borderRadius: 12, padding: 8 }}
                 >
                   <button className="bk-header-action-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+                    <Badge count={unreadCount} size="small" offset={[4, -2]}>
                       <BellOutlined style={{ color: '#fff', fontSize: 20 }} />
                     </Badge>
                   </button>
