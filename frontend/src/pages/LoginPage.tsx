@@ -22,12 +22,17 @@ const LoginPage: React.FC = () => {
       }).join(''));
       const payload = JSON.parse(jsonPayload);
 
+      const role = payload.role || 'USER';
       localStorage.setItem('token', token);
       localStorage.setItem('username', values.username);
-      localStorage.setItem('role', payload.role || 'USER');
+      localStorage.setItem('role', role);
 
       message.success('Đăng nhập thành công! 👋');
-      navigate('/');
+      if (role === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } catch (error: any) {
       if (error?.status === 401 || error?.status === 400) {
         message.error('Tên đăng nhập hoặc mật khẩu không đúng!');

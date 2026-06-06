@@ -15,10 +15,14 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
     if (!token) {
       navigate('/login');
       return;
     }
+    
+    // Đã gỡ bỏ đoạn chặn Admin ở đây để Admin vào sửa hồ sơ được
 
     userApi.getAll()
       .then(res => {
@@ -100,12 +104,16 @@ const Profile: React.FC = () => {
               <div className="profile-menu-item active">
                 <UserOutlined /> Thông tin cá nhân
               </div>
-              <div className="profile-menu-item" onClick={() => navigate('/my-bookings')}>
-                <CalendarOutlined /> Lịch sử đặt phòng
-              </div>
-              <div className="profile-menu-item" onClick={() => navigate('/wishlist')}>
-                <HeartOutlined /> Khách sạn đã lưu
-              </div>
+              {currentUser?.role !== 'ADMIN' && (
+                <>
+                  <div className="profile-menu-item" onClick={() => navigate('/my-bookings')}>
+                    <CalendarOutlined /> Lịch sử đặt phòng
+                  </div>
+                  <div className="profile-menu-item" onClick={() => navigate('/wishlist')}>
+                    <HeartOutlined /> Khách sạn đã lưu
+                  </div>
+                </>
+              )}
             </div>
           </aside>
 
@@ -148,7 +156,12 @@ const Profile: React.FC = () => {
               <Divider />
               <div style={{ display: 'flex', gap: 12 }}>
                 <Button danger onClick={handleLogout}>Đăng xuất</Button>
-                <Button onClick={() => navigate('/')} icon={<HomeOutlined />}>Quay về trang chủ</Button>
+                <Button 
+                  onClick={() => navigate(currentUser?.role === 'ADMIN' ? '/admin' : '/')} 
+                  icon={<HomeOutlined />}
+                >
+                  {currentUser?.role === 'ADMIN' ? 'Quay về trang Admin' : 'Quay về trang chủ'}
+                </Button>
               </div>
             </div>
           </main>

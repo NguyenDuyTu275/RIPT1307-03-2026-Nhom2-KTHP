@@ -233,7 +233,7 @@ const Header: React.FC<HeaderProps> = ({ showSearch, fullWidth }) => {
       <div className="bk-header-top">
         <div className="bk-header-top-inner" style={fullWidth ? { maxWidth: '100%', padding: '0 24px' } : undefined}>
           {/* Logo */}
-          <div className="bk-logo" onClick={() => navigate('/')}>
+          <div className="bk-logo" onClick={() => navigate(isAdmin ? '/admin' : '/')}>
             Booking<span>.com</span>
           </div>
 
@@ -241,29 +241,24 @@ const Header: React.FC<HeaderProps> = ({ showSearch, fullWidth }) => {
           <div className="bk-header-actions">
             {token ? (
               <>
-                {isAdmin && (
-                  <button
-                    className="bk-header-action-btn hide-on-mobile"
-                    onClick={() => navigate('/admin')}
-                    style={{ fontWeight: 600 }}
-                  >
-                    Quản lý Admin
-                  </button>
-                )}
-                
-                <Tooltip title="Danh sách yêu thích">
-                  <button className="bk-header-action-btn" onClick={() => navigate('/wishlist')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Badge count={wishlist.length} size="small" offset={[4, -2]}>
-                      <HeartOutlined style={{ color: '#fff', fontSize: 20 }} />
-                    </Badge>
-                  </button>
-                </Tooltip>
+                {/* Ẩn bớt các nút của User nếu là Admin */}
+                {!isAdmin && (
+                  <>
+                    <Tooltip title="Danh sách yêu thích">
+                      <button className="bk-header-action-btn" onClick={() => navigate('/wishlist')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Badge count={wishlist.length} size="small" offset={[4, -2]}>
+                          <HeartOutlined style={{ color: '#fff', fontSize: 20 }} />
+                        </Badge>
+                      </button>
+                    </Tooltip>
 
-                <Tooltip title="Lịch sử đặt phòng">
-                  <button className="bk-header-action-btn" onClick={() => navigate('/my-bookings')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CarryOutOutlined style={{ color: '#fff', fontSize: 21 }} />
-                  </button>
-                </Tooltip>
+                    <Tooltip title="Lịch sử đặt phòng">
+                      <button className="bk-header-action-btn" onClick={() => navigate('/my-bookings')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CarryOutOutlined style={{ color: '#fff', fontSize: 21 }} />
+                      </button>
+                    </Tooltip>
+                  </>
+                )}
 
                 <Popover
                   content={notificationContent}

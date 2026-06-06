@@ -102,15 +102,6 @@ const AdminDashboard: React.FC = () => {
             <ReconciliationOutlined /> Yêu cầu Đặt phòng
           </div>
 
-          <div style={{ marginTop: 40, borderTop: '1px solid #e8e8e8', paddingTop: 20 }}>
-            <div 
-              className="admin-menu-item" 
-              onClick={() => navigate('/')}
-              style={{ padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, color: '#595959' }}
-            >
-              <ArrowLeftOutlined /> Về trang chủ
-            </div>
-          </div>
         </aside>
 
         {/* Content */}
