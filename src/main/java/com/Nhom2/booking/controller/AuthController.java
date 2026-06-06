@@ -1,7 +1,10 @@
 package com.Nhom2.booking.controller;
 
+import com.Nhom2.booking.dto.ForgotPasswordRequest;
+import com.Nhom2.booking.dto.GoogleLoginRequest;
 import com.Nhom2.booking.dto.LoginRequest;
 import com.Nhom2.booking.dto.RegisterRequest;
+import com.Nhom2.booking.dto.ResetPasswordRequest;
 import com.Nhom2.booking.dto.VerifyOtpRequest;
 import com.Nhom2.booking.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -58,4 +61,43 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
-}
+
+    // ═══════════════════════════════════════════════════════════
+    // QUÊN MẬT KHẨU
+    // ═══════════════════════════════════════════════════════════
+
+    // Bước 1: Nhập username -> gửi OTP đến email liên kết
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            String maskedEmail = userService.forgotPassword(request);
+            return ResponseEntity.ok(maskedEmail);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // Bước 2: Nhập OTP + mật khẩu mới -> đặt lại mật khẩu
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            return ResponseEntity.ok(userService.resetPassword(request));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ĐĂNG NHẬP BẰNG GOOGLE
+    // ═══════════════════════════════════════════════════════════
+
+    @PostMapping("/google")
+    public ResponseEntity<String> googleLogin(@RequestBody GoogleLoginRequest request) {
+        try {
+            String token = userService.loginWithGoogle(request.getCredential());
+            return ResponseEntity.ok(token);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        }
+    }
+}
