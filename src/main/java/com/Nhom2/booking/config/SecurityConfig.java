@@ -47,6 +47,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/uploads/**"
                         ).permitAll()
+                        .requestMatchers("/").permitAll()
                         .requestMatchers("/api/chat").permitAll()
                         .requestMatchers("/api/webhook/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/hotels/**", "/rooms/**").permitAll()
