@@ -245,11 +245,19 @@ public class UserService {
         }
 
         // Tìm user theo email
+<<<<<<< HEAD
         List<User> existingUsers = userRepository.findByEmail(email);
 
         User user;
         if (!existingUsers.isEmpty()) {
             user = existingUsers.get(0);
+=======
+        Optional<User> existingUser = userRepository.findByEmail(email);
+
+        User user;
+        if (existingUser.isPresent()) {
+            user = existingUser.get();
+>>>>>>> main
             if (user.getRole() == null) {
                 user.setRole(UserRole.USER);
                 userRepository.save(user);

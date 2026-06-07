@@ -35,7 +35,9 @@ src/main/resources/application.properties
 
 .vercel
 .env*
+.env
 
 # Frontend build & dependencies - never commit these
+node_modules/
 frontend/node_modules/
 frontend/dist/
