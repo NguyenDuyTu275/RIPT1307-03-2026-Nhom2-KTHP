@@ -26,12 +26,15 @@ import Deals from './pages/Deals';
 // ── Admin
 import AdminDashboard from './pages/AdminDashboard';
 
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import './App.css';
 
 function App() {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
   return (
-    <WishlistProvider>
-      <Router>
+    <GoogleOAuthProvider clientId={clientId}>
+      <WishlistProvider>
+        <Router>
         <Routes>
           {/* ── Root redirect */}
           <Route path="/" element={<HomePage />} />
@@ -66,7 +69,8 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-    </WishlistProvider>
+      </WishlistProvider>
+    </GoogleOAuthProvider>
   );
 }
 

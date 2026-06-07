@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, message, Divider } from 'antd';
 import { useNavigate, Link } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { authApi } from '../api';
 
 const Register: React.FC = () => {
@@ -57,6 +58,38 @@ const Register: React.FC = () => {
       } else {
         message.error(typeof errResponse === 'string' ? errResponse : 'Xác thực OTP thất bại. Vui lòng thử lại.');
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    if (!credentialResponse.credential) return;
+    setLoading(true);
+    try {
+      const res = await authApi.googleLogin(credentialResponse.credential);
+      const token: string = res;
+
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      const payload = JSON.parse(jsonPayload);
+
+      const role = payload.role || 'USER';
+      localStorage.setItem('token', token);
+      localStorage.setItem('username', payload.sub || 'GoogleUser');
+      localStorage.setItem('role', role);
+
+      message.success('Đăng nhập bằng Google thành công! 👋');
+      if (role === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+    } catch (error: any) {
+      message.error('Lỗi đăng nhập Google: ' + (error?.message || 'Không xác định'));
     } finally {
       setLoading(false);
     }
@@ -140,6 +173,18 @@ const Register: React.FC = () => {
                     Đăng ký ngay
                   </Button>
                 </Form.Item>
+
+                <Divider plain style={{ color: '#888', fontSize: 13 }}>hoặc đăng ký với</Divider>
+
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => {
+                      message.error('Đăng nhập Google thất bại');
+                    }}
+                    useOneTap
+                  />
+                </div>
               </Form>
             </>
           ) : (

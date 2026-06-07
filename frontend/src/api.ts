@@ -40,6 +40,36 @@ export const authApi = {
 
   verifyOtp: (email: string, otp: string) =>
     swaggerApi.auth.verifyOtp({ email, otp }, TEXT_FMT),
+
+  googleLogin: (credential: string) =>
+    fetch('/proxy/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+    }).then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.text();
+    }),
+
+  forgotPassword: (username: string) =>
+    fetch('/proxy/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    }).then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.text();
+    }),
+
+  resetPassword: (username: string, otp: string, newPassword: string) =>
+    fetch('/proxy/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, otp, newPassword }),
+    }).then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.text();
+    }),
 };
 
 export const chatApi = {
