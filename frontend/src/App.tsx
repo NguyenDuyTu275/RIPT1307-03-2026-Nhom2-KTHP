@@ -12,6 +12,7 @@ import SearchResults from './pages/SearchResults';
 import HotelDetailPage from './pages/HotelDetailPage';
 import HotelReviewAndChatPage from './pages/HotelReviewAndChatPage';
 import GuestInfoPage from './pages/GuestInfoPage';
+import PaymentPage from './pages/PaymentPage';
 import BookingConfirmation from './pages/BookingConfirmation';
 
 // ── Account
@@ -25,12 +26,15 @@ import Deals from './pages/Deals';
 // ── Admin
 import AdminDashboard from './pages/AdminDashboard';
 
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import './App.css';
 
 function App() {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
   return (
-    <WishlistProvider>
-      <Router>
+    <GoogleOAuthProvider clientId={clientId}>
+      <WishlistProvider>
+        <Router>
         <Routes>
           {/* ── Root redirect */}
           <Route path="/" element={<HomePage />} />
@@ -45,6 +49,7 @@ function App() {
           <Route path="/hotels/:id" element={<HotelDetailPage />} />
           <Route path="/hotels/:id/reviews" element={<HotelReviewAndChatPage />} />
           <Route path="/booking/:hotelId/guest" element={<GuestInfoPage />} />
+          <Route path="/booking/payment" element={<PaymentPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmation />} />
 
           {/* ── Account */}
@@ -64,7 +69,8 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-    </WishlistProvider>
+      </WishlistProvider>
+    </GoogleOAuthProvider>
   );
 }
 

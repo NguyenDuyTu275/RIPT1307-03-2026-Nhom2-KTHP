@@ -136,14 +136,8 @@ public class UserService {
         return jwtUtil.generateToken(user.getUsername(), user.getRole());
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // FORGOT PASSWORD (tìm theo username)
-    // ═══════════════════════════════════════════════════════════
 
-    /**
-     * Bước 1: User nhập username → tìm user → gửi OTP đến email liên kết.
-     * Trả về email đã mask (vd: d***d@gmail.com) để hiển thị cho user.
-     */
+
     public String forgotPassword(ForgotPasswordRequest request) {
         if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
             throw new RuntimeException("Vui lòng nhập tên đăng nhập");

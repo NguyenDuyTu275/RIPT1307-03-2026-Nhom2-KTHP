@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Row, Col, Skeleton, Tag, Button, Divider, Empty, Input, message, Modal } from 'antd';
+import { Row, Col, Skeleton, Tag, Button, Divider, Empty, Input, message, Modal, Drawer } from 'antd';
 import {
   EnvironmentOutlined,
   WifiOutlined, CarOutlined, CoffeeOutlined,
@@ -15,16 +15,18 @@ import { getHotelImage } from '../components/HotelCard';
 import { hotelApi, reviewApi } from '../api';
 import { useWishlist } from '../context/WishlistContext';
 import { transformImageUrl } from '../utils/imageUtils';
+import { cachedFetch, HOTEL_DETAIL_TTL } from '../utils/apiCache';
+import HotelReviewAndChatPage from './HotelReviewAndChatPage';
 
 const AMENITIES = [
-  { icon: <WifiOutlined />, label: 'Wi-Fi miễn phí' },
-  { icon: <CarOutlined />, label: 'Bãi đỗ xe' },
-  { icon: <CoffeeOutlined />, label: 'Bữa sáng' },
-  { icon: '🏊', label: 'Hồ bơi' },
-  { icon: '🏋️', label: 'Phòng gym' },
-  { icon: '🍽️', label: 'Nhà hàng' },
-  { icon: '🛎️', label: 'Lễ tân 24/7' },
-  { icon: '❄️', label: 'Điều hoà' },
+  { label: 'Wi-Fi miễn phí' },
+  { label: 'Bãi đỗ xe' },
+  { label: 'Bữa sáng' },
+  { label: 'Hồ bơi' },
+  { label: 'Phòng gym' },
+  { label: 'Nhà hàng' },
+  { label: 'Lễ tân 24/7' },
+  { label: 'Điều hoà' },
 ];
 
 const NAV_TABS = ['Tổng quan', 'Thông tin & giá', 'Tiện nghi', 'Quy tắc chung', 'Đánh giá của khách'];
@@ -111,6 +113,7 @@ const HotelDetailPage: React.FC = () => {
   const { isInWishlist, toggleWish } = useWishlist();
   const wished = isInWishlist(Number(id));
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [reviewDrawerVisible, setReviewDrawerVisible] = useState(false);
 
   // ── Review state ──
   const [allReviews, setAllReviews] = useState<any[]>([]);
@@ -129,19 +132,19 @@ const HotelDetailPage: React.FC = () => {
     } catch { return null; }
   }, []);
 
-  // Filter reviews for this hotel
+  // Lọc đánh giá cho khách sạn này
   const reviews = useMemo(() => {
     return allReviews.filter((r: any) => r.hotel?.id === Number(id));
   }, [allReviews, id]);
 
-  // Compute stats from filtered reviews
+  // Tính toán thống kê từ các đánh giá đã lọc
   const reviewStats = useMemo(() => {
     if (reviews.length === 0) return { avg: null, total: 0 };
     const sum = reviews.reduce((acc: number, r: any) => acc + (r.rating || 0), 0);
     return { avg: sum / reviews.length, total: reviews.length };
   }, [reviews]);
 
-  // Rating distribution
+  // Phân bổ đánh giá
   const ratingDistribution = useMemo(() => {
     const dist = [
       { label: 'Xuất sắc', range: '9-10', count: 0, color: '#008234' },
@@ -162,22 +165,24 @@ const HotelDetailPage: React.FC = () => {
   }, [reviews]);
 
   const fetchReviews = useCallback(() => {
-    reviewApi.getAll()
-      .then((res: any) => setAllReviews(res.data || []))
-      .catch(() => {});
+    // Reviews ít thay đổi → cache 60s
+    cachedFetch('reviews_all', () => reviewApi.getAll(), 60_000)
+      .then((data: any) => setAllReviews(data || []))
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
     if (!id) return;
-    hotelApi.getById(Number(id))
-      .then(res => setHotel(res.data))
-      .catch(() => {})
+    // Cache chi tiết khách sạn 2 phút
+    cachedFetch(`hotel_${id}`, () => hotelApi.getById(Number(id)), HOTEL_DETAIL_TTL)
+      .then(data => setHotel(data))
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, [id]);
 
   useEffect(() => { fetchReviews(); }, [fetchReviews]);
 
-  // Collect all images from rooms
+  // Thu thập tất cả hình ảnh từ các phòng
   const allImages = useMemo(() => {
     if (!hotel) return [];
     const imgs: string[] = [];
@@ -205,7 +210,7 @@ const HotelDetailPage: React.FC = () => {
 
     setSubmittingReview(true);
     try {
-      // Parse current user ID from token
+      // Lấy ID người dùng hiện tại từ token
       const token = localStorage.getItem('token');
       let userId: number | null = null;
       if (token) {
@@ -221,7 +226,7 @@ const HotelDetailPage: React.FC = () => {
         hotel: { id: Number(id) },
       };
 
-      // If we have userId, include it
+      // Thêm ID người dùng nếu đã đăng nhập
       if (userId) {
         reviewData.user = { id: userId };
       }
@@ -241,7 +246,7 @@ const HotelDetailPage: React.FC = () => {
 
   const handleTabClick = (tab: string) => {
     if (tab === 'Đánh giá của khách') {
-      navigate(`/hotels/${id}/reviews`);
+      setReviewDrawerVisible(true);
       return;
     }
 
@@ -252,15 +257,15 @@ const HotelDetailPage: React.FC = () => {
       'Tiện nghi': 'amenities-section',
       'Quy tắc chung': 'policies-section',
     }[tab];
-    
+
     if (sectionId) {
-      // Add a slight offset to account for the sticky header
+      // Thêm khoảng cách bù cho header cố định
       const element = document.getElementById(sectionId);
       if (element) {
-        const headerOffset = 110; // Adjust this based on your actual sticky header height
+        const headerOffset = 110; // Điều chỉnh theo chiều cao thực tế của header
         const elementPosition = element.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-  
+
         window.scrollTo({
           top: offsetPosition,
           behavior: 'smooth'
@@ -300,8 +305,25 @@ const HotelDetailPage: React.FC = () => {
     ? getRatingLabel(displayRatingNum)
     : null;
 
-  // Check if current user already reviewed this hotel
+  // Kiểm tra xem người dùng hiện tại đã đánh giá chưa
   const hasReviewed = reviews.some((r: any) => r.user?.username === currentUsername);
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: hotelName,
+          text: `Xem khách sạn ${hotelName} trên Booking!`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        message.success('Đã sao chép liên kết!');
+      }
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+  };
 
   return (
     <div className="page-wrapper">
@@ -311,8 +333,14 @@ const HotelDetailPage: React.FC = () => {
       <div style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="container" style={{ padding: '10px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#595959' }}>
-            <span style={{ cursor: 'pointer', color: '#006ce4' }} onClick={() => navigate('/')}>Trang chủ</span>
-            <span>›</span>
+            <Button 
+              type="text" 
+              icon={<LeftOutlined />} 
+              onClick={() => navigate('/')} 
+              style={{ padding: '0 8px', marginRight: 12, fontWeight: 600, color: '#006ce4', background: '#e6f2ff', borderRadius: 4 }}
+            >
+              Về trang chủ
+            </Button>
             <span style={{ cursor: 'pointer', color: '#006ce4' }} onClick={() => navigate('/search')}>Khách sạn</span>
             <span>›</span>
             <span style={{ color: '#1a1a1a', fontWeight: 500 }}>{hotelName}</span>
@@ -350,17 +378,16 @@ const HotelDetailPage: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              {[1,2,3].map(i => (
+              {[1, 2, 3].map(i => (
                 <span key={i} style={{ color: '#febb02', fontSize: 14 }}>★</span>
               ))}
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, lineHeight: 1.3 }}>{hotelName}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-              <span 
+              <span
                 style={{ fontSize: 13, color: '#006ce4', cursor: 'pointer' }}
                 onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotelName} ${hotel.address || ''} ${hotel.city || ''}`)}`, '_blank')}
               >
-                <EnvironmentOutlined style={{ marginRight: 3 }} />
                 {hotel.city || hotel.address || 'Việt Nam'} – <span style={{ textDecoration: 'underline' }}>Vị trí xuất sắc - hiển thị bản đồ</span>
               </span>
             </div>
@@ -371,7 +398,7 @@ const HotelDetailPage: React.FC = () => {
               onClick={() => toggleWish(Number(id))}
               size="large"
             />
-            <Button icon={<ShareAltOutlined />} size="large" />
+            <Button icon={<ShareAltOutlined />} size="large" onClick={handleShare} />
             <Button
               type="primary"
               size="large"
@@ -421,7 +448,7 @@ const HotelDetailPage: React.FC = () => {
           {/* Rating Sidebar & Map */}
           <Col xs={24} md={7}>
             {/* Map Box */}
-            <div 
+            <div
               style={{
                 position: 'relative',
                 borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0',
@@ -431,7 +458,7 @@ const HotelDetailPage: React.FC = () => {
               }}
               onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotelName} ${hotel.address || ''} ${hotel.city || ''}`)}`, '_blank')}
             >
-              <iframe 
+              <iframe
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(`${hotelName} ${hotel.address || ''} ${hotel.city || ''}`)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
                 style={{ position: 'absolute', top: -50, left: 0, width: '100%', height: 250, border: 0, pointerEvents: 'none' }}
                 aria-hidden="true"
@@ -442,11 +469,11 @@ const HotelDetailPage: React.FC = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: 'rgba(255,255,255,0.15)'
               }}>
-                <Button 
-                  type="primary" 
+                <Button
+                  type="primary"
                   icon={<EnvironmentOutlined />}
-                  style={{ 
-                    fontSize: 14, fontWeight: 700, borderRadius: 4, 
+                  style={{
+                    fontSize: 14, fontWeight: 700, borderRadius: 4,
                     padding: '0 16px', height: 36, background: '#006ce4',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                   }}
@@ -486,9 +513,9 @@ const HotelDetailPage: React.FC = () => {
               <Divider style={{ margin: '16px 0' }} />
 
               <div style={{ fontSize: 13, color: '#333', lineHeight: 1.8, marginBottom: 16 }}>
-                <div><span style={{ color: '#008234', marginRight: 6 }}>✓</span> Vị trí thuận lợi, gần trung tâm</div>
-                <div><span style={{ color: '#008234', marginRight: 6 }}>✓</span> Nhân viên thân thiện và nhiệt tình</div>
-                <div><span style={{ color: '#008234', marginRight: 6 }}>✓</span> Phòng sạch sẽ, tiện nghi đầy đủ</div>
+                <div>Vị trí thuận lợi, gần trung tâm</div>
+                <div>Nhân viên thân thiện và nhiệt tình</div>
+                <div>Phòng sạch sẽ, tiện nghi đầy đủ</div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
@@ -542,11 +569,11 @@ const HotelDetailPage: React.FC = () => {
             {/* Rooms & Prices */}
             {hotel.rooms && hotel.rooms.length > 0 && (
               <div id="rooms-section" style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 4, padding: 20, marginBottom: 16 }}>
-                <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>🛏️ Phòng trống</h3>
+                <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Phòng trống</h3>
                 {hotel.rooms.map((room: any) => {
                   const roomImg = room.images?.[0]?.imageUrl;
                   return (
-                    <div key={room.id} style={{
+                    <div key={room.id} className="room-item-row" style={{
                       display: 'flex', gap: 14, padding: '12px 0',
                       borderBottom: '1px solid #f0f0f0', alignItems: 'center'
                     }}>
@@ -554,21 +581,21 @@ const HotelDetailPage: React.FC = () => {
                         {roomImg ? (
                           <img src={transformImageUrl(roomImg)} alt={room.name} referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🛏️</div>
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#999' }}>Chưa có ảnh</div>
                         )}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, fontSize: 14, color: '#006ce4', marginBottom: 2 }}>{room.name}</div>
                         <div style={{ fontSize: 12, color: '#595959' }}>
                           {room.type && <Tag style={{ fontSize: 11 }}>{room.type}</Tag>}
-                          {room.capacity && <span>👥 {room.capacity} khách</span>}
+                          {room.capacity && <span>{room.capacity} khách</span>}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <div style={{ fontSize: 18, fontWeight: 800 }}>{room.pricePerNight?.toLocaleString('vi-VN')}₫</div>
                         <div style={{ fontSize: 11, color: '#595959' }}>mỗi đêm</div>
                       </div>
-                      <Button type="primary" size="small" onClick={() => navigate(`/booking/${id}/guest`)}>
+                      <Button type="primary" size="small" onClick={() => navigate(`/booking/${id}/guest`, { state: { roomId: room.id } })}>
                         Đặt
                       </Button>
                     </div>
@@ -579,12 +606,11 @@ const HotelDetailPage: React.FC = () => {
 
             {/* Amenities */}
             <div id="amenities-section" style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 4, padding: 20, marginBottom: 16 }}>
-              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>🎯 Tiện nghi nổi bật</h3>
+              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Tiện nghi nổi bật</h3>
               <Row gutter={[10, 10]}>
                 {AMENITIES.map((a) => (
                   <Col key={a.label} xs={12} sm={8}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-                      <CheckCircleOutlined style={{ color: '#008234' }} />
                       <span>{a.label}</span>
                     </div>
                   </Col>
@@ -594,7 +620,7 @@ const HotelDetailPage: React.FC = () => {
 
             {/* Policies */}
             <div id="policies-section" style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 4, padding: 20, marginBottom: 16 }}>
-              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 12 }}>📋 Quy tắc chung</h3>
+              <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 12 }}>Quy tắc chung</h3>
               {[
                 ['Nhận phòng', 'Từ 14:00'],
                 ['Trả phòng', 'Trước 12:00'],
@@ -653,58 +679,88 @@ const HotelDetailPage: React.FC = () => {
               </Button>
 
               <div style={{ textAlign: 'center', marginTop: 8, fontSize: 12, color: '#008234' }}>
-                ✓ Không mất phí đặt phòng · Hủy miễn phí
+                Không mất phí đặt phòng · Hủy miễn phí
               </div>
 
               <Divider style={{ margin: '12px 0' }} />
 
               <div style={{ fontSize: 12, color: '#595959' }}>
-                <div style={{ marginBottom: 4 }}>🏨 {hotelName}</div>
-                <div style={{ marginBottom: 4 }}>📍 {hotel.city || hotel.address || 'Việt Nam'}</div>
-                <div>⭐ {displayRating ? `${displayRating}/10` : 'Chưa đánh giá'}</div>
+                <div style={{ marginBottom: 4 }}>Khách sạn: {hotelName}</div>
+                <div style={{ marginBottom: 4 }}>Địa điểm: {hotel.city || hotel.address || 'Việt Nam'}</div>
+                <div>Đánh giá: {displayRating ? `${displayRating}/10` : 'Chưa đánh giá'}</div>
               </div>
             </div>
           </Col>
         </Row>
       </div>
 
-      {/* ── Custom Lightbox ── */}
+      {/* ── Photo Grid Lightbox ── */}
       {previewIndex !== null && (
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+          position: 'fixed', inset: 0, zIndex: 99999, background: '#fff',
+          display: 'flex', flexDirection: 'column'
         }}>
-          <div 
-            style={{ position: 'absolute', top: 20, right: 24, cursor: 'pointer', color: '#fff', fontSize: 44, zIndex: 10, padding: 10, lineHeight: 1 }}
-            onClick={() => setPreviewIndex(null)}
-          >
-            ×
-          </div>
-          <div 
-            style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#fff', fontSize: 40, zIndex: 10, padding: 20 }}
-            onClick={(e) => { e.stopPropagation(); setPreviewIndex((prev) => (prev! > 0 ? prev! - 1 : allImages.length - 1)); }}
-          >
-            <LeftOutlined />
+          {/* Header */}
+          <div style={{ height: 60, borderBottom: '1px solid #e7e7e7', display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', background: '#fff', flexShrink: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, textTransform: 'uppercase' }}>{hotelName}</div>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+              <Button type="primary" size="large" onClick={() => { setPreviewIndex(null); navigate(`/booking/${id}/guest`); }}>
+                Đặt ngay
+              </Button>
+              <div 
+                style={{ cursor: 'pointer', fontSize: 15, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }} 
+                onClick={() => setPreviewIndex(null)}
+              >
+                Đóng <span style={{ fontSize: 20 }}>✕</span>
+              </div>
+            </div>
           </div>
           
-          <img 
-            src={allImages[previewIndex]} 
-            alt="" 
-            style={{ maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain' }} 
-            referrerPolicy="no-referrer"
-          />
-          
-          <div 
-            style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#fff', fontSize: 40, zIndex: 10, padding: 20 }}
-            onClick={(e) => { e.stopPropagation(); setPreviewIndex((prev) => (prev! < allImages.length - 1 ? prev! + 1 : 0)); }}
-          >
-            <LeftOutlined style={{ transform: 'rotate(180deg)' }} />
-          </div>
-          <div style={{ position: 'absolute', bottom: 20, color: '#fff', fontSize: 16, fontWeight: 500 }}>
-            {previewIndex + 1} / {allImages.length}
+          {/* Grid Content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 40px', background: '#f5f5f5' }}>
+            <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+              <div style={{ marginBottom: 20 }}>
+                <span style={{ fontSize: 24, fontWeight: 700 }}>Tất cả hình ảnh</span>
+                <span style={{ marginLeft: 12, color: '#595959' }}>({allImages.length} ảnh)</span>
+              </div>
+              <Row gutter={[16, 16]}>
+                {allImages.map((img, i) => (
+                  <Col xs={24} sm={12} md={8} lg={6} key={i}>
+                    <div style={{ 
+                      borderRadius: 8, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                      transition: 'transform 0.2s', cursor: 'pointer', backgroundColor: '#fff'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <img 
+                        src={img} 
+                        alt={`${hotelName} - ảnh ${i + 1}`}
+                        style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }} 
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+            </div>
           </div>
         </div>
       )}
+
+      <Drawer
+        title={<span style={{ fontSize: 20, fontWeight: 700 }}>Đánh giá của khách về {hotelName}</span>}
+        width={1000}
+        onClose={() => setReviewDrawerVisible(false)}
+        open={reviewDrawerVisible}
+        placement="right"
+        bodyStyle={{ padding: 0, background: '#f5f5f5' }}
+        headerStyle={{ borderBottom: '1px solid #e7e7e7', padding: '24px' }}
+        closeIcon={<span style={{ fontSize: 20 }}>✕</span>}
+        maskStyle={{ backdropFilter: 'blur(8px)', background: 'rgba(0, 0, 0, 0.4)' }}
+      >
+        <HotelReviewAndChatPage isDrawer />
+      </Drawer>
 
       <Footer />
     </div>

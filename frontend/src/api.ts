@@ -40,6 +40,36 @@ export const authApi = {
 
   verifyOtp: (email: string, otp: string) =>
     swaggerApi.auth.verifyOtp({ email, otp }, TEXT_FMT),
+
+  googleLogin: (credential: string) =>
+    fetch('/proxy/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+    }).then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.text();
+    }),
+
+  forgotPassword: (username: string) =>
+    fetch('/proxy/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    }).then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.text();
+    }),
+
+  resetPassword: (username: string, otp: string, newPassword: string) =>
+    fetch('/proxy/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, otp, newPassword }),
+    }).then(async res => {
+      if (!res.ok) throw new Error(await res.text());
+      return res.text();
+    }),
 };
 
 export const chatApi = {
@@ -93,16 +123,53 @@ export const bookingApi = {
     swaggerApi.bookings.getRequests(bookingId, JSON_FMT),
 };
 
+// ─── PAYMENTS ─────────────────────────────────────────────────
+export const paymentApi = {
+  getPaymentQr: (bookingId: number) => {
+    return fetch(`/proxy/bookings/${bookingId}/payment-qr`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    }).then(async res => {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Lỗi lấy QR');
+      }
+      return res.json();
+    });
+  },
+  confirmPayment: (bookingId: number) => {
+    return fetch(`/proxy/bookings/${bookingId}/confirm-payment`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    }).then(async res => {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Lỗi xác nhận');
+      }
+      return res.json();
+    });
+  }
+};
+
 // ─── NOTIFICATIONS ────────────────────────────────────────────
 export const notificationApi = {
   getMy: () => swaggerApi.notifications.getMyNotifications(JSON_FMT),
   markAsRead: (notificationId: number) =>
     swaggerApi.notifications.markAsRead(notificationId, JSON_FMT),
+  delete: (notificationId: number) =>
+    fetch(`/proxy/notifications/${notificationId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    }),
 };
 
 // ─── ADMIN ────────────────────────────────────────────────────
 export const adminApi = {
-  // Bookings
+  // Đặt phòng
   getBookings: (status?: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED') =>
     swaggerApi.admin.getBookings(status ? { status } : {}, JSON_FMT),
   approveBooking: (bookingId: number) =>
@@ -112,7 +179,7 @@ export const adminApi = {
   markBookingPaid: (bookingId: number) =>
     swaggerApi.admin.markBookingPaid(bookingId, JSON_FMT),
 
-  // Booking Requests
+  // Yêu cầu đặt phòng
   getBookingRequests: (status?: 'PENDING' | 'APPROVED' | 'REJECTED') =>
     swaggerApi.admin.getBookingRequests(status ? { status } : {}, JSON_FMT),
   approveBookingRequest: (requestId: number, response?: string) =>
@@ -120,7 +187,7 @@ export const adminApi = {
   rejectBookingRequest: (requestId: number, response?: string) =>
     swaggerApi.admin.rejectBookingRequest(requestId, { response } as ProcessBookingRequestDto, JSON_FMT),
 
-  // Statistics & Reports
+  // Thống kê & Báo cáo
   getOverview: () => swaggerApi.admin.getOverview(JSON_FMT),
   exportBookingsExcel: () => swaggerApi.admin.exportBookings(JSON_FMT),
 };

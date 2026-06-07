@@ -69,19 +69,20 @@ const StarRating = ({
   );
 };
 
-const HotelReviewAndChatPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+const HotelReviewAndChatPage = ({ isDrawer }: { isDrawer?: boolean }) => {
+  const { id: paramsId } = useParams<{ id: string }>();
+  const id = paramsId || window.location.pathname.split('/')[2];
   const navigate = useNavigate();
   const [hotel, setHotel] = useState<any>(null);
   
-  // Review States
+  // State đánh giá
   const [allReviews, setAllReviews] = useState<any[]>([]);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewHover, setReviewHover] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // Chat States
+  // State trò chuyện
   const [messages, setMessages] = useState<{ sender: 'user' | 'bot', text: string, time: Date }[]>([
     { sender: 'bot', text: 'Xin chào! Tôi là trợ lý ảo của khách sạn. Tôi có thể giúp gì cho bạn?', time: new Date() }
   ]);
@@ -182,11 +183,9 @@ const handleSendMessage = async () => {
 };
   const hotelName = hotel?.name || 'Khách sạn';
 
-  return (
-    <div className="page-wrapper" style={{ background: '#f5f5f5', minHeight: '100vh' }}>
-      <Header />
-
-      <div className="container" style={{ padding: '24px' }}>
+  const content = (
+    <div className="container" style={{ padding: isDrawer ? '0' : '24px' }}>
+      {!isDrawer && (
         <Button 
           type="link" 
           icon={<LeftOutlined />} 
@@ -195,6 +194,7 @@ const handleSendMessage = async () => {
         >
           Quay lại {hotelName}
         </Button>
+      )}
 
         <Row gutter={[24, 24]}>
           {/* ── Trái: Đánh giá ── */}
@@ -387,7 +387,16 @@ const handleSendMessage = async () => {
           </Col>
         </Row>
       </div>
-      
+  );
+
+  if (isDrawer) {
+    return content;
+  }
+
+  return (
+    <div className="page-wrapper page-slide-in-right" style={{ background: '#f5f5f5', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Header />
+      {content}
       <Footer />
     </div>
   );

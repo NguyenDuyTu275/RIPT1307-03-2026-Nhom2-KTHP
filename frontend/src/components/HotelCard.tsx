@@ -1,0 +1,130 @@
+import React from 'react';
+
+interface HotelCardProps {
+  hotel: {
+    id: number | string;
+    name: string;
+    city?: string;
+    address?: string;
+    ratingAvg?: number;
+    description?: string;
+    status?: string;
+    imageUrl?: string;
+    rooms?: { pricePerNight?: number; images?: { imageUrl?: string }[] }[];
+    stars?: number;
+    reviewCount?: number;
+    type?: string;
+    oldPrice?: number;
+  };
+  onClick?: () => void;
+  wished?: boolean;
+  onWishToggle?: () => void;
+  showPrice?: boolean;
+  estimatedPrice?: number;
+}
+
+/**
+ * Lấy URL ảnh đại diện cho hotel.
+ * Ưu tiên: hotel.imageUrl → rooms[0].images[0].imageUrl → null
+ */
+export function getHotelImage(hotel: any): string | null {
+  let url = null;
+  if (hotel?.imageUrl) {
+    url = hotel.imageUrl;
+  } else {
+    // Fallback: lấy ảnh từ phòng đầu tiên
+    const rooms = hotel?.rooms;
+    if (rooms && rooms.length > 0) {
+      for (const room of rooms) {
+        if (room.images && room.images.length > 0 && room.images[0].imageUrl) {
+          url = room.images[0].imageUrl;
+          break;
+        }
+      }
+    }
+  }
+
+  // Chuyển đổi link Google Drive nếu có để tránh lỗi 403 / bị chặn
+  if (url && url.includes('drive.google.com')) {
+    const match = url.match(/id=([^&]+)/);
+    if (match && match[1]) {
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+    }
+  }
+  return url;
+}
+
+const HotelCard: React.FC<HotelCardProps> = ({
+  hotel,
+  onClick,
+  wished = false,
+  onWishToggle,
+  showPrice = true,
+  estimatedPrice,
+}) => {
+  const rating = hotel.ratingAvg ?? 0;
+  // Lấy giá từ backend, không tự sinh giá
+  const price = estimatedPrice ?? hotel.rooms?.[0]?.pricePerNight;
+  const imgUrl = getHotelImage(hotel) || 'https://images.unsplash.com/photo-1542314831-c6a4d1409e15?auto=format&fit=crop&q=80&w=1000'; // fallback đẹp
+  
+  const ratingLabel = rating >= 9 ? 'Xuất sắc' : rating >= 8.5 ? 'Tuyệt vời' : rating >= 8 ? 'Rất tốt' : rating > 0 ? 'Tốt' : 'Chưa đánh giá';
+
+  const [imageError, setImageError] = React.useState(false);
+
+  return (
+    <div className="hotel-card" onClick={onClick}>
+      {/* Container ảnh */}
+      <div className="hotel-card-img-container">
+        {onWishToggle && (
+          <button
+            className={`hotel-card-wish-btn ${wished ? 'active' : ''}`}
+            onClick={(e) => { e.stopPropagation(); onWishToggle(); }}
+          >
+            <svg viewBox="0 0 24 24" fill={wished ? "#e71d36" : "none"} stroke={wished ? "#e71d36" : "#666"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </button>
+        )}
+        {!imageError ? (
+          <img
+            className="hotel-card-img"
+            src={imgUrl}
+            alt={hotel.name}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="hotel-card-img hotel-card-img-fallback">🏨</div>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="hotel-card-body">
+        <div className="hotel-card-name">{hotel.name}</div>
+        <div className="hotel-card-city">
+          {hotel.city || hotel.address || 'Đang cập nhật'}
+        </div>
+
+        <div className="hotel-card-rating-container">
+          <div className="hotel-card-rating-score">{rating > 0 ? rating.toFixed(1) : 'N/A'}</div>
+          <div className="hotel-card-rating-text">
+            <span className="rating-word">{ratingLabel}</span>
+            <span className="rating-count">{hotel.reviewCount || 0} đánh giá</span>
+          </div>
+        </div>
+
+        {showPrice && (
+          <div className="hotel-card-price-wrapper">
+            <span className="hotel-card-price-label">Bắt đầu từ</span>
+            <span className="hotel-card-price-new">
+              {price ? `VND ${price.toLocaleString('vi-VN')}` : 'Liên hệ'}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default HotelCard;

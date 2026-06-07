@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Row, Col, Button, Skeleton } from 'antd';
+import { Row, Col, Button } from 'antd';
 import { HeartFilled, DeleteOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HotelCard from '../components/HotelCard';
 import { hotelApi } from '../api';
 import { useWishlist } from '../context/WishlistContext';
+import { cachedFetch, HOTEL_DETAIL_TTL } from '../utils/apiCache';
 
 const Wishlist: React.FC = () => {
   const navigate = useNavigate();
@@ -22,70 +23,83 @@ const Wishlist: React.FC = () => {
     }
 
     setLoading(true);
-    Promise.all(wishlist.map(id => hotelApi.getById(Number(id))))
-      .then(responses => {
-        const fetchedHotels = responses.map(res => res.data).filter(Boolean);
-        setHotels(fetchedHotels);
-      })
+    // Cache từng KS theo ID, tái dùng cache từ trang chi tiết nếu có
+    Promise.all(
+      wishlist.map(id => cachedFetch(`hotel_${id}`, () => hotelApi.getById(Number(id)), HOTEL_DETAIL_TTL))
+    )
+      .then(hotels => setHotels(hotels.filter(Boolean)))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [wishlist]);
 
   return (
-    <div className="page-wrapper flex flex-col min-h-screen">
-      <Header showSearch />
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fff' }}>
+      <Header />
 
-      <div className="bg-[#003b95] py-6">
-        <div className="container mx-auto px-4">
-          <button
-            onClick={() => navigate('/')}
-            className="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-white/80 text-sm font-semibold pb-3"
-          >
-            ← Quay lại trang chủ
-          </button>
-          <h1 className="text-white text-2xl font-extrabold mb-1 flex items-center">
-            <HeartFilled className="text-[#ff4d4f] mr-2.5" />
-            Danh sách yêu thích
-          </h1>
-          <p className="text-white/80 text-sm m-0">
-            {wishlist.length} khách sạn đã lưu
-          </p>
-        </div>
-      </div>
+      <div style={{ flex: 1, padding: '40px 0' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px' }}>
+          
+          {/* Header Section */}
+          <div style={{ marginBottom: 32 }}>
+            <Button 
+              type="text" 
+              onClick={() => navigate('/')} 
+              style={{ padding: 0, marginBottom: 16, color: '#006ce4', fontWeight: 600, fontSize: 15 }}
+            >
+              ← Quay lại trang chủ
+            </Button>
+            <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 8px 0', color: '#1a1a1a' }}>
+              Danh sách yêu thích
+            </h1>
+            <p style={{ margin: 0, fontSize: 16, color: '#595959' }}>
+              {wishlist.length} khách sạn đã lưu
+            </p>
+          </div>
 
-      <div className="bg-[#f5f5f5] flex-1 py-6 pb-12">
-        <div className="container mx-auto px-4">
           {loading ? (
-            <Row gutter={[16, 20]}>
+            <Row gutter={[24, 24]}>
               {[...Array(wishlist.length || 4)].map((_, i) => (
-                <Col key={i} xs={24} sm={12} md={6}>
-                  <div className="bg-white rounded-lg p-4 h-[300px]">
-                    <Skeleton active paragraph={{ rows: 4 }} />
+                <Col key={i} xs={24} sm={12} lg={8}>
+                  <div style={{ borderRadius: 12, overflow: 'hidden', background: '#fff', border: '1px solid #e7e7e7' }}>
+                    <div style={{ width: '100%', height: 220, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                    <div style={{ padding: '16px' }}>
+                      <div style={{ height: 18, width: '80%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite', marginBottom: 12 }} />
+                      <div style={{ height: 14, width: '50%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                    </div>
                   </div>
                 </Col>
               ))}
             </Row>
           ) : hotels.length === 0 ? (
-            <div className="bg-white rounded-lg py-16 px-6 text-center">
-              <div className="text-6xl mb-4">💔</div>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Chưa có gì trong danh sách yêu thích</h2>
-              <p className="text-gray-600 mb-6">Khi tìm kiếm khách sạn, nhấn ❤️ để lưu lại nhé!</p>
-              <Button type="primary" size="large" onClick={() => navigate('/search')} className="font-bold">
-                Tìm kiếm khách sạn
+            <div style={{ 
+              background: '#fff', borderRadius: 12, padding: '80px 24px', 
+              textAlign: 'center', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center' 
+            }}>
+              <div style={{ 
+                width: 80, height: 80, borderRadius: '50%', background: '#f5f5f5', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 
+              }}>
+                <HeartFilled style={{ fontSize: 32, color: '#e2e8f0' }} />
+              </div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', margin: '0 0 12px 0' }}>Lưu lại để xem sau</h2>
+              <p style={{ color: '#595959', marginBottom: 32, fontSize: 16, maxWidth: 400 }}>
+                Lưu lại những khách sạn bạn thích để dễ dàng quyết định nơi lưu trú cho chuyến đi tiếp theo.
+              </p>
+              <Button type="primary" size="large" onClick={() => navigate('/')} style={{ fontWeight: 700, height: 48, padding: '0 32px' }}>
+                Khám phá ngay
               </Button>
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-center mb-5">
-                <span className="font-bold text-base text-gray-900">{hotels.length} khách sạn yêu thích</span>
-                <Button icon={<DeleteOutlined />} danger onClick={clearAll} size="small">
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+                <Button icon={<DeleteOutlined />} danger onClick={clearAll} size="middle" style={{ borderRadius: 6, fontWeight: 500 }}>
                   Xóa tất cả
                 </Button>
               </div>
 
-              <Row gutter={[16, 20]}>
+              <Row gutter={[24, 24]}>
                 {hotels.map(hotel => (
-                  <Col key={hotel.id} xs={24} sm={12} md={6}>
+                  <Col key={hotel.id} xs={24} sm={12} lg={8}>
                     <HotelCard
                       hotel={hotel}
                       wished={true}

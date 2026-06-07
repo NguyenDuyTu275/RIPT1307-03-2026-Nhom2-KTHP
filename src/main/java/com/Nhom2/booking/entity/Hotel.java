@@ -34,6 +34,9 @@ public class Hotel {
 
     private String status;
 
+    @org.hibernate.annotations.Formula("(SELECT COUNT(r.id) FROM reviews r WHERE r.hotel_id = id)")
+    private Long reviewCount;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

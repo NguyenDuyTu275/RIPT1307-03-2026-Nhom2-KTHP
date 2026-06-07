@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Row, Col, Slider, Checkbox, Select, Skeleton, Empty } from 'antd';
+import { Row, Col, Slider, Checkbox, Select, Empty } from 'antd';
 import { FilterOutlined, SortAscendingOutlined } from '@ant-design/icons';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -8,6 +8,7 @@ import SearchWidget from '../components/SearchWidget';
 import HotelCard, { getHotelImage } from '../components/HotelCard';
 import { hotelApi } from '../api';
 import { useWishlist } from '../context/WishlistContext';
+import { cachedFetch, HOTEL_LIST_TTL } from '../utils/apiCache';
 
 const { Option } = Select;
 
@@ -34,8 +35,9 @@ const SearchResults: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    hotelApi.getAll()
-      .then(res => setHotels(res.data || []))
+    // Tái dùng cache hotels_all từ HomePage nếu có
+    cachedFetch('hotels_all', () => hotelApi.getAll(), HOTEL_LIST_TTL)
+      .then(data => setHotels(data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -43,7 +45,7 @@ const SearchResults: React.FC = () => {
   const filtered = useMemo(() => {
     let result = [...hotels];
 
-    // Filter by city
+    // Lọc theo thành phố
     if (city) {
       result = result.filter(h =>
         h.city?.toLowerCase().includes(city.toLowerCase()) ||
@@ -52,7 +54,7 @@ const SearchResults: React.FC = () => {
       );
     }
 
-    // Filter by rating
+    // Lọc theo đánh giá
     if (selectedRatings.length > 0) {
       result = result.filter(h => {
         const r = h.ratingAvg || 0;
@@ -60,13 +62,13 @@ const SearchResults: React.FC = () => {
       });
     }
 
-    // Filter by price range
+    // Lọc theo khoảng giá
     result = result.filter(h => {
       const price = h.rooms?.[0]?.pricePerNight ?? 0;
       return price >= priceRange[0] && price <= priceRange[1];
     });
 
-    // Filter by property type (OR logic)
+    // Lọc theo loại chỗ nghỉ (logic OR)
     if (selectedPropertyTypes.length > 0) {
       result = result.filter(h => {
         const textToSearch = `${h.name} ${h.description}`.toLowerCase();
@@ -74,7 +76,7 @@ const SearchResults: React.FC = () => {
       });
     }
 
-    // Filter by features/amenities (AND logic)
+    // Lọc theo tiện nghi (logic AND)
     if (selectedFeatures.length > 0) {
       result = result.filter(h => {
         const textToSearch = `${h.name} ${h.description}`.toLowerCase();
@@ -82,7 +84,7 @@ const SearchResults: React.FC = () => {
       });
     }
 
-    // Filter by guests and rooms capacity
+    // Lọc theo sức chứa khách và phòng
     result = result.filter(h => {
       if (!h.rooms || h.rooms.length === 0) return false;
       const totalCapacity = h.rooms.reduce((sum: number, r: any) => sum + (r.capacity || 0) * (r.quantity || 0), 0);
@@ -90,7 +92,7 @@ const SearchResults: React.FC = () => {
       return totalCapacity >= numGuests && totalRooms >= numRooms;
     });
 
-    // Sort
+    // Sắp xếp
     result.sort((a, b) => {
       if (sortBy === 'rating') return (b.ratingAvg || 0) - (a.ratingAvg || 0);
       if (sortBy === 'name') return a.name.localeCompare(b.name);
@@ -121,13 +123,8 @@ const SearchResults: React.FC = () => {
         <div className="container">
           {/* Back button */}
           <button
+            className="bk-btn-back-blue"
             onClick={() => navigate('/')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: '#006ce4', fontSize: 14, fontWeight: 600,
-              padding: '12px 0 0',
-            }}
           >
             ← Quay lại trang chủ
           </button>
@@ -143,10 +140,13 @@ const SearchResults: React.FC = () => {
                   cursor: 'pointer',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
                 }}
-                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(city || 'Việt Nam')}`, '_blank')}
+                onClick={() => {
+                  const loc = city || (filtered.length > 0 ? (filtered[0].city || filtered[0].address || 'Hà Nội, Việt Nam') : 'Việt Nam');
+                  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`, '_blank');
+                }}
               >
                 <iframe 
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(city || 'Việt Nam')}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(city || (filtered.length > 0 ? (filtered[0].city || filtered[0].address || 'Hà Nội, Việt Nam') : 'Việt Nam'))}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
                   style={{ position: 'absolute', top: -50, left: 0, width: '100%', height: 250, border: 0, pointerEvents: 'none' }}
                   aria-hidden="true"
                   title="map"
@@ -336,8 +336,14 @@ const SearchResults: React.FC = () => {
 
               {loading ? (
                 [...Array(4)].map((_, i) => (
-                  <div key={i} className="hotel-result-card" style={{ padding: 16, pointerEvents: 'none' }}>
-                    <Skeleton active avatar={{ shape: 'square', size: 200 }} paragraph={{ rows: 3 }} />
+                  <div key={i} className="hotel-result-card" style={{ padding: 0, overflow: 'hidden', pointerEvents: 'none', display: 'flex' }}>
+                    <div style={{ width: 220, minHeight: 150, flexShrink: 0, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                    <div style={{ flex: 1, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ height: 20, width: '55%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                      <div style={{ height: 14, width: '35%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                      <div style={{ height: 14, width: '45%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite' }} />
+                      <div style={{ height: 20, width: '25%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s ease-in-out infinite', marginTop: 'auto' }} />
+                    </div>
                   </div>
                 ))
               ) : filtered.length === 0 ? (
@@ -388,7 +394,7 @@ const SearchResults: React.FC = () => {
                       <div className="hotel-result-body">
                         <div className="hotel-result-info">
                           <div className="hotel-result-name">{hotel.name}</div>
-                          <div className="hotel-result-city">📍 {hotel.city || hotel.address || 'Việt Nam'}</div>
+                          <div className="hotel-result-city">{hotel.city || hotel.address || 'Hà Nội'}</div>
                           <div className="hotel-result-desc">{hotel.description || 'Khách sạn cao cấp với đầy đủ tiện nghi, phù hợp cho cả du lịch công tác và nghỉ dưỡng.'}</div>
 
                           <div style={{ marginTop: 12, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -398,13 +404,18 @@ const SearchResults: React.FC = () => {
                         </div>
 
                         <div className="hotel-result-pricing">
-                          <div>
-                             <span className="rating-badge" style={{ fontSize: 14 }}>{rating !== null ? rating.toFixed(1) : 'N/A'}</span>
-                             <div style={{ fontSize: 12, color: '#595959', marginTop: 4 }}>{ratingLabel || 'Chưa đánh giá'}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', marginBottom: 'auto' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+                              <span className="rating-word">{ratingLabel || 'Chưa đánh giá'}</span>
+                              <span className="rating-count">{hotel.reviewCount || 0} đánh giá</span>
+                            </div>
+                            <div className="hotel-card-rating-score">
+                              {rating !== null ? rating.toFixed(1) : 'N/A'}
+                            </div>
                           </div>
-                          <div>
-                           <div className="hotel-result-price">{price !== null ? price.toLocaleString('vi-VN') + '₫' : 'Liên hệ để biết giá'}</div>
-                            <div className="hotel-result-price-label">mỗi đêm, đã bao gồm thuế</div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div className="hotel-card-price-label">Bắt đầu từ</div>
+                            <div className="hotel-card-price-new" style={{ marginBottom: 4 }}>{price !== null ? 'VND ' + price.toLocaleString('vi-VN') : 'Liên hệ'}</div>
                             <button
                               className="hotel-result-cta"
                               style={{ marginTop: 8, padding: '8px 16px', borderRadius: 4, cursor: 'pointer', background: '#006ce4', color: '#fff', border: 'none', fontWeight: 700, fontSize: 14, width: '100%' }}
