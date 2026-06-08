@@ -89,7 +89,7 @@ const BookingConfirmation: React.FC = () => {
             ['Ngày nhận phòng', `${checkIn} (từ 14:00)`],
             ['Ngày trả phòng', `${checkOut} (trước 12:00)`],
             ['Số đêm', `${Math.max(1, nights || 2)} đêm`],
-            ['Trạng thái thanh toán', 'Thanh toán sau khi duyệt (hoặc tại khách sạn)'],
+            ['Trạng thái thanh toán', booking?.paymentStatus === 'PAID' ? '✅ Đã thanh toán' : 'Chờ thanh toán'],
           ].map(([label, value]) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
               <span style={{ color: '#595959', fontSize: 14 }}>{label}</span>

@@ -21,16 +21,13 @@ const PaymentPage: React.FC = () => {
   const nights = state?.nights;
   const totalPrice = state?.totalPrice;
 
-  // Tải QR khi booking đã CONFIRMED
+  // Tải QR thanh toán
   const loadQr = (bookingId: number) => {
     setLoadingQr(true);
     paymentApi.getPaymentQr(bookingId)
       .then((data: any) => setQrData(data))
       .catch((e: any) => {
-        // Nếu lỗi do booking chưa confirmed thì không hiển thị lỗi (sẽ hiện banner chờ duyệt)
-        if (!e?.message?.includes('confirmed')) {
-          message.error('Không thể tải mã QR: ' + (e?.message || 'Lỗi không xác định'));
-        }
+        message.error('Không thể tải mã QR: ' + (e?.message || 'Lỗi không xác định'));
       })
       .finally(() => setLoadingQr(false));
   };
@@ -40,14 +37,11 @@ const PaymentPage: React.FC = () => {
       navigate('/');
       return;
     }
-    if (booking.status === 'CONFIRMED') {
-      loadQr(booking.id);
-    } else {
-      setLoadingQr(false);
-    }
-  }, [booking?.id, booking?.status]);
+    // Booking giờ luôn CONFIRMED, tải QR ngay
+    loadQr(booking.id);
+  }, [booking?.id]);
 
-  // Tự động kiểm tra trạng thái (polling 3s)
+  // Tự động kiểm tra thanh toán (polling 3s)
   useEffect(() => {
     if (!booking?.id) return;
 
@@ -59,12 +53,6 @@ const PaymentPage: React.FC = () => {
 
         // Cập nhật trạng thái booking
         setCurrentBooking(updated);
-
-        // Nếu vừa được duyệt → tải QR
-        if (updated.status === 'CONFIRMED' && currentBooking?.status !== 'CONFIRMED') {
-          message.success('Đặt phòng đã được Admin duyệt! Đang tải mã QR...');
-          if (updated.id != null) loadQr(updated.id);
-        }
 
         // Nếu đã thanh toán → chuyển trang xác nhận
         if (updated.paymentStatus === 'PAID') {
@@ -139,32 +127,33 @@ const PaymentPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Thông báo nếu booking đang PENDING */}
-        {isPending && (
-          <div style={{
-            background: '#fffbe6',
-            border: '1px solid #ffe58f',
-            borderRadius: 10,
-            padding: '16px 20px',
-            marginBottom: 20,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 12,
-          }}>
-            <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: '#faad14' }} spin />} />
-            <div>
-              <div style={{ fontWeight: 700, color: '#875700', fontSize: 15, marginBottom: 4 }}>
-                ⏳ Đang chờ Admin duyệt đặt phòng
-              </div>
-              <div style={{ color: '#614700', fontSize: 13 }}>
-                Đặt phòng của bạn đang chờ được xác nhận. Mã QR thanh toán sẽ xuất hiện tự động sau khi Admin duyệt (thường trong vài phút). Bạn không cần làm gì thêm.
-              </div>
+        {/* Thông báo đặt phòng */}
+        <div style={{
+          background: isPending ? '#e6f4ff' : '#f6ffed',
+          border: `1px solid ${isPending ? '#91caff' : '#b7eb8f'}`,
+          borderRadius: 10,
+          padding: '16px 20px',
+          marginBottom: 20,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12,
+        }}>
+          {isPending ? (
+            <LoadingOutlined style={{ fontSize: 22, color: '#1677ff', marginTop: 2 }} />
+          ) : (
+            <CheckCircleOutlined style={{ fontSize: 22, color: '#52c41a', marginTop: 2 }} />
+          )}
+          <div>
+            <div style={{ fontWeight: 700, color: isPending ? '#003eb3' : '#135200', fontSize: 15, marginBottom: 4 }}>
+              {isPending ? '⏳ Chờ thanh toán để duyệt đặt phòng' : '✅ Đặt phòng đã được xác nhận'}
+            </div>
+            <div style={{ color: isPending ? '#0958d9' : '#237804', fontSize: 13 }}>
+              Vui lòng quét mã QR hoặc chuyển khoản theo thông tin bên dưới để hoàn tất thanh toán. Admin sẽ duyệt đặt phòng của bạn sau khi nhận được tiền.
             </div>
           </div>
-        )}
+        </div>
 
-        {isConfirmed && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             {/* QR Code */}
             <div style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 12, padding: 24, textAlign: 'center' }}>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#1a1a1a' }}>Mã QR thanh toán</div>
@@ -230,15 +219,14 @@ const PaymentPage: React.FC = () => {
                 </div>
               ) : null}
             </div>
-          </div>
-        )}
+        </div>
 
         {/* Booking summary */}
         <div style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 12, padding: 20, marginTop: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 12 }}>Tóm tắt đặt phòng</div>
           {[
             ['Mã đặt phòng', `BK${String(booking.id).padStart(6, '0')}`],
-            ['Trạng thái', isPending ? '⏳ Chờ duyệt' : isConfirmed ? '✅ Đã xác nhận - Có thể thanh toán' : booking.status],
+            ['Trạng thái', isPending ? '⏳ Chờ thanh toán' : isConfirmed ? '✅ Đã xác nhận' : booking.status],
             ['Khách sạn', hotel?.name],
             ['Nhận phòng', checkIn],
             ['Trả phòng', checkOut],
@@ -251,13 +239,11 @@ const PaymentPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Notice - chỉ hiện khi CONFIRMED */}
-        {isConfirmed && (
-          <div style={{ background: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: 8, padding: 14, marginTop: 16, fontSize: 13, color: '#0050b3', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Spin indicator={<LoadingOutlined style={{ fontSize: 18 }} spin />} />
-            <span><strong>Hệ thống đang tự động kiểm tra thanh toán...</strong> Bạn hãy thực hiện chuyển khoản, đơn phòng sẽ tự động hoàn tất trong 1-3 phút. Nếu đợi lâu, bạn có thể nhấn xác nhận thủ công.</span>
-          </div>
-        )}
+        {/* Notice */}
+        <div style={{ background: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: 8, padding: 14, marginTop: 16, fontSize: 13, color: '#0050b3', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Spin indicator={<LoadingOutlined style={{ fontSize: 18 }} spin />} />
+          <span><strong>Hệ thống đang tự động kiểm tra thanh toán...</strong> Bạn hãy thực hiện chuyển khoản, đơn phòng sẽ tự động hoàn tất trong 1-3 phút. Nếu đợi lâu, bạn có thể nhấn xác nhận thủ công.</span>
+        </div>
 
         {/* Action buttons */}
         <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
@@ -266,20 +252,18 @@ const PaymentPage: React.FC = () => {
             style={{ flex: 1, height: 52 }}
             onClick={() => navigate('/my-bookings')}
           >
-            {isPending ? 'Xem đặt phòng của tôi' : 'Thanh toán sau'}
+            Thanh toán sau
           </Button>
-          {isConfirmed && (
-            <Button
-              type="primary"
-              size="large"
-              icon={<CheckCircleOutlined />}
-              loading={confirming}
-              style={{ flex: 2, height: 52, fontSize: 15, fontWeight: 700, background: '#006ce4' }}
-              onClick={handleConfirmPayment}
-            >
-              Xác nhận thủ công (Nếu lỗi)
-            </Button>
-          )}
+          <Button
+            type="primary"
+            size="large"
+            icon={<CheckCircleOutlined />}
+            loading={confirming}
+            style={{ flex: 2, height: 52, fontSize: 15, fontWeight: 700, background: '#006ce4' }}
+            onClick={handleConfirmPayment}
+          >
+            Xác nhận thủ công (Nếu lỗi)
+          </Button>
         </div>
       </div>
 

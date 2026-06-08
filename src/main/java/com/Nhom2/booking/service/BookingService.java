@@ -31,8 +31,8 @@ import java.util.List;
 @Service
 public class BookingService {
 
-    private static final List<BookingStatus> RESERVED_STATUSES =
-            List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED);
+    private static final List<BookingStatus> RESERVED_STATUSES = List.of(BookingStatus.PENDING,
+            BookingStatus.CONFIRMED);
 
     private final RoomRepository roomRepository;
     private final BookingRoomRepository bookingRoomRepository;
@@ -49,8 +49,7 @@ public class BookingService {
             RoomRepository roomRepository,
             BookingRoomRepository bookingRoomRepository,
             BookingRequestRepository bookingRequestRepository,
-            NotificationService notificationService
-    ) {
+            NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.userRepository = userRepository;
         this.hotelRepository = hotelRepository;
@@ -64,8 +63,7 @@ public class BookingService {
     public Booking createBooking(
             String username,
             Long hotelId,
-            BookingRequest request
-    ) {
+            BookingRequest request) {
 
         validateBookingRequest(request);
 
@@ -101,8 +99,7 @@ public class BookingService {
                     roomRequest.getQuantity(),
                     request.getCheckInDate(),
                     request.getCheckOutDate(),
-                    null
-            );
+                    null);
 
             BookingRoom bookingRoom = new BookingRoom();
             bookingRoom.setBooking(savedBooking);
@@ -120,8 +117,7 @@ public class BookingService {
         Booking result = bookingRepository.save(savedBooking);
         notificationService.notifyAdmins(
                 "New booking",
-                "Booking #" + result.getId() + " is waiting for approval"
-        );
+                "Booking #" + result.getId() + " is waiting for approval");
 
         return result;
     }
@@ -152,8 +148,7 @@ public class BookingService {
 
         notificationService.notifyAdmins(
                 "Booking cancelled",
-                "User " + user.getUsername() + " cancelled booking #" + booking.getId()
-        );
+                "User " + user.getUsername() + " cancelled booking #" + booking.getId());
 
         return result;
     }
@@ -177,8 +172,7 @@ public class BookingService {
         validateAvailabilityForExistingBooking(
                 booking,
                 booking.getCheckInDate(),
-                booking.getCheckOutDate()
-        );
+                booking.getCheckOutDate());
 
         booking.setStatus(BookingStatus.CONFIRMED);
         Booking result = bookingRepository.save(booking);
@@ -186,8 +180,7 @@ public class BookingService {
         notificationService.create(
                 booking.getUser(),
                 "Booking approved",
-                "Your booking #" + booking.getId() + " has been approved"
-        );
+                "Your booking #" + booking.getId() + " has been approved");
 
         return result;
     }
@@ -209,8 +202,7 @@ public class BookingService {
                 "Booking rejected",
                 response == null || response.isBlank()
                         ? "Your booking #" + booking.getId() + " has been rejected"
-                        : response
-        );
+                        : response);
 
         return result;
     }
@@ -230,8 +222,7 @@ public class BookingService {
         notificationService.create(
                 booking.getUser(),
                 "Payment confirmed",
-                "Payment for booking #" + booking.getId() + " has been confirmed"
-        );
+                "Payment for booking #" + booking.getId() + " has been confirmed");
 
         return result;
     }
@@ -240,8 +231,7 @@ public class BookingService {
     public com.Nhom2.booking.entity.BookingRequest createBookingRequest(
             String username,
             Long bookingId,
-            CreateBookingRequestDto request
-    ) {
+            CreateBookingRequestDto request) {
 
         if (request == null || request.getType() == null) {
             throw new RuntimeException("Request type is required");
@@ -260,8 +250,7 @@ public class BookingService {
             validateBookingDates(request.getNewCheckIn(), request.getNewCheckOut());
         }
 
-        com.Nhom2.booking.entity.BookingRequest entity =
-                new com.Nhom2.booking.entity.BookingRequest();
+        com.Nhom2.booking.entity.BookingRequest entity = new com.Nhom2.booking.entity.BookingRequest();
         entity.setType(request.getType());
         entity.setNewCheckIn(request.getNewCheckIn());
         entity.setNewCheckOut(request.getNewCheckOut());
@@ -269,22 +258,19 @@ public class BookingService {
         entity.setStatus(RequestStatus.PENDING);
         entity.setBooking(booking);
 
-        com.Nhom2.booking.entity.BookingRequest result =
-                bookingRequestRepository.save(entity);
+        com.Nhom2.booking.entity.BookingRequest result = bookingRequestRepository.save(entity);
 
         notificationService.notifyAdmins(
                 "New booking request",
                 "User " + user.getUsername() + " sent " + request.getType()
-                        + " request for booking #" + booking.getId()
-        );
+                        + " request for booking #" + booking.getId());
 
         return result;
     }
 
     public List<com.Nhom2.booking.entity.BookingRequest> getMyBookingRequests(
             String username,
-            Long bookingId
-    ) {
+            Long bookingId) {
 
         User user = getUserByUsername(username);
         Booking booking = getBooking(bookingId);
@@ -294,8 +280,7 @@ public class BookingService {
     }
 
     public List<com.Nhom2.booking.entity.BookingRequest> getBookingRequests(
-            RequestStatus status
-    ) {
+            RequestStatus status) {
         if (status == null) {
             return bookingRequestRepository.findAllByOrderByCreatedAtDesc();
         }
@@ -305,12 +290,10 @@ public class BookingService {
     @Transactional
     public com.Nhom2.booking.entity.BookingRequest approveBookingRequest(
             Long requestId,
-            String response
-    ) {
+            String response) {
 
         User admin = getCurrentUser();
-        com.Nhom2.booking.entity.BookingRequest request =
-                getBookingRequest(requestId);
+        com.Nhom2.booking.entity.BookingRequest request = getBookingRequest(requestId);
         ensureRequestPending(request);
 
         Booking booking = request.getBooking();
@@ -322,8 +305,7 @@ public class BookingService {
             validateAvailabilityForExistingBooking(
                     booking,
                     request.getNewCheckIn(),
-                    request.getNewCheckOut()
-            );
+                    request.getNewCheckOut());
             booking.setCheckInDate(request.getNewCheckIn());
             booking.setCheckOutDate(request.getNewCheckOut());
             recalculateTotalPrice(booking);
@@ -336,16 +318,14 @@ public class BookingService {
         request.setProcessedBy(admin);
         request.setAdminResponse(response);
 
-        com.Nhom2.booking.entity.BookingRequest result =
-                bookingRequestRepository.save(request);
+        com.Nhom2.booking.entity.BookingRequest result = bookingRequestRepository.save(request);
 
         notificationService.create(
                 booking.getUser(),
                 "Request approved",
                 response == null || response.isBlank()
                         ? "Your request for booking #" + booking.getId() + " has been approved"
-                        : response
-        );
+                        : response);
 
         return result;
     }
@@ -353,12 +333,10 @@ public class BookingService {
     @Transactional
     public com.Nhom2.booking.entity.BookingRequest rejectBookingRequest(
             Long requestId,
-            String response
-    ) {
+            String response) {
 
         User admin = getCurrentUser();
-        com.Nhom2.booking.entity.BookingRequest request =
-                getBookingRequest(requestId);
+        com.Nhom2.booking.entity.BookingRequest request = getBookingRequest(requestId);
         ensureRequestPending(request);
 
         request.setStatus(RequestStatus.REJECTED);
@@ -366,17 +344,15 @@ public class BookingService {
         request.setProcessedBy(admin);
         request.setAdminResponse(response);
 
-        com.Nhom2.booking.entity.BookingRequest result =
-                bookingRequestRepository.save(request);
+        com.Nhom2.booking.entity.BookingRequest result = bookingRequestRepository.save(request);
 
         notificationService.create(
                 request.getBooking().getUser(),
                 "Request rejected",
                 response == null || response.isBlank()
                         ? "Your request for booking #" + request.getBooking().getId()
-                        + " has been rejected"
-                        : response
-        );
+                                + " has been rejected"
+                        : response);
 
         return result;
     }
@@ -430,49 +406,43 @@ public class BookingService {
             Integer requestedQuantity,
             LocalDate checkIn,
             LocalDate checkOut,
-            Long excludedBookingId
-    ) {
+            Long excludedBookingId) {
         if (room.getQuantity() == null || room.getQuantity() <= 0) {
             throw new RuntimeException("Room quantity is invalid");
         }
 
         Long reserved = excludedBookingId == null
                 ? bookingRoomRepository.sumReservedQuantityForRoom(
-                room,
-                checkIn,
-                checkOut,
-                RESERVED_STATUSES
-        )
+                        room,
+                        checkIn,
+                        checkOut,
+                        RESERVED_STATUSES)
                 : bookingRoomRepository.sumReservedQuantityForRoomExcludingBooking(
-                room,
-                excludedBookingId,
-                checkIn,
-                checkOut,
-                RESERVED_STATUSES
-        );
+                        room,
+                        excludedBookingId,
+                        checkIn,
+                        checkOut,
+                        RESERVED_STATUSES);
 
         int available = room.getQuantity() - reserved.intValue();
 
         if (requestedQuantity > available) {
             throw new RuntimeException(
-                    "Room " + room.getName() + " only has " + available + " available"
-            );
+                    "Room " + room.getName() + " only has " + available + " available");
         }
     }
 
     private void validateAvailabilityForExistingBooking(
             Booking booking,
             LocalDate checkIn,
-            LocalDate checkOut
-    ) {
+            LocalDate checkOut) {
         for (BookingRoom bookingRoom : booking.getBookingRooms()) {
             validateRoomAvailable(
                     bookingRoom.getRoom(),
                     bookingRoom.getQuantity(),
                     checkIn,
                     checkOut,
-                    booking.getId()
-            );
+                    booking.getId());
         }
     }
 
@@ -516,8 +486,7 @@ public class BookingService {
         return getUserByUsername(
                 SecurityContextHolder.getContext()
                         .getAuthentication()
-                        .getName()
-        );
+                        .getName());
     }
 
     private User getUserByUsername(String username) {
