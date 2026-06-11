@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.iws
+*.iml
+*.ipr
+
+# Frontend (không cần cho backend image)
+frontend
+
+# Build output (sẽ build lại trong Docker)
+target
+
+# Maven wrapper jar (đã có trong .mvn)
+.mvn/wrapper/maven-wrapper.jar
+
+# Docs & logs
+*.md
+*.log
+SQL.sql
+Test.java
+maven_build.log
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
