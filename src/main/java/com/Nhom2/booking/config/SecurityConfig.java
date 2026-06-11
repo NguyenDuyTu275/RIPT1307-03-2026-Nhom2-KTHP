@@ -76,13 +76,10 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Cho phép các nguồn (Origins) nào được gọi tới Backend này
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5080",
-                "http://localhost:5173",
-                "https://ript-1307-03-2026-nhom2-kthp.vercel.app",
-                "https://ript-1307-03-2026-nhom2-kthp.vercel.app/",
-                "https://ript1307-03-2026-nhom2-kthp.vercel.app",
-                "https://ript1307-03-2026-nhom2-kthp.vercel.app/"
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*",
+                "https://*.vercel.app",
+                "https://*.railway.app"
         ));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
