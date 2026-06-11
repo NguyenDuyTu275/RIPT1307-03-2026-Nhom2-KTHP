@@ -154,71 +154,71 @@ const PaymentPage: React.FC = () => {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            {/* QR Code */}
-            <div style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 12, padding: 24, textAlign: 'center' }}>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#1a1a1a' }}>Mã QR thanh toán</div>
-              {loadingQr ? (
-                <div style={{ padding: '40px 0' }}>
-                  <Spin indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />} />
-                  <div style={{ marginTop: 12, color: '#595959', fontSize: 13 }}>Đang tải mã QR...</div>
+          {/* QR Code */}
+          <div style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 12, padding: 24, textAlign: 'center' }}>
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#1a1a1a' }}>Mã QR thanh toán</div>
+            {loadingQr ? (
+              <div style={{ padding: '40px 0' }}>
+                <Spin indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />} />
+                <div style={{ marginTop: 12, color: '#595959', fontSize: 13 }}>Đang tải mã QR...</div>
+              </div>
+            ) : qrData?.qrCodeUrl ? (
+              <>
+                <img
+                  src={qrData.qrCodeUrl}
+                  alt="QR Code thanh toán"
+                  style={{ width: '100%', maxWidth: 220, borderRadius: 8, border: '1px solid #e0e0e0' }}
+                />
+                <div style={{ marginTop: 12, fontSize: 12, color: '#008234', fontWeight: 600 }}>
+                  Hỗ trợ tất cả app ngân hàng
                 </div>
-              ) : qrData?.qrCodeUrl ? (
-                <>
-                  <img
-                    src={qrData.qrCodeUrl}
-                    alt="QR Code thanh toán"
-                    style={{ width: '100%', maxWidth: 220, borderRadius: 8, border: '1px solid #e0e0e0' }}
-                  />
-                  <div style={{ marginTop: 12, fontSize: 12, color: '#008234', fontWeight: 600 }}>
-                    Hỗ trợ tất cả app ngân hàng
-                  </div>
-                </>
-              ) : (
-                <div style={{ padding: '20px 0', color: '#ff4d4f' }}>Không thể tải mã QR</div>
-              )}
-            </div>
+              </>
+            ) : (
+              <div style={{ padding: '20px 0', color: '#ff4d4f' }}>Không thể tải mã QR</div>
+            )}
+          </div>
 
-            {/* Transfer info */}
-            <div style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 12, padding: 24 }}>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#1a1a1a' }}>Thông tin chuyển khoản</div>
+          {/* Transfer info */}
+          <div style={{ background: '#fff', border: '1px solid #e7e7e7', borderRadius: 12, padding: 24 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: '#1a1a1a' }}>Thông tin chuyển khoản</div>
 
-              {loadingQr ? (
-                <Spin size="small" />
-              ) : qrData ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  {[
-                    { label: 'Ngân hàng', value: qrData.bankName },
-                    { label: 'Số tài khoản', value: qrData.accountNumber, copyable: true },
-                    { label: 'Chủ tài khoản', value: qrData.accountName },
-                    { label: 'Nội dung', value: qrData.transferContent, copyable: true },
-                  ].map(({ label, value, copyable }) => (
-                    <div key={label}>
-                      <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 2 }}>{label}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a', wordBreak: 'break-all' }}>{value}</span>
-                        {copyable && (
-                          <Button
-                            size="small"
-                            type="text"
-                            icon={<CopyOutlined />}
-                            onClick={() => handleCopy(value, label)}
-                            style={{ color: '#006ce4', flexShrink: 0 }}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-                  <Divider style={{ margin: '4px 0' }} />
-                  <div>
-                    <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 2 }}>Số tiền cần chuyển</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: '#006ce4' }}>
-                      {(qrData.amount || totalPrice || 0).toLocaleString('vi-VN')}₫
+            {loadingQr ? (
+              <Spin size="small" />
+            ) : qrData ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {[
+                  { label: 'Ngân hàng', value: qrData.bankName },
+                  { label: 'Số tài khoản', value: qrData.accountNumber, copyable: true },
+                  { label: 'Chủ tài khoản', value: qrData.accountName },
+                  { label: 'Nội dung', value: qrData.transferContent, copyable: true },
+                ].map(({ label, value, copyable }) => (
+                  <div key={label}>
+                    <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 2 }}>{label}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontWeight: 700, fontSize: 14, color: '#1a1a1a', wordBreak: 'break-all' }}>{value}</span>
+                      {copyable && (
+                        <Button
+                          size="small"
+                          type="text"
+                          icon={<CopyOutlined />}
+                          onClick={() => handleCopy(value, label)}
+                          style={{ color: '#006ce4', flexShrink: 0 }}
+                        />
+                      )}
                     </div>
                   </div>
+                ))}
+
+                <Divider style={{ margin: '4px 0' }} />
+                <div>
+                  <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 2 }}>Số tiền cần chuyển</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#006ce4' }}>
+                    {(qrData.amount || totalPrice || 0).toLocaleString('vi-VN')}₫
+                  </div>
                 </div>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         {/* Booking summary */}

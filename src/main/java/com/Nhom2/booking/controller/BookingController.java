@@ -16,8 +16,7 @@ public class BookingController {
     private final BookingService bookingService;
 
     public BookingController(
-            BookingService bookingService
-    ) {
+            BookingService bookingService) {
         this.bookingService = bookingService;
     }
 
@@ -26,14 +25,12 @@ public class BookingController {
     public Booking createBooking(
             @PathVariable Long hotelId,
             @RequestBody BookingRequest request,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
 
         return bookingService.createBooking(
                 authentication.getName(),
                 hotelId,
-                request
-        );
+                request);
     }
 
     // xem booking của chính mình
@@ -45,8 +42,7 @@ public class BookingController {
     // huỷ booking
     @PutMapping("/cancel/{bookingId}")
     public Booking cancelBooking(
-            @PathVariable Long bookingId
-    ) {
+            @PathVariable Long bookingId) {
         return bookingService.cancelBooking(bookingId);
     }
 
@@ -54,23 +50,19 @@ public class BookingController {
     public com.Nhom2.booking.entity.BookingRequest createRequest(
             @PathVariable Long bookingId,
             @RequestBody CreateBookingRequestDto request,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
         return bookingService.createBookingRequest(
                 authentication.getName(),
                 bookingId,
-                request
-        );
+                request);
     }
 
     @GetMapping("/{bookingId}/requests")
     public List<com.Nhom2.booking.entity.BookingRequest> getRequests(
             @PathVariable Long bookingId,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
         return bookingService.getMyBookingRequests(
                 authentication.getName(),
-                bookingId
-        );
+                bookingId);
     }
 }
